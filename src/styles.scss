@@ -1,1 +1,25 @@
-/* You can add global styles to this file, and also import other style files */
+@use '@angular/material' as mat;
+
+// 🎨 Creamos un tema Material 3 light sin personalización
+$theme: mat.define-theme((
+  color: (
+    theme-type: light,
+  ),
+  typography: (
+    brand-family: 'Manrope, sans-serif',
+    plain-family: 'Manrope, sans-serif',
+  ),
+));
+
+// ✅ Aplicamos el tema global
+:root {
+  @include mat.all-component-themes($theme);
+}
+
+// 🌍 Estilos globales
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Manrope', sans-serif;
+  background-color: #ffffff;
+}

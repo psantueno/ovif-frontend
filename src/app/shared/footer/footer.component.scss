@@ -1,0 +1,29 @@
+.footer {
+  background-color: #89B968;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  padding: 2rem 3rem;
+  font-size: 0.85rem;
+
+  .footer-links {
+    max-width: 50%;
+
+    ul {
+      list-style: none;
+      padding: 0;
+
+      li {
+        margin-bottom: 0.3rem;
+      }
+    }
+  }
+
+  .footer-contact {
+    text-align: right;
+
+    p {
+      margin: 0.5rem 0;
+    }
+  }
+}
