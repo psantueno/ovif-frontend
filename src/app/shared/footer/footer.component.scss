@@ -1,29 +1,90 @@
 .footer {
-  background-color: #89B968;
-  color: #fff;
+  background-color: #89B968; // Fondo verde
+  color: #fff; // Texto blanco
   display: flex;
-  justify-content: space-between;
-  padding: 2rem 3rem;
-  font-size: 0.85rem;
+  flex-direction: column; // Cambiamos a columna para organizar las secciones verticalmente
+  padding: 1.5rem 3rem;
+  font-size: 0.9rem;
+  align-items: center;
+
+  .footer-columns {
+    display: flex; // Organiza las columnas en fila
+    justify-content: space-between; // Espacio entre columnas
+    gap: 3rem; // Espaciado entre columnas
+    flex-wrap: wrap; // Permite que las columnas se ajusten en pantallas pequeñas
+    align-items: baseline;
+  }
 
   .footer-links {
-    max-width: 50%;
+    flex: 1; // Cada columna ocupa el mismo espacio
+    min-width: 200px; // Ancho mínimo para columnas pequeñas
 
     ul {
       list-style: none;
       padding: 0;
+      font-weight: bold; // Negrita para el título de la lista
 
       li {
         margin-bottom: 0.3rem;
+        font-weight: normal; // Texto normal para los elementos de la lista
       }
     }
   }
 
   .footer-contact {
-    text-align: right;
+    flex: 1; // Ocupa el mismo espacio que las otras columnas
+    text-align: left;
 
     p {
       margin: 0.5rem 0;
     }
+
+    i {
+      margin-right: 0.5rem; // Espaciado entre el ícono y el texto
+    }
   }
+
+  .footer-social-networks {
+    flex: 1; // Ocupa el mismo espacio que las otras columnas
+    text-align: center; // Centra el contenido
+    margin-top: 1rem;
+
+    i {
+      font-size: 2rem; // Aumenta el tamaño de los íconos
+      margin: 0 0.5rem; // Espaciado entre íconos
+      color: #fff; // Color blanco para los íconos
+      transition: color 0.3s ease; // Efecto de transición al pasar el mouse
+      &:hover {
+        color: #f4e0b6; // Cambia el color al pasar el mouse
+      }
+    }
+  }
+
+  .footer-developer {
+    text-align: center; // Centra el texto en la fila inferior
+    margin-top: 2rem; // Espaciado superior
+    font-size: 0.8rem; // Tamaño de fuente más pequeño
+    color: #ffffff; // Color del texto
+  }
+
 }
+
+.footer-gobierno {
+    background-color: #F4E0B6; // Fondo marrón claro
+    color: #2B3E4C; // Texto azul oscuro
+    text-align: center; // Centra el texto
+    padding: 1rem; // Espaciado interno
+    font-size: 0.8rem; // Tamaño de fuente más pequeño
+    font-weight: bold;
+
+    p {
+      margin: 0; // Elimina márgenes del párrafo
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        margin: 0 0.3rem; // Espaciado entre íconos y texto
+      }
+    }
+  }

@@ -1,25 +1,464 @@
 @use '@angular/material' as mat;
 
-// 🎨 Creamos un tema Material 3 light sin personalización
+// 🎨 Creamos el tema personalizado con Material 3 usando tus colores
 $theme: mat.define-theme((
   color: (
-    theme-type: light,
+    theme-type: light, // Define el tema como "light" (claro)
+    primary: mat.$azure-palette, // Paleta de colores principal (azul)
+    tertiary: mat.$green-palette, // Paleta de colores terciarios (verde)
   ),
   typography: (
-    brand-family: 'Manrope, sans-serif',
-    plain-family: 'Manrope, sans-serif',
+    brand-family: 'Manrope, sans-serif', // Fuente personalizada para marcas
+    plain-family: 'Manrope, sans-serif', // Fuente personalizada para texto plano
   ),
 ));
 
-// ✅ Aplicamos el tema global
+// ✅ Aplicamos el tema global y definimos variables CSS
 :root {
-  @include mat.all-component-themes($theme);
+  @include mat.all-component-themes($theme); // Aplica el tema global a todos los componentes de Angular Material
+  
+  // 🎨 Variables CSS personalizadas para tus colores específicos
+  & {
+    --color-primary: #2B3E4C; // Color principal (azul oscuro)
+    --color-primary-rgb: 43, 62, 76; // Versión RGB del color principal
+    --color-primary-light: #3f6f91; // Versión más clara del color principal
+    --color-primary-dark: #1b4062; // Versión más oscura del color principal
+    
+    --color-secondary: #89B968; // Color secundario (verde)
+    --color-secondary-rgb: 137, 185, 104; // Versión RGB del color secundario
+    --color-secondary-light: #a7cf89; // Versión más clara del color secundario
+    --color-secondary-dark: #689752; // Versión más oscura del color secundario
+    
+    --color-accent: #F4E0B6; // Color de acento (marrón claro)
+    --color-accent-rgb: 244, 224, 182; // Versión RGB del color de acento
+    --color-accent-light: #f9e2c6; // Versión más clara del color de acento
+    --color-accent-dark: #d4aa70; // Versión más oscura del color de acento
+    
+    --color-neutral: #FCF2DD; // Color neutro (gris claro)
+    --color-neutral-rgb: 252, 242, 221; // Versión RGB del color neutro
+    --color-neutral-light: #fefcf7; // Versión más clara del color neutro
+    --color-neutral-dark: #f5ecc4; // Versión más oscura del color neutro
+    
+    // Variables de superficie y fondo
+    --color-surface: #ffffff; // Color de superficie (blanco)
+    --color-surface-variant: #FCF2DD; // Variante del color de superficie
+    --color-background: #fafafa; // Color de fondo (gris muy claro)
+    
+    // Variables de texto
+    --color-on-primary: #ffffff; // Color del texto sobre el color principal
+    --color-on-secondary: #000000; // Color del texto sobre el color secundario
+    --color-on-accent: #000000; // Color del texto sobre el color de acento
+    --color-on-surface: #2B3E4C; // Color del texto sobre la superficie
+    
+    // Override de variables de Material Design
+    --mdc-theme-primary: var(--color-primary); // Sobrescribe el color principal de Material Design
+    --mdc-theme-secondary: var(--color-secondary); // Sobrescribe el color secundario de Material Design
+    --mdc-theme-surface: var(--color-surface); // Sobrescribe el color de superficie de Material Design
+    --mdc-theme-background: var(--color-background); // Sobrescribe el color de fondo de Material Design
+    --mdc-theme-on-primary: var(--color-on-primary); // Sobrescribe el color del texto sobre el color principal
+    --mdc-theme-on-secondary: var(--color-on-secondary); // Sobrescribe el color del texto sobre el color secundario
+    --mdc-theme-on-surface: var(--color-on-surface); // Sobrescribe el color del texto sobre la superficie
+  }
 }
 
 // 🌍 Estilos globales
 html, body {
-  height: 100%;
-  margin: 0;
-  font-family: 'Manrope', sans-serif;
-  background-color: #ffffff;
+  height: 100%; // Asegura que el contenido ocupe toda la altura de la ventana
+  margin: 0; // Elimina el margen predeterminado
+  padding: 0; // Elimina el padding predeterminado
+  font-family: 'Manrope', sans-serif; // Aplica la fuente personalizada
+  background-color: var(--color-background); // Establece el color de fondo global
+  color: var(--color-on-surface); // Establece el color del texto global
+}
+
+* {
+  box-sizing: border-box; // Asegura que el padding y el borde se incluyan en el tamaño total de los elementos
+}
+
+// 🎨 Clases utilitarias para usar tus colores
+.bg-primary { 
+  & {
+    background-color: var(--color-primary) !important; // Fondo con el color principal
+    color: var(--color-on-primary) !important; // Texto con el color sobre el color principal
+  }
+}
+
+.bg-primary-light { 
+  & {
+    background-color: var(--color-primary-light) !important; // Fondo con el color principal claro
+    color: white !important; // Texto blanco
+  }
+}
+
+.bg-primary-dark { 
+  & {
+    background-color: var(--color-primary-dark) !important; // Fondo con el color principal oscuro
+    color: white !important; // Texto blanco
+  }
+}
+
+.bg-secondary { 
+  & {
+    background-color: var(--color-secondary) !important; // Fondo con el color secundario
+    color: var(--color-on-secondary) !important; // Texto con el color sobre el color secundario
+  }
+}
+
+.bg-secondary-light { 
+  & {
+    background-color: var(--color-secondary-light) !important; // Fondo con el color secundario claro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+.bg-secondary-dark { 
+  & {
+    background-color: var(--color-secondary-dark) !important; // Fondo con el color secundario oscuro
+    color: white !important; // Texto blanco
+  }
+}
+
+.bg-accent { 
+  & {
+    background-color: var(--color-accent) !important; // Fondo con el color de acento
+    color: var(--color-on-accent) !important; // Texto con el color sobre el color de acento
+  }
+}
+
+.bg-accent-light { 
+  & {
+    background-color: var(--color-accent-light) !important; // Fondo con el color de acento claro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+.bg-accent-dark { 
+  & {
+    background-color: var(--color-accent-dark) !important; // Fondo con el color de acento oscuro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+.bg-neutral { 
+  & {
+    background-color: var(--color-neutral) !important; // Fondo con el color neutro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+.bg-neutral-light { 
+  & {
+    background-color: var(--color-neutral-light) !important; // Fondo con el color neutro claro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+.bg-neutral-dark { 
+  & {
+    background-color: var(--color-neutral-dark) !important; // Fondo con el color neutro oscuro
+    color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
+  }
+}
+
+// Clases para colores de texto
+.text-primary { 
+  & {
+    color: var(--color-primary) !important; // Texto con el color principal
+  }
+}
+
+.text-primary-light { 
+  & {
+    color: var(--color-primary-light) !important; // Texto con el color principal claro
+  }
+}
+
+.text-primary-dark { 
+  & {
+    color: var(--color-primary-dark) !important; // Texto con el color principal oscuro
+  }
+}
+
+.text-secondary { 
+  & {
+    color: var(--color-secondary) !important; // Texto con el color secundario
+  }
+}
+
+.text-secondary-light { 
+  & {
+    color: var(--color-secondary-light) !important; // Texto con el color secundario claro
+  }
+}
+
+.text-secondary-dark { 
+  & {
+    color: var(--color-secondary-dark) !important; // Texto con el color secundario oscuro
+  }
+}
+
+.text-accent { 
+  & {
+    color: var(--color-accent-dark) !important; // Texto con el color de acento oscuro
+  }
+}
+
+.text-neutral { 
+  & {
+    color: var(--color-neutral-dark) !important; // Texto con el color neutro oscuro
+  }
+}
+
+// Clases para bordes
+.border-primary { 
+  & {
+    border-color: var(--color-primary) !important; // Borde con el color principal
+  }
+}
+
+.border-secondary { 
+  & {
+    border-color: var(--color-secondary) !important; // Borde con el color secundario
+  }
+}
+
+.border-accent { 
+  & {
+    border-color: var(--color-accent-dark) !important; // Borde con el color de acento oscuro
+  }
+}
+
+.border-neutral { 
+  & {
+    border-color: var(--color-neutral-dark) !important; // Borde con el color neutro oscuro
+  }
+}
+
+// 🔧 Personalizaciones específicas de componentes Angular Material
+.mat-mdc-card {
+  & {
+    background-color: var(--color-surface);
+    border: 1px solid rgba(var(--color-neutral-rgb), 0.3);
+  }
+  
+  &.card-primary {
+    border-color: var(--color-primary);
+  }
+  
+  &.card-secondary {
+    border-color: var(--color-secondary);
+  }
+  
+  &.card-accent {
+    & {
+      background-color: var(--color-neutral);
+      border-color: var(--color-accent-dark);
+    }
+  }
+}
+
+// Botones personalizados
+.mat-mdc-button {
+  &.button-primary {
+    & {
+      --mdc-text-button-label-text-color: var(--color-primary);
+    }
+    
+    &:hover {
+      background-color: rgba(var(--color-primary-rgb), 0.04);
+    }
+  }
+  
+  &.button-secondary {
+    & {
+      --mdc-text-button-label-text-color: var(--color-secondary);
+    }
+    
+    &:hover {
+      background-color: rgba(var(--color-secondary-rgb), 0.04);
+    }
+  }
+}
+
+.mat-mdc-raised-button {
+  &.button-primary {
+    & {
+      --mdc-filled-button-container-color: var(--color-primary);
+      --mdc-filled-button-label-text-color: white;
+    }
+    
+    &:hover {
+      --mdc-filled-button-container-color: var(--color-primary-light);
+    }
+  }
+  
+  &.button-secondary {
+    & {
+      --mdc-filled-button-container-color: var(--color-secondary);
+      --mdc-filled-button-label-text-color: black;
+    }
+    
+    &:hover {
+      --mdc-filled-button-container-color: var(--color-secondary-light);
+    }
+  }
+  
+  &.button-accent {
+    & {
+      --mdc-filled-button-container-color: var(--color-accent);
+      --mdc-filled-button-label-text-color: black;
+    }
+    
+    &:hover {
+      --mdc-filled-button-container-color: var(--color-accent-light);
+    }
+  }
+}
+
+.mat-mdc-fab {
+  &.fab-primary {
+    & {
+      --mdc-fab-container-color: var(--color-primary);
+      --mdc-fab-label-text-color: white;
+    }
+  }
+  
+  &.fab-secondary {
+    & {
+      --mdc-fab-container-color: var(--color-secondary);
+      --mdc-fab-label-text-color: black;
+    }
+  }
+}
+
+// Form fields
+.mat-mdc-form-field {
+  & {
+    --mdc-filled-text-field-active-indicator-color: var(--color-primary); // Cambia el color del borde activo
+    --mdc-filled-text-field-focus-active-indicator-color: var(--color-secondary); // Cambia el color del borde al enfocar
+    --mdc-filled-text-field-label-text-color: rgba(var(--color-primary-rgb), 0.6); // Cambia el color del label
+    --mdc-filled-text-field-focus-label-text-color: var(--color-secondary); // Cambia el color del label al enfocar
+  }
+  
+  &.field-accent {
+    & {
+      --mdc-filled-text-field-container-color: var(--color-neutral);
+      --mdc-filled-text-field-focus-active-indicator-color: var(--color-accent-dark);
+      --mdc-filled-text-field-focus-label-text-color: var(--color-accent-dark);
+    }
+  }
+}
+
+// Chips personalizados
+.mat-mdc-chip {
+  &.chip-primary {
+    & {
+      --mdc-chip-elevated-container-color: var(--color-primary);
+      --mdc-chip-label-text-color: white;
+    }
+  }
+  
+  &.chip-secondary {
+    & {
+      --mdc-chip-elevated-container-color: var(--color-secondary);
+      --mdc-chip-label-text-color: black;
+    }
+  }
+  
+  &.chip-accent {
+    & {
+      --mdc-chip-elevated-container-color: var(--color-accent);
+      --mdc-chip-label-text-color: black;
+    }
+  }
+  
+  &.chip-neutral {
+    & {
+      --mdc-chip-elevated-container-color: var(--color-neutral);
+      --mdc-chip-label-text-color: black;
+    }
+  }
+}
+
+// 📱 Responsive utilities
+@media (max-width: 768px) {
+  html, body {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    font-size: 12px;
+  }
+}
+
+// 🎯 Utilidades adicionales
+.elevation-1 { 
+  & {
+    box-shadow: 0 2px 4px rgba(var(--color-primary-rgb), 0.1); 
+  }
+}
+
+.elevation-2 { 
+  & {
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.15); 
+  }
+}
+
+.elevation-3 { 
+  & {
+    box-shadow: 0 8px 16px rgba(var(--color-primary-rgb), 0.2); 
+  }
+}
+
+.elevation-accent {
+  & {
+    box-shadow: 0 4px 8px rgba(var(--color-accent-rgb), 0.2);
+  }
+}
+
+.rounded { 
+  & {
+    border-radius: 8px; 
+  }
+}
+
+.rounded-lg { 
+  & {
+    border-radius: 12px; 
+  }
+}
+
+.rounded-xl { 
+  & {
+    border-radius: 16px; 
+  }
+}
+
+// Animaciones suaves
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+// Utilidades para gradientes con tus colores
+.gradient-primary {
+  & {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    color: white;
+  }
+}
+
+.gradient-secondary {
+  & {
+    background: linear-gradient(135deg, var(--color-secondary-dark) 0%, var(--color-secondary) 100%);
+    color: white;
+  }
+}
+
+.gradient-neutral {
+  & {
+    background: linear-gradient(135deg, var(--color-neutral) 0%, var(--color-accent-light) 100%);
+    color: rgba(0, 0, 0, 0.87);
+  }
 }
