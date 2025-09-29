@@ -1,3 +1,4 @@
+import { Router } from '@angular/router';
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -23,4 +24,12 @@ import { MatCardModule } from '@angular/material/card';  // 👈 este faltaba
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {}
+export class LoginComponent {
+  constructor(private router: Router) {}
+
+  onLogin() {
+    // Aquí puedes agregar la lógica de autenticación
+    // Si el login es exitoso, redirige al usuario a la vista Home
+    this.router.navigate(['/home']);
+  }
+}

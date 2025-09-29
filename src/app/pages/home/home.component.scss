@@ -1,0 +1,43 @@
+.home-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 120px); // Ajusta la altura excluyendo el header y footer
+  background-color: #FCF2DD; // Fondo similar al login
+  padding: 2rem;
+}
+
+.home-content {
+  text-align: center;
+  background-color: #2B3E4C; // Fondo oscuro para el contenido
+  color: #F4E0B6; // Texto claro
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+  }
+
+  .btn-action {
+    background-color: #6ab04c; // Botón verde
+    color: #ffffff;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover {
+      background-color: #5a9a3e; // Color más oscuro al pasar el mouse
+    }
+  }
+}
