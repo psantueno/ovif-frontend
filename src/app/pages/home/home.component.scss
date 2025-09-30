@@ -1,43 +1,95 @@
 .home-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: calc(100vh - 120px); // Ajusta la altura excluyendo el header y footer
-  background-color: #FCF2DD; // Fondo similar al login
   padding: 2rem;
+  background-color: #FCF2DD;
+  min-height: calc(100vh - 120px); // ajusta al layout con header/footer
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
-.home-content {
+.home-header {
   text-align: center;
-  background-color: #2B3E4C; // Fondo oscuro para el contenido
-  color: #F4E0B6; // Texto claro
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  margin-bottom: 2rem;
 
   h1 {
     font-size: 2rem;
-    margin-bottom: 1rem;
+    color: #2B3E4C;
+    margin-bottom: 0.5rem;
   }
 
   p {
-    font-size: 1.2rem;
-    margin-bottom: 2rem;
+    color: #2B3E4C;
+    font-weight: 500;
+  }
+}
+
+.ejercicio-selector {
+  margin-bottom: 2rem;
+  text-align: center;
+
+  label {
+    font-weight: bold;
+    margin-right: 0.5rem;
+    color: #2B3E4C;
   }
 
-  .btn-action {
-    background-color: #6ab04c; // Botón verde
-    color: #ffffff;
-    padding: 0.75rem 1.5rem;
+  select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #C2B394;
+    border-radius: 6px;
     font-size: 1rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+  }
+}
 
-    &:hover {
-      background-color: #5a9a3e; // Color más oscuro al pasar el mouse
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.home-card {
+  background: #2B3E4C;
+  color: #F4E0B6;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+  display: flex; // 👈 activa flexbox
+  align-items: center; // 👈 alinea icono y texto en el centro
+  gap: 0.5rem; // 👈 espacio entre ícono y texto
+  font-size: 1.1rem;
+
+  mat-icon {
+    font-size: 24px; // tamaño estándar
+    color: #F4E0B6; // mismo color que el texto
+  }
+
+  &:hover {
+    background: #6ab04c;
+    color: #fff;
+
+    mat-icon {
+      color: #fff; // cambia el color del ícono al hacer hover
     }
+  }
+}
+
+.cerrar-mes {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+
+  .btn-cerrar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; // separación entre ícono y texto 
+    font-weight: bold;
+    padding: 0.75rem 1.5rem;
   }
 }

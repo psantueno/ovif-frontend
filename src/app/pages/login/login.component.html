@@ -8,20 +8,38 @@
       <h2>BIENVENIDO</h2>
       <p>Inicie sesión con sus credenciales.</p>
 
-      <form>
+      <form [formGroup]="form" (ngSubmit)="onLogin()">
+        <!-- Usuario -->
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Nombre de usuario</mat-label>
-          <input matInput placeholder="Ingrese su usuario" />
+          <input matInput formControlName="usuario" placeholder="Ingrese su usuario" />
+          <mat-error *ngIf="form.get('usuario')?.hasError('required')">
+          (*) El usuario es obligatorio
+          </mat-error>
         </mat-form-field>
 
+        <!-- Contraseña -->
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Contraseña</mat-label>
-          <input matInput type="password" placeholder="Ingrese su contraseña" />
+          <input matInput type="password" formControlName="password" placeholder="Ingrese su contraseña" />
+          <mat-error *ngIf="form.get('password')?.hasError('required')">
+            (*) La contraseña es obligatoria
+          </mat-error>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" class="btn-ingresar">
-          INGRESAR
+        <!-- Botón con loader -->
+        <button mat-raised-button color="primary" class="btn-ingresar" type="submit" [disabled]="form.invalid || loading">
+          <ng-container *ngIf="!loading; else loadingTpl">
+            INGRESAR
+          </ng-container>
         </button>
+
+        <ng-template #loadingTpl>
+          <mat-spinner diameter="24"></mat-spinner>
+        </ng-template>
+
+        <!-- Error global -->
+        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
       </form>
     </div>
   </mat-card>

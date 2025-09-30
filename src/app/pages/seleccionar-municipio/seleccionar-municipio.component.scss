@@ -1,0 +1,26 @@
+.municipio-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+
+  h2 {
+    margin-bottom: 1.5rem;
+    color: #2B3E4C;
+  }
+
+  .municipio-card {
+    background: #f4e0b6;
+    padding: 1rem 2rem;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #6ab04c;
+      color: white;
+    }
+  }
+}

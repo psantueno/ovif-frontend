@@ -1,9 +1,12 @@
 import { Routes } from '@angular/router';
 import { LoginComponent } from './pages/login/login.component';
 import { HomeComponent } from './pages/home/home.component';
+import { SeleccionarMunicipioComponent } from './pages/seleccionar-municipio/seleccionar-municipio.component';
+import { AuthGuard } from './core/guards/auth.guard'; 
 
 export const routes: Routes = [
-  { path: '', component: LoginComponent }, // Ruta para la página de login
-  { path: 'home', component: HomeComponent }, // Ruta para la página de inicio (Home)
-  { path: '**', redirectTo: '' } // Redirige cualquier ruta no encontrada al login
+  { path: 'login', component: LoginComponent },
+  { path: '', component: SeleccionarMunicipioComponent, canActivate: [AuthGuard] },
+  { path: 'home', component: HomeComponent, canActivate: [AuthGuard] },
+  { path: '**', redirectTo: '' }
 ];

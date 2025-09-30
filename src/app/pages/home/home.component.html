@@ -1,9 +1,52 @@
-
 <div class="home-container">
-  <div class="home-content">
-    <h1>Bienvenido a la Plataforma</h1>
-    <p>Esta es la página principal después de iniciar sesión.</p>
-    <button class="btn-action">Explorar</button>
+  <div class="home-header">
+    <h1>Bienvenido a la Plataforma OVIF</h1>
+    <p>Municipio: {{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</p>
   </div>
+
+  <!-- Selector de Ejercicio/Mes -->
+  <div class="ejercicio-selector">
+    <label for="ejercicioMes">Ejercicio y Mes:</label>
+    <select id="ejercicioMes" [(ngModel)]="ejercicioMes">
+      <option value="">Seleccione un ejercicio/mes</option>
+      <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
+        {{ em.texto }}
+      </option>
+    </select>
+  </div>
+
+  <!-- Acciones principales -->
+  <div class="home-actions">
+  <div class="home-card" (click)="irA('gastos')">
+    <mat-icon>payments</mat-icon>
+    <span>Gastos</span>
+  </div>
+
+  <div class="home-card" (click)="irA('recursos')">
+    <mat-icon>savings</mat-icon>
+    <span>Recursos</span>
+  </div>
+
+  <div class="home-card" (click)="irA('personal')">
+    <mat-icon>groups</mat-icon>
+    <span>Personal</span>
+  </div>
+
+  <div
+    class="home-card"
+    *ngIf="municipioSeleccionado?.municipio_subir_archivos === 1"
+    (click)="irA('archivos')"
+  >
+    <mat-icon>folder</mat-icon>
+    <span>Archivos</span>
+  </div>
+</div>
+
+  <!-- Acción cerrar mes -->
+  <div class="cerrar-mes">
+  <button mat-raised-button color="tertiary" class="btn-cerrar" (click)="cerrarMes()">
+    <mat-icon>event_busy</mat-icon>
+    <span>Cerrar Mes</span>
+  </button>
 </div>
 

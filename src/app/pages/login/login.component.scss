@@ -1,9 +1,10 @@
+// Estilos generales que ya tenías
 .login-container {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60vh; // Ajusta la altura según sea necesario
-  background-color: #FCF2DD; // color de fondo similar al diseño
+  height: 60vh;
+  background-color: #FCF2DD;
 }
 
 .login-card {
@@ -18,14 +19,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0; // Eliminamos el padding para que la imagen ocupe todo el espacio
-  background-color: #2B3E4C; // Color de fondo opcional
+  padding: 0;
+  background-color: #2B3E4C;
 
   img {
-    width: 100%; // La imagen ocupará todo el ancho del contenedor
-    height: 100%; // La imagen ocupará todo el alto del contenedor
-    object-fit: cover; // Asegura que la imagen se ajuste sin deformarse
-    object-position: center; // Centra la imagen dentro del contenedor
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 }
 
@@ -55,19 +56,33 @@
   }
 
   .btn-ingresar {
-    background-color: #6ab04c !important; // verde del botón
+    background-color: #6ab04c !important;
     color: #ffffff;
     width: 100%;
     padding: 0.75rem;
     font-weight: bold;
-    width: auto; // Ajusta el ancho al contenido del texto
+    width: auto;
   }
 
-form {
-  width: 100%; // Asegura que el formulario ocupe todo el ancho disponible
-  display: flex; // Habilita flexbox en el formulario
-  flex-direction: column; // Organiza los elementos en columna
-  align-items: center; // Centra los elementos horizontalmente
-}
+  form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 
+  // 👇 override de mensajes de error
+   ::ng-deep .mat-mdc-form-field-error {
+    color: #fcf2dd !important;  // 👈 texto del color que pediste
+    font-weight: 500;
+  }
+
+  // error global (debajo del botón)
+  .error {
+    color: #fcf2dd;
+    margin-top: 1rem;
+    text-align: center;
+    width: 100%;
+    font-weight: 500;
+  }
 }

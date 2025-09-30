@@ -1,0 +1,6 @@
+<div class="municipio-container">
+  <h2>Seleccione un municipio</h2>
+  <div *ngFor="let m of municipios" class="municipio-card" (click)="seleccionar(m)">
+    {{ m.municipio_nombre }}
+  </div>
+</div>
