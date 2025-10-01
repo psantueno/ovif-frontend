@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>
+  {{ data?.usuario ? 'Editar Usuario' : 'Nuevo Usuario' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form">
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Usuario</mat-label>
+    <input matInput formControlName="usuario" />
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Email</mat-label>
+    <input matInput type="email" formControlName="email" />
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Nombre</mat-label>
+    <input matInput formControlName="nombre" />
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Apellido</mat-label>
+    <input matInput formControlName="apellido" />
+  </mat-form-field>
+
+  <!-- Contraseña solo al crear -->
+  <mat-form-field *ngIf="!data?.usuario" class="full-width" appearance="fill">
+    <mat-label>Contraseña</mat-label>
+    <input matInput type="password" formControlName="password" />
+  </mat-form-field>
+
+  <!-- Municipios -->
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Municipios</mat-label>
+    <mat-select formControlName="municipios" multiple>
+      <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
+        {{ m.municipio_nombre }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <!-- Activo -->
+  <mat-slide-toggle formControlName="activo">Activo</mat-slide-toggle>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close>Cancelar</button>
+  <button mat-raised-button color="primary" (click)="guardar()">Guardar</button>
+</mat-dialog-actions>

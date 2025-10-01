@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  padding: 0.5rem;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+
+  mat-icon {
+    font-size: 22px;
+    color: var(--color-secondary);
+  }
+}
+
+mat-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 400px;
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+mat-dialog-actions {
+  padding-top: 1rem;
+
+  button {
+    font-weight: 600;
+  }
+}
+
+mat-slide-toggle {
+  margin-top: 1rem;
+  color: var(--color-primary-dark);
+}
