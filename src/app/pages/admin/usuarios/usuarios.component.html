@@ -1,5 +1,6 @@
 <div class="usuarios-container">
-  <!-- Encabezado con breadcrumb y volver -->
+
+  <!-- Encabezado -->
   <div class="usuarios-header">
     <nav class="breadcrumb">
       <a [routerLink]="'/admin'" class="breadcrumb-link">Admin</a> ›
@@ -12,68 +13,133 @@
     </button>
   </div>
 
-  <!-- Card principal -->
-  <mat-card class="usuarios-card">
-    <mat-card-header>
-      <mat-icon class="header-icon">group</mat-icon>
-      <mat-card-title>Gestión de Usuarios</mat-card-title>
-    </mat-card-header>
+  <!-- 🔍 Filtros -->
+  <mat-card class="filtros-card">
+    <form [formGroup]="filtroForm" (ngSubmit)="aplicarFiltros()" class="filtro-form">
 
-    <mat-card-content>
-      <table mat-table [dataSource]="dataSource" class="usuarios-table">
+      <!-- Búsqueda global -->
+      <mat-form-field appearance="outline">
+        <mat-label>Buscar</mat-label>
+        <input matInput formControlName="search" placeholder="Nombre, apellido o email">
+      </mat-form-field>
 
-        <!-- Usuario -->
-        <ng-container matColumnDef="usuario">
-          <th mat-header-cell *matHeaderCellDef> Usuario </th>
-          <td mat-cell *matCellDef="let u"> {{ u.usuario }} </td>
-        </ng-container>
+      <!-- Municipio dinámico -->
+      <mat-form-field appearance="outline">
+        <mat-label>Municipio</mat-label>
+        <mat-select formControlName="municipio">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
+            {{ m.municipio_nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-        <!-- Email -->
-        <ng-container matColumnDef="email">
-          <th mat-header-cell *matHeaderCellDef> Email </th>
-          <td mat-cell *matCellDef="let u"> {{ u.email }} </td>
-        </ng-container>
+      <!-- Rol dinámico -->
+      <mat-form-field appearance="outline">
+        <mat-label>Rol</mat-label>
+        <mat-select formControlName="rol">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let r of roles" [value]="r.rol_id">
+            {{ r.nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
 
-        <!-- Nombre -->
-        <ng-container matColumnDef="nombre">
-          <th mat-header-cell *matHeaderCellDef> Nombre </th>
-          <td mat-cell *matCellDef="let u"> {{ u.nombre }} {{ u.apellido }} </td>
-        </ng-container>
-
-        <!-- Estado -->
-        <ng-container matColumnDef="activo">
-          <th mat-header-cell *matHeaderCellDef> Estado </th>
-          <td mat-cell *matCellDef="let u">
-            <mat-chip class="mat-mdc-standard-chip" [class.mat-primary]="u.activo" [class.mat-warn]="!u.activo">
-              {{ u.activo ? 'Activo' : 'Inactivo' }}
-            </mat-chip>
-          </td>
-        </ng-container>
-
-        <!-- Acciones -->
-        <ng-container matColumnDef="acciones">
-          <th mat-header-cell *matHeaderCellDef> Acciones </th>
-          <td mat-cell *matCellDef="let u">
-            <button mat-icon-button color="primary" matTooltip="Editar" (click)="editarUsuario(u)">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" matTooltip="Deshabilitar" (click)="deshabilitarUsuario(u)">
-              <mat-icon>block</mat-icon>
-            </button>
-            <button mat-icon-button color="accent" matTooltip="Resetear contraseña" (click)="resetPassword(u)">
-              <mat-icon>lock_reset</mat-icon>
-            </button>
-          </td>
-        </ng-container>
-
-        <!-- Filas -->
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-      </table>
-    </mat-card-content>
+      <!-- Botón aplicar -->
+      <button mat-raised-button color="primary" type="submit">
+        <mat-icon>search</mat-icon> Aplicar
+      </button>
+    </form>
   </mat-card>
 
-  <!-- Botón flotante para agregar -->
+  <!-- 📋 Resultados -->
+  <ng-container *ngIf="busquedaEjecutada">
+
+    <!-- Tabla de usuarios -->
+    <mat-card class="usuarios-card" *ngIf="dataSource.data.length > 0; else sinResultados">
+      <mat-card-header>
+        <mat-icon class="header-icon">group</mat-icon>
+        <mat-card-title>Gestión de Usuarios</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <table mat-table [dataSource]="dataSource" class="usuarios-table">
+
+          <!-- Usuario -->
+          <ng-container matColumnDef="usuario">
+            <th mat-header-cell *matHeaderCellDef> Usuario </th>
+            <td mat-cell *matCellDef="let u"> {{ u.usuario }} </td>
+          </ng-container>
+
+          <!-- Email -->
+          <ng-container matColumnDef="email">
+            <th mat-header-cell *matHeaderCellDef> Email </th>
+            <td mat-cell *matCellDef="let u"> {{ u.email }} </td>
+          </ng-container>
+
+          <!-- Nombre -->
+          <ng-container matColumnDef="nombre">
+            <th mat-header-cell *matHeaderCellDef> Nombre </th>
+            <td mat-cell *matCellDef="let u"> {{ u.nombre }} {{ u.apellido }} </td>
+          </ng-container>
+
+          <!-- Estado -->
+          <ng-container matColumnDef="activo">
+            <th mat-header-cell *matHeaderCellDef> Estado </th>
+            <td mat-cell *matCellDef="let u">
+              <mat-chip class="mat-mdc-standard-chip"
+                        [class.mat-primary]="u.activo"
+                        [class.mat-warn]="!u.activo">
+                {{ u.activo ? 'Activo' : 'Inactivo' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef> Acciones </th>
+            <td mat-cell *matCellDef="let u">
+              <button mat-icon-button color="primary" matTooltip="Editar" (click)="editarUsuario(u)">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" matTooltip="Deshabilitar" (click)="deshabilitarUsuario(u)">
+                <mat-icon>block</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" matTooltip="Resetear contraseña" (click)="resetPassword(u)">
+                <mat-icon>lock_reset</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Filas -->
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- 📌 Paginador -->
+    <mat-paginator
+      *ngIf="dataSource.data.length > 0"
+      [length]="totalRegistros"
+      [pageSize]="limite"
+      [pageSizeOptions]="[5, 10, 20]"
+      (page)="cambiarPagina($event)">
+    </mat-paginator>
+
+    <!-- ❌ Sin resultados -->
+    <ng-template #sinResultados>
+      <mat-card class="usuarios-card">
+        <mat-card-content>
+          <p class="sin-resultados">
+            <mat-icon>search_off</mat-icon> No se encontraron resultados
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </ng-template>
+  </ng-container>
+
+  <!-- ➕ Botón flotante -->
   <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">
     <mat-icon>add</mat-icon>
   </button>

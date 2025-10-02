@@ -44,6 +44,31 @@
   }
 }
 
+.filtros-card {
+  width: 100%;
+  max-width: 1100px;
+  margin-bottom: 1rem;
+  background: var(--color-surface);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+  .filtro-form {
+    display: grid;
+    grid-template-columns: 1fr auto; // campo buscador + botón
+    gap: 1rem;
+    align-items: end;
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    button {
+      height: 56px; // igual al alto del mat-form-field
+    }
+  }
+}
+
 .usuarios-card {
   width: 100%;
   max-width: 1100px;
@@ -93,16 +118,27 @@ mat-chip {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.8rem;
+  border-radius: 50px;   // 👈 mismo radio para ambos
+  padding: 0.2rem 0.8rem;
+  --mdc-chip-outline-color: transparent !important;
 
   &.mat-primary {
-    background-color: var(--color-secondary) !important;
-    color: #fff !important;
+    background-color: #C6EFCE !important; // verde claro Excel
+    color: #006100 !important;            // verde oscuro Excel
   }
 
   &.mat-warn {
-    background-color: #d32f2f !important;
-    color: #fff !important;
+    background-color: #F8D7DA !important; // rojo claro
+    color: #721C24 !important;            // rojo oscuro
   }
+}
+
+.sin-resultados {
+  font-size: 1rem;
+  text-align: center;
+  color: var(--color-primary-dark);
+  font-weight: 500;
+  padding: 1rem 0;
 }
 
 .fab-add {

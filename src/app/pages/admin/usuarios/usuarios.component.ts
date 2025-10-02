@@ -7,8 +7,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
-import { UsuariosDialogComponent } from './usuarios-dialog.component';
 import { RouterModule } from '@angular/router';
+import { UsuariosDialogComponent } from './usuarios-dialog.component';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+
+// services
+import { UsuariosService } from '../../../services/usuarios.service';
 
 export interface Usuario {
   usuario_id?: number;
@@ -22,9 +30,10 @@ export interface Usuario {
 
 @Component({
   selector: 'app-usuarios',
-  standalone: true, // ✅ ahora es standalone
+  standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     MatDialogModule,
     MatTableModule,
     MatIconModule,
@@ -32,7 +41,11 @@ export interface Usuario {
     MatTooltipModule,
     MatCardModule,
     MatChipsModule,
-    RouterModule,
+    ReactiveFormsModule,
+    MatPaginatorModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatInputModule
   ],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
@@ -40,34 +53,71 @@ export interface Usuario {
 export class UsuariosComponent implements OnInit {
   displayedColumns: string[] = ['usuario', 'email', 'nombre', 'activo', 'acciones'];
   dataSource = new MatTableDataSource<Usuario>([]);
+  totalRegistros: number = 0;
 
-  constructor(private dialog: MatDialog) {}
+  pagina: number = 0;
+  limite: number = 10;
+  busquedaEjecutada: boolean = false;
+
+  filtroForm: FormGroup;
+
+  municipios: any[] = [];
+  roles: any[] = [];
+
+  constructor(
+    private dialog: MatDialog,
+    private fb: FormBuilder,
+    private usuariosService: UsuariosService
+  ) {
+    this.filtroForm = this.fb.group({
+      search: [''],
+      municipio: [''],
+      rol: ['']
+    });
+  }
 
   ngOnInit(): void {
-    this.cargarUsuarios();
+    this.cargarMunicipios();
+    this.cargarRoles();
   }
 
   cargarUsuarios() {
-    this.dataSource.data = [
-      {
-        usuario_id: 1,
-        usuario: 'jdoe',
-        email: 'jdoe@example.com',
-        nombre: 'John',
-        apellido: 'Doe',
-        activo: true,
-        municipios: [1, 2],
-      },
-      {
-        usuario_id: 2,
-        usuario: 'msmith',
-        email: 'msmith@example.com',
-        nombre: 'Mary',
-        apellido: 'Smith',
-        activo: false,
-        municipios: [3],
-      },
-    ];
+    const filtros = this.filtroForm.value;
+
+    this.usuariosService.getUsuarios({
+      pagina: (this.pagina + 1).toString(),
+      limite: this.limite.toString(),
+      search: filtros.search || '',
+      municipio: filtros.municipio || '',
+      rol: filtros.rol || ''
+    }).subscribe((res: any) => {
+      this.busquedaEjecutada = true;
+      this.dataSource.data = res.data;
+      this.totalRegistros = res.total;
+    });
+  }
+
+  aplicarFiltros() {
+    this.pagina = 0;
+    this.cargarUsuarios();
+  }
+
+  cambiarPagina(event: PageEvent) {
+    this.pagina = event.pageIndex;
+    this.limite = event.pageSize;
+    this.cargarUsuarios();
+  }
+
+  cargarMunicipios() {
+    this.usuariosService.getMunicipios().subscribe((res) => {
+      this.municipios = res;
+    });
+  }
+
+  cargarRoles() {
+    this.usuariosService.getRoles().subscribe((res) => {
+      this.roles = res;
+    });
   }
 
   abrirDialogCrear() {
@@ -77,10 +127,7 @@ export class UsuariosComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        console.log('Usuario creado:', result);
-        this.cargarUsuarios();
-      }
+      if (result) this.cargarUsuarios();
     });
   }
 
@@ -91,15 +138,11 @@ export class UsuariosComponent implements OnInit {
     });
 
     dialogRef.afterClosed().subscribe((result) => {
-      if (result) {
-        console.log('Usuario editado:', result);
-        this.cargarUsuarios();
-      }
+      if (result) this.cargarUsuarios();
     });
   }
 
   deshabilitarUsuario(usuario: Usuario) {
-    console.log('Deshabilitando usuario:', usuario);
     usuario.activo = false;
     this.cargarUsuarios();
   }
