@@ -27,6 +27,7 @@
     "@fortawesome/fontawesome-free": "^7.0.1",
     "material-icons": "^1.13.14",
     "rxjs": "~7.8.0",
+    "sweetalert2": "^11.24.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },

@@ -1,26 +1,59 @@
-.municipio-container {
+.municipios-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  background-color: var(--color-neutral);
+  padding: 2rem;
+}
+
+.municipios-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+}
+
+.municipios-title {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.municipio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.municipio-item {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background-color: var(--color-neutral-light);
+  border-radius: 10px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--color-secondary-light);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .municipio-icon {
+    color: var(--color-primary);
+  }
+}
+
+.municipio-unico {
+  color: var(--color-secondary-dark);
+  font-weight: 500;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem;
-
-  h2 {
-    margin-bottom: 1.5rem;
-    color: #2B3E4C;
-  }
-
-  .municipio-card {
-    background: #f4e0b6;
-    padding: 1rem 2rem;
-    margin: 0.5rem 0;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.2s;
-
-    &:hover {
-      background: #6ab04c;
-      color: white;
-    }
-  }
+  gap: 0.5rem;
 }

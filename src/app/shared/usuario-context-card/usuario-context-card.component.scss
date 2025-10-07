@@ -1,0 +1,62 @@
+.usuario-card {
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 1rem;
+  gap: 1rem;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  min-width: 260px;
+
+  .info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .municipio-select {
+    flex: 1;
+    min-width: 150px;
+  }
+
+  button {
+    color: var(--color-primary);
+  }
+}
+
+/* 🦴 Skeletons */
+.skeleton {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 37%,
+    #f0f0f0 63%
+  );
+  background-size: 400% 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -468px 0;
+  }
+  100% {
+    background-position: 468px 0;
+  }
+}
+
+.nombre-skeleton {
+  width: 80px;
+  height: 16px;
+}
+
+.select-skeleton {
+  width: 160px;
+  height: 36px;
+}

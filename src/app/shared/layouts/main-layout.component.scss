@@ -1,0 +1,44 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-primary);
+  color: white;
+  padding: 0.8rem 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1.2rem;
+  }
+
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: 500;
+
+      &:hover {
+        color: var(--color-secondary-light);
+      }
+    }
+  }
+}
+
+.app-main {
+  padding: 2rem;
+  background-color: var(--color-neutral);
+  min-height: calc(100vh - 60px);
+}

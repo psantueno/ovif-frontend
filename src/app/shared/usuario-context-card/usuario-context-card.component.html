@@ -1,0 +1,31 @@
+<div class="usuario-card">
+  <div class="info" *ngIf="!cargando; else skeletonUsuario">
+    <mat-icon>person</mat-icon>
+    <span class="nombre">{{ usuario?.nombre || 'Usuario' }}</span>
+  </div>
+
+  <ng-template #skeletonUsuario>
+    <div class="skeleton nombre-skeleton"></div>
+  </ng-template>
+
+  <ng-container *ngIf="!cargando; else skeletonMunicipio">
+    <mat-select
+      [(value)]="municipioActual"
+      (selectionChange)="onChangeMunicipio($event.value)"
+      class="municipio-select"
+    >
+      <mat-option *ngFor="let m of municipios" [value]="m">
+        {{ m.municipio_nombre }}
+      </mat-option>
+    </mat-select>
+  </ng-container>
+
+  <ng-template #skeletonMunicipio>
+    <div class="skeleton select-skeleton"></div>
+  </ng-template>
+
+  <button mat-icon-button (click)="logout()" aria-label="Cerrar sesión" [disabled]="cargando">
+    <mat-icon>logout</mat-icon>
+  </button>
+</div>
+
