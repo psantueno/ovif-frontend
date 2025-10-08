@@ -1,31 +1,44 @@
 <div class="usuario-card">
-  <div class="info" *ngIf="!cargando; else skeletonUsuario">
-    <mat-icon>person</mat-icon>
-    <span class="nombre">{{ usuario?.nombre || 'Usuario' }}</span>
+  <!-- Usuario -->
+  <div class="info" *ngIf="usuarioNombre; else usuarioSkeleton">
+    <mat-icon>account_circle</mat-icon>
+    <span class="texto">{{ usuarioNombre }}</span>
   </div>
 
-  <ng-template #skeletonUsuario>
-    <div class="skeleton nombre-skeleton"></div>
-  </ng-template>
+  <!-- Municipio -->
+  <div class="info municipio" *ngIf="!cargandoMunicipios; else municipioSkeleton">
+    <mat-icon>account_balance</mat-icon>
+    <ng-container *ngIf="municipios.length; else sinMunicipio">
+      <mat-select
+        [value]="municipioActual?.municipio_id"
+        (selectionChange)="onMunicipioChange($event.value)"
+        class="texto"
+      >
+        <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
+          {{ m.municipio_nombre }}
+        </mat-option>
+      </mat-select>
+    </ng-container>
+  </div>
 
-  <ng-container *ngIf="!cargando; else skeletonMunicipio">
-    <mat-select
-      [(value)]="municipioActual"
-      (selectionChange)="onChangeMunicipio($event.value)"
-      class="municipio-select"
-    >
-      <mat-option *ngFor="let m of municipios" [value]="m">
-        {{ m.municipio_nombre }}
-      </mat-option>
-    </mat-select>
-  </ng-container>
-
-  <ng-template #skeletonMunicipio>
-    <div class="skeleton select-skeleton"></div>
-  </ng-template>
-
-  <button mat-icon-button (click)="logout()" aria-label="Cerrar sesión" [disabled]="cargando">
-    <mat-icon>logout</mat-icon>
-  </button>
+  <!-- Acciones -->
+  <div class="acciones">
+    <button mat-stroked-button color="primary" (click)="onLogout()" [disabled]="cerrandoSesion">
+      <mat-icon>logout</mat-icon>
+      <span>{{ cerrandoSesion ? 'Cerrando...' : 'Cerrar sesión' }}</span>
+    </button>
+  </div>
 </div>
 
+<!-- Skeletons -->
+<ng-template #usuarioSkeleton>
+  <div class="info"><div class="skeleton icon"></div><div class="skeleton line"></div></div>
+</ng-template>
+
+<ng-template #municipioSkeleton>
+  <div class="info municipio"><div class="skeleton icon"></div><div class="skeleton line"></div></div>
+</ng-template>
+
+<ng-template #sinMunicipio>
+  <span class="texto sin-asignar">sin asignar</span>
+</ng-template>

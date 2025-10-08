@@ -1,27 +1,13 @@
 import { Component } from '@angular/core';
-import { RouterOutlet, Router } from '@angular/router';
+import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MatIconModule } from '@angular/material/icon';
+import { UsuarioContextCardComponent } from '../usuario-context-card/usuario-context-card.component';
 
 @Component({
   selector: 'main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, MatIconModule],
+  imports: [CommonModule, RouterOutlet, UsuarioContextCardComponent],
   templateUrl: './main-layout.component.html',
   styleUrls: ['./main-layout.component.scss']
 })
-export class MainLayout {
-  municipioSeleccionado = JSON.parse(localStorage.getItem('municipioSeleccionado') || 'null');
-
-  constructor(private router: Router) {}
-
-  irASeleccionMunicipio() {
-    this.router.navigate(['/seleccionar-municipio']);
-  }
-
-  logout() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('municipioSeleccionado');
-    this.router.navigate(['/login']);
-  }
-}
+export class MainLayout {}

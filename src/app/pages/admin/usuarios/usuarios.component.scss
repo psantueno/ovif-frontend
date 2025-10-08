@@ -8,6 +8,7 @@
   align-items: center;
 }
 
+/* HEADER */
 .usuarios-header {
   width: 100%;
   max-width: 1100px;
@@ -36,62 +37,192 @@
     }
   }
 
+  /* 🔙 Botón volver con estilo consistente */
   button {
+    background-color: #2b3e4c;
+    color: #fff;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
     display: flex;
     align-items: center;
-    gap: 0.3rem;
-    font-weight: 600;
+    gap: 0.4rem;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.25s ease, color 0.25s ease;
+    border: none;
+
+    &:hover {
+      background-color: var(--color-secondary);
+      color: var(--color-on-secondary);
+    }
+
+    mat-icon {
+      font-size: 20px;
+    }
   }
 }
 
+/* 🔍 Filtros */
 .filtros-card {
   width: 100%;
   max-width: 1100px;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   background: var(--color-surface);
-  padding: 1rem 1.5rem;
+  padding: 1.5rem 2rem;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 
   .filtro-form {
     display: grid;
-    grid-template-columns: 1fr auto; // campo buscador + botón
+    grid-template-columns: 2fr 1fr 1fr auto;
     gap: 1rem;
-    align-items: end;
+
+    /* 👇 clave: alinea los elementos a la base, no a la caja completa */
+    align-items: flex-end;
 
     mat-form-field {
       width: 100%;
     }
 
-    button {
-      height: 56px; // igual al alto del mat-form-field
+    .search-field mat-icon {
+      color: var(--color-primary);
+    }
+
+    /* 🔘 Botón buscar del mismo alto visual, sin agrandarlo */
+    .btn-buscar {
+      align-self: baseline;
+      /* 👈 alinea con la base de los mat-form-field */
+      padding: 1.75rem 1.5rem;
+      /* mismo “peso visual” que inputs */
+      background-color: #2b3e4c;
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      transition: background-color 0.25s ease, color 0.25s ease;
+      border: none;
+
+      &:hover {
+        background-color: var(--color-secondary);
+        color: var(--color-on-secondary);
+      }
+
+      mat-icon {
+        font-size: 20px;
+      }
     }
   }
 }
 
+/* 🎯 Acciones en tabla */
+.acciones {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+
+  button[mat-icon-button] {
+    transition: background-color 0.25s ease, color 0.25s ease;
+    border-radius: 8px;
+    color: var(--color-primary);
+
+    mat-icon {
+      font-size: 20px;
+    }
+
+    /* hover general en verde */
+    &:hover {
+      background-color: var(--color-secondary);
+      color: #fff;
+    }
+  }
+
+  /* hover rojo exclusivo para eliminar */
+  button[mat-icon-button][matTooltip='Eliminar']:hover {
+    background-color: #d32f2f !important;
+    color: #fff !important;
+  }
+}
+
+
+mat-paginator {
+  background: var(--color-surface);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  border-radius: 0 0 12px 12px;
+  margin-top: -0.5rem;
+  width: 100%;
+  max-width: 1100px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+
+  ::ng-deep .mat-mdc-paginator-container {
+    justify-content: flex-end;
+    padding: 0.5rem 1rem;
+  }
+
+  ::ng-deep .mat-mdc-paginator-page-size {
+    font-weight: 500;
+  }
+
+  ::ng-deep .mat-mdc-paginator-range-actions button:hover {
+    background-color: var(--color-secondary);
+    color: #fff;
+  }
+}
+
+
+
+/* 📱 Responsive */
+@media (max-width: 900px) {
+  .filtros-card .filtro-form {
+    grid-template-columns: 1fr 1fr;
+
+    .btn-buscar {
+      grid-column: span 2;
+      height: 56px;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .filtros-card .filtro-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 📋 Tabla y resultados */
 .usuarios-card {
   width: 100%;
   max-width: 1100px;
   background: var(--color-surface);
   padding: 1rem;
   border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 mat-card-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* 👈 centra verticalmente el icono */
+  gap: 0.6rem;
 
   .header-icon {
-    font-size: 28px;
+    font-size: 30px;
+    min-width: 30px;
+    height: 30px;
     color: var(--color-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   mat-card-title {
     font-size: 1.4rem;
     font-weight: 600;
     color: var(--color-primary);
+    display: flex;
+    align-items: center;
   }
 }
 
@@ -114,36 +245,55 @@ mat-card-header {
   }
 }
 
+/* Chips estado */
 mat-chip {
   font-weight: 600;
   text-transform: uppercase;
   font-size: 0.8rem;
-  border-radius: 50px;   // 👈 mismo radio para ambos
+  border-radius: 50px;
   padding: 0.2rem 0.8rem;
   --mdc-chip-outline-color: transparent !important;
 
   &.mat-primary {
-    background-color: #C6EFCE !important; // verde claro Excel
-    color: #006100 !important;            // verde oscuro Excel
+    background-color: #C6EFCE !important;
+    color: #006100 !important;
   }
 
   &.mat-warn {
-    background-color: #F8D7DA !important; // rojo claro
-    color: #721C24 !important;            // rojo oscuro
+    background-color: #F8D7DA !important;
+    color: #721C24 !important;
   }
 }
 
-.sin-resultados {
-  font-size: 1rem;
+/* ❌ Sin resultados */
+.sin-resultados-card {
   text-align: center;
-  color: var(--color-primary-dark);
-  font-weight: 500;
-  padding: 1rem 0;
+
+  .sin-resultados {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #777;
+    /* gris neutro moderno */
+    padding: 2rem 0;
+
+    mat-icon {
+      font-size: 48px;
+      margin-bottom: 0.5rem;
+      color: #999;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+  }
 }
 
+/* ➕ Botón flotante */
 .fab-add {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }

@@ -1,12 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { AuthService } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
 import { MunicipioService } from '../../services/municipio.service';
-import { Router } from '@angular/router';
-import Swal, { SweetAlertResult } from 'sweetalert2';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-usuario-context-card',
@@ -15,56 +14,107 @@ import Swal, { SweetAlertResult } from 'sweetalert2';
   templateUrl: './usuario-context-card.component.html',
   styleUrls: ['./usuario-context-card.component.scss']
 })
-export class UsuarioContextCardComponent implements OnInit {
-  usuario: any;
+export class UsuarioContextCardComponent implements OnInit, OnDestroy {
+  usuarioNombre = '';
   municipios: any[] = [];
   municipioActual: any;
-  cargando = true; // 👈 controla el skeleton
+  cargandoMunicipios = true;
+  cerrandoSesion = false;
+  private sub?: Subscription;
+  private logoutSub?: Subscription;
 
   constructor(
-    private auth: AuthService,
     private municipioService: MunicipioService,
-    private router: Router
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
+    this.usuarioNombre = this.readUsuarioNombre();
     this.municipioActual = this.municipioService.getMunicipioActual();
-    this.auth.obtenerMisMunicipios().subscribe({
-      next: (data) => {
-        this.municipios = data;
-        this.cargando = false; // ✅ desactiva el skeleton
-      },
-      error: (e) => {
-        console.error(e);
-        this.cargando = false;
-      },
+
+    this.sub = this.municipioService.municipio$.subscribe((mun) => {
+      this.municipioActual = mun;
     });
 
-    this.usuario = JSON.parse(localStorage.getItem('usuario') || '{}');
-  }
+    this.municipioService.getMisMunicipios().subscribe({
+      next: (data) => {
+        this.municipios = data ?? [];
 
-  onChangeMunicipio(nuevo: any) {
-    if (!nuevo || nuevo.municipio_id === this.municipioActual?.municipio_id) return;
+        if (!this.municipioActual && this.municipios.length > 0) {
+          this.municipioService.setMunicipio(this.municipios[0], { silent: true });
+        }
 
-    Swal.fire({
-      title: '¿Cambiar de municipio?',
-      text: 'Si estás cargando datos, podrías perder los cambios no guardados.',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Cambiar',
-      cancelButtonText: 'Cancelar'
-    }).then((result: SweetAlertResult) => {
-      if (result.isConfirmed) {
-        this.municipioService.setMunicipio(nuevo);
-        this.router.navigate(['/home']);
-        Swal.fire('Municipio cambiado', '', 'success');
+        this.cargandoMunicipios = false;
+      },
+      error: (err) => {
+        console.error('Error al cargar municipios', err);
+        this.cargandoMunicipios = false;
       }
     });
   }
 
-  logout() {
-    localStorage.removeItem('token');
-    this.municipioService.clear();
-    this.router.navigate(['/login']);
+  private readUsuarioNombre(): string {
+    const posiblesKeys = ['user', 'usuario'];
+
+    for (const key of posiblesKeys) {
+      const guardado = localStorage.getItem(key);
+      if (!guardado) {
+        continue;
+      }
+
+      try {
+        const parsed = JSON.parse(guardado);
+        const nombre = [parsed?.nombre, parsed?.apellido]
+          .filter((parte) => !!parte)
+          .join(' ')
+          .trim();
+
+        if (nombre) {
+          return nombre;
+        }
+
+        if (parsed?.username) {
+          return parsed.username;
+        }
+
+        if (parsed?.usuario) {
+          return parsed.usuario;
+        }
+      } catch (error) {
+        console.warn('No se pudo parsear el usuario guardado', error);
+      }
+    }
+
+    return '';
+  }
+
+  onMunicipioChange(id: number) {
+    const seleccionado = this.municipios.find((m) => m.municipio_id === id);
+    if (seleccionado) {
+      this.municipioService.setMunicipio(seleccionado);
+    }
+  }
+
+  onLogout() {
+    if (this.cerrandoSesion) {
+      return;
+    }
+
+    this.cerrandoSesion = true;
+    this.logoutSub?.unsubscribe();
+    this.logoutSub = this.authService.logout().subscribe({
+      next: () => {
+        this.cerrandoSesion = false;
+      },
+      error: (err) => {
+        console.error('Error al cerrar sesión', err);
+        this.cerrandoSesion = false;
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.sub?.unsubscribe();
+    this.logoutSub?.unsubscribe();
   }
 }

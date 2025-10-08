@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -14,6 +14,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginator } from '@angular/material/paginator';
 
 // services
 import { UsuariosService } from '../../../services/usuarios.service';
@@ -53,6 +54,7 @@ export interface Usuario {
 export class UsuariosComponent implements OnInit {
   displayedColumns: string[] = ['usuario', 'email', 'nombre', 'activo', 'acciones'];
   dataSource = new MatTableDataSource<Usuario>([]);
+  @ViewChild(MatPaginator) paginator!: MatPaginator;
   totalRegistros: number = 0;
 
   pagina: number = 0;
@@ -94,11 +96,17 @@ export class UsuariosComponent implements OnInit {
       this.busquedaEjecutada = true;
       this.dataSource.data = res.data;
       this.totalRegistros = res.total;
+      if (this.paginator) {
+        this.paginator.pageIndex = this.pagina;
+      }
     });
   }
 
   aplicarFiltros() {
     this.pagina = 0;
+    if (this.paginator) {
+      this.paginator.firstPage();
+    }
     this.cargarUsuarios();
   }
 

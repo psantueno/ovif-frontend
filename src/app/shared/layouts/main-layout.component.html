@@ -1,22 +1,6 @@
-<header class="app-header">
-  <div class="logo">
-    <mat-icon>account_balance</mat-icon>
-    <span>OVIF</span>
-  </div>
-
-  <div class="nav-right">
-    <button class="municipio-btn" (click)="irASeleccionMunicipio()">
-      <mat-icon>location_city</mat-icon>
-      {{ municipioSeleccionado?.municipio_nombre || 'Seleccionar municipio' }}
-    </button>
-
-    <button class="logout-btn" (click)="logout()">
-      <mat-icon>logout</mat-icon>
-      Salir
-    </button>
-  </div>
-</header>
-
 <main class="app-main">
   <router-outlet></router-outlet>
 </main>
+
+<!-- Context card posicionada fija abajo del header -->
+<app-usuario-context-card class="usuario-context-fixed"></app-usuario-context-card>

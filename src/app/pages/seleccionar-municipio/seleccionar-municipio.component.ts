@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
+import { MunicipioService } from '../../services/municipio.service';
 
 @Component({
   selector: 'app-seleccionar-municipio',
@@ -14,7 +15,11 @@ import { AuthService } from '../../services/auth.service';
 export class SeleccionarMunicipioComponent implements OnInit {
   municipios: any[] = [];
 
-  constructor(private auth: AuthService, private router: Router) {}
+  constructor(
+    private auth: AuthService,
+    private router: Router,
+    private municipioService: MunicipioService
+  ) {}
 
   ngOnInit(): void {
     this.auth.obtenerMisMunicipios().subscribe({
@@ -34,7 +39,7 @@ export class SeleccionarMunicipioComponent implements OnInit {
   }
 
   seleccionar(municipio: any) {
-    localStorage.setItem('municipioSeleccionado', JSON.stringify(municipio));
+    this.municipioService.setMunicipio(municipio, { silent: true });
     this.router.navigate(['/home']);
   }
 }
