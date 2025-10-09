@@ -16,8 +16,8 @@ export class AuthService {
   login(usuario: string, password: string): Observable<any> {
   return this.http.post(`${this.apiUrl}/auth/login`, { usuario, password }).pipe(
     tap((res: any) => {
+      localStorage.removeItem('municipioSeleccionado');
       this.user = res.user;
-      // 👇 Guardamos el token y los datos en localStorage
       localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
       this.router.navigate(['/']); // selección de municipio
@@ -32,6 +32,7 @@ export class AuthService {
         this.user = null;
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        localStorage.removeItem('municipioSeleccionado');
         this.router.navigate(['/login']);
       })
     );

@@ -26,6 +26,7 @@ export class SeleccionarMunicipioComponent implements OnInit {
       next: (municipios) => {
         this.municipios = municipios;
         if (municipios.length === 0) {
+           this.municipioService.clear();
           this.router.navigate(['/home']);
         } else if (municipios.length === 1) {
           this.seleccionar(municipios[0]);

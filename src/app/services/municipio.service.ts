@@ -1,26 +1,24 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject,  map, catchError, of } from 'rxjs';
 import Swal from 'sweetalert2';
+import { API_URL } from '../app.config';
 
 @Injectable({ providedIn: 'root' })
 export class MunicipioService {
+  private readonly apiUrl = inject(API_URL);
+  private readonly http = inject(HttpClient);
   private readonly storageKey = 'municipioSeleccionado';
   private readonly municipioSubject = new BehaviorSubject<any>(this.readFromStorage());
   readonly municipio$ = this.municipioSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
-
   private readFromStorage(): any {
     const guardado = localStorage.getItem(this.storageKey);
-    if (!guardado) {
-      return null;
-    }
-
+    if (!guardado) return null;
     try {
       return JSON.parse(guardado);
-    } catch (error) {
-      console.warn('No se pudo parsear el municipio guardado', error);
+    } catch {
+      console.warn('No se pudo parsear el municipio guardado');
       return null;
     }
   }
@@ -51,7 +49,14 @@ export class MunicipioService {
     localStorage.removeItem(this.storageKey);
   }
 
+
   getMisMunicipios() {
-    return this.http.get<any[]>('/api/usuarios/me/municipios');
+    return this.http.get<any[]>(`${this.apiUrl}/usuarios/me/municipios`).pipe(
+      map((res) => Array.isArray(res) ? res : []),
+      catchError((err) => {
+        console.error('Error en getMisMunicipios:', err);
+        return of([]);
+      })
+    );
   }
 }

@@ -100,8 +100,9 @@
                 <button mat-icon-button color="primary" matTooltip="Editar" (click)="editarUsuario(u)">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button mat-icon-button color="warn" matTooltip="Deshabilitar" (click)="deshabilitarUsuario(u)">
-                  <mat-icon>block</mat-icon>
+                <button mat-icon-button [color]="u.activo ? 'warn' : 'primary'"
+                  [matTooltip]="u.activo ? 'Deshabilitar' : 'Habilitar'" (click)="cambiarEstadoUsuario(u)">
+                  <mat-icon>{{ u.activo ? 'block' : 'check_circle' }}</mat-icon>
                 </button>
                 <button mat-icon-button color="accent" matTooltip="Resetear contraseña" (click)="resetPassword(u)">
                   <mat-icon>lock_reset</mat-icon>

@@ -26,7 +26,7 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   constructor(
     private municipioService: MunicipioService,
     private authService: AuthService
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.usuarioNombre = this.readUsuarioNombre();
@@ -38,10 +38,18 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
 
     this.municipioService.getMisMunicipios().subscribe({
       next: (data) => {
-        this.municipios = data ?? [];
+        this.municipios = Array.isArray(data) ? data : [];
 
-        if (!this.municipioActual && this.municipios.length > 0) {
-          this.municipioService.setMunicipio(this.municipios[0], { silent: true });
+        if (this.municipios.length > 0) {
+          // Si hay municipios, aseguramos selección válida
+          if (!this.municipioActual) {
+            this.municipioService.setMunicipio(this.municipios[0], { silent: true });
+            this.municipioActual = this.municipios[0];
+          }
+        } else {
+          // 🔹 Si no tiene municipios asociados
+          this.municipioActual = null;
+          this.municipioService.clear(); // 👈 limpia storage y BehaviorSubject
         }
 
         this.cargandoMunicipios = false;

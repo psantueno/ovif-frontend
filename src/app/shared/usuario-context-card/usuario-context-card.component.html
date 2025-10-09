@@ -8,18 +8,20 @@
   <!-- Municipio -->
   <div class="info municipio" *ngIf="!cargandoMunicipios; else municipioSkeleton">
     <mat-icon>account_balance</mat-icon>
-    <ng-container *ngIf="municipios.length; else sinMunicipio">
-      <mat-select
-        [value]="municipioActual?.municipio_id"
-        (selectionChange)="onMunicipioChange($event.value)"
-        class="texto"
-      >
+
+    <ng-container *ngIf="municipios.length > 0 && municipioActual; else sinMunicipio">
+      <mat-select [value]="municipioActual?.municipio_id" (selectionChange)="onMunicipioChange($event.value)"
+        class="texto">
         <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
           {{ m.municipio_nombre }}
         </mat-option>
       </mat-select>
     </ng-container>
   </div>
+
+  <ng-template #sinMunicipio>
+    <span class="texto sin-asignar">sin asignar</span>
+  </ng-template>
 
   <!-- Acciones -->
   <div class="acciones">
@@ -32,13 +34,15 @@
 
 <!-- Skeletons -->
 <ng-template #usuarioSkeleton>
-  <div class="info"><div class="skeleton icon"></div><div class="skeleton line"></div></div>
+  <div class="info">
+    <div class="skeleton icon"></div>
+    <div class="skeleton line"></div>
+  </div>
 </ng-template>
 
 <ng-template #municipioSkeleton>
-  <div class="info municipio"><div class="skeleton icon"></div><div class="skeleton line"></div></div>
-</ng-template>
-
-<ng-template #sinMunicipio>
-  <span class="texto sin-asignar">sin asignar</span>
+  <div class="info municipio">
+    <div class="skeleton icon"></div>
+    <div class="skeleton line"></div>
+  </div>
 </ng-template>

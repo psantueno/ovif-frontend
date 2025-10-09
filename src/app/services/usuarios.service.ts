@@ -3,6 +3,23 @@ import { HttpClient } from '@angular/common/http';
 import { API_URL } from '../app.config' 
 import { Observable } from 'rxjs';
 
+
+export interface Usuario {
+  usuario_id?: number;
+  usuario: string;
+  email: string;
+  nombre: string;
+  apellido: string;
+  activo: boolean;
+  municipios?: number[];
+}
+
+export interface UsuarioToggleResponse {
+  message: string;
+  user: Usuario;
+}
+
+
 @Injectable({ providedIn: 'root' })
 export class UsuariosService {
   private http = inject(HttpClient);
@@ -22,4 +39,12 @@ export class UsuariosService {
   getRoles(): Observable<any> {
     return this.http.get(`${this.apiUrl}/roles/select`);
   }
+
+  toggleUsuarioActivo(id: number): Observable<UsuarioToggleResponse> {
+    return this.http.patch<UsuarioToggleResponse>(
+      `${this.apiUrl}/usuarios/${id}/toggle`,
+      {}
+    );
+  }
+
 }

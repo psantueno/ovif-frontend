@@ -28,14 +28,23 @@
         </mat-form-field>
 
         <!-- Botón con loader -->
-        <button mat-raised-button color="primary" class="btn-ingresar" type="submit" [disabled]="form.invalid || loading">
+        <button
+          mat-raised-button
+          color="primary"
+          class="btn-ingresar"
+          type="submit"
+          [disabled]="form.invalid || loading"
+        >
           <ng-container *ngIf="!loading; else loadingTpl">
             INGRESAR
           </ng-container>
         </button>
 
         <ng-template #loadingTpl>
-          <mat-spinner diameter="24"></mat-spinner>
+          <div class="loading-content">
+            <mat-spinner diameter="22" class="custom-spinner"></mat-spinner>
+            <span>Iniciando...</span>
+          </div>
         </ng-template>
 
         <!-- Error global -->

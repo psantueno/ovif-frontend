@@ -15,6 +15,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginator } from '@angular/material/paginator';
+import Swal from 'sweetalert2';
 
 // services
 import { UsuariosService } from '../../../services/usuarios.service';
@@ -28,6 +29,7 @@ export interface Usuario {
   activo: boolean;
   municipios?: number[];
 }
+
 
 @Component({
   selector: 'app-usuarios',
@@ -150,9 +152,58 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  deshabilitarUsuario(usuario: Usuario) {
-    usuario.activo = false;
-    this.cargarUsuarios();
+  cambiarEstadoUsuario(usuario: Usuario) {
+    const accion = usuario.activo ? 'deshabilitar' : 'habilitar';
+    const color = usuario.activo ? '#d33' : '#89B968'; // rojo si deshabilita, azul si habilita
+
+    Swal.fire({
+      title: `¿Confirmas ${accion}?`,
+      text: `Vas a ${accion} al usuario "${usuario.usuario}".`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: `Sí, ${accion}`,
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: color,
+      cancelButtonColor: '#6c757d',
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.usuariosService.toggleUsuarioActivo(usuario.usuario_id!).subscribe({
+          next: (res) => {
+            // ✅ TOAST de éxito arriba a la derecha
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'success',
+              title: res.message,
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: '#f0fdf4', // suave verde claro
+              color: '#14532d',      // verde oscuro para el texto
+            });
+
+            this.cargarUsuarios();
+          },
+          error: (err) => {
+            console.error('❌ Error cambiando estado:', err);
+
+            // ❌ TOAST de error
+            Swal.fire({
+              toast: true,
+              position: 'top-end',
+              icon: 'error',
+              title: 'Error al cambiar el estado del usuario',
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: '#fee2e2', // rojo claro
+              color: '#7f1d1d',      // rojo oscuro texto
+            });
+          },
+        });
+      }
+    });
   }
 
   resetPassword(usuario: Usuario) {
