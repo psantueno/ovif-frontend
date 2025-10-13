@@ -1,43 +1,81 @@
-:host {
-  display: block;
-  padding: 0.5rem;
-}
-
-h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: var(--color-primary);
-  margin-bottom: 1rem;
-
-  mat-icon {
-    font-size: 22px;
-    color: var(--color-secondary);
-  }
-}
-
-mat-dialog-content {
+/* ===== Estructura general ===== */
+.dialog-content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: 400px;
+  /* separa los campos */
+  padding: 1.5rem;
+}
 
-  .full-width {
-    width: 100%;
+.full-width {
+  width: 100%;
+}
+
+.toggle-wrapper {
+  margin-top: 0.5rem;
+}
+
+/* ===== Botones ===== */
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #eee;
+}
+
+.btn-cancelar {
+  border-color: #2b3e4c !important;
+  color: #2b3e4c !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: 0.2s ease-in-out;
+
+  &:hover {
+    background-color: #2b3e4c !important;
+    color: #fff !important;
   }
 }
 
-mat-dialog-actions {
-  padding-top: 1rem;
+.btn-guardar {
+  background-color: #2b3e4c !important;
+  color: #fff !important;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: 0.2s ease-in-out;
 
-  button {
-    font-weight: 600;
+  &:hover {
+    background-color: var(--color-secondary, #2c610c) !important;
+    color: #000000 !important;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    margin-right: 4px;
   }
 }
 
-mat-slide-toggle {
-  margin-top: 1rem;
-  color: var(--color-primary-dark);
+/* ===== Campos readonly ===== */
+input[readonly] {
+  background-color: #e0e2ec;
+  cursor: not-allowed;
+}
+
+/* ===== Título ===== */
+h2[mat-dialog-title] {
+  color: #2b3e4c;
+  margin: 0;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  align-items: center;
+
+}
+
+.dialog-title-icon {
+  font-size: 25px;
+  color: #2b3e4c;
+  vertical-align: text-top;
+
+  margin-top: 1px;
+  /* pequeño ajuste óptico */
 }

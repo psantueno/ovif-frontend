@@ -47,4 +47,15 @@ export class UsuariosService {
     );
   }
 
+  // Crear usuario
+createUsuario(data: any): Observable<any> {
+  return this.http.post(`${this.apiUrl}/usuarios`, data);
+}
+
+// Actualizar usuario
+updateUsuario(id: number, data: any): Observable<any> {
+  return this.http.put(`${this.apiUrl}/usuarios/${id}`, data);
+}
+
+
 }
