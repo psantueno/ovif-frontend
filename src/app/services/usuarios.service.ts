@@ -58,4 +58,9 @@ updateUsuario(id: number, data: any): Observable<any> {
 }
 
 
+// Eliminar usuario permanentemente con verificacion previa de registros.
+deleteUsuario(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/usuarios/${id}`);
+}
+
 }

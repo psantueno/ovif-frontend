@@ -161,10 +161,12 @@ mat-card-header {
 .usuarios-table {
   width: 100%;
   margin-top: 1rem;
-  table-layout: fixed; /* 👈 fija el ancho de columnas */
+  table-layout: fixed;
+  /* 👈 fija el ancho de columnas */
   border-collapse: collapse;
 
-  th, td {
+  th,
+  td {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -212,8 +214,10 @@ mat-card-header {
     text-align: center;
   }
 
-  tr.mat-row, tr.mat-header-row {
-    height: 56px; /* 👈 alto fijo para filas */
+  tr.mat-row,
+  tr.mat-header-row {
+    height: 56px;
+    /* 👈 alto fijo para filas */
   }
 }
 
@@ -242,7 +246,7 @@ mat-card-header {
   }
 
   /* Hover rojo exclusivo para eliminar */
-  button[mat-icon-button][matTooltip='Eliminar']:hover {
+  button[mat-icon-button][matTooltip='Eliminar usuario']:hover {
     background-color: #d32f2f !important;
     color: #fff !important;
   }
@@ -268,7 +272,7 @@ mat-chip {
     background-color: #F8D7DA !important;
     color: #721C24 !important;
   }
-  
+
 }
 
 // tamaño de fuente en el chip
@@ -276,13 +280,11 @@ mat-chip {
   font-size: 0.7rem !important;
 }
 
-::ng-deep .mat-mdc-standard-chip.mat-primary:not(.mdc-evolution-chip--disabled)
-  .mdc-evolution-chip__text-label {
+::ng-deep .mat-mdc-standard-chip.mat-primary:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label {
   color: #006100 !important; // verde oscuro
 }
 
-::ng-deep .mat-mdc-standard-chip.mat-warn:not(.mdc-evolution-chip--disabled)
-  .mdc-evolution-chip__text-label {
+::ng-deep .mat-mdc-standard-chip.mat-warn:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label {
   color: #721C24 !important; // rojo oscuro
 }
 
@@ -328,6 +330,8 @@ mat-paginator {
 
     mat-icon {
       font-size: 48px;
+      min-width: 48px;
+      height: 48px;
       margin-bottom: 0.5rem;
       color: #999;
     }
@@ -371,7 +375,8 @@ mat-paginator {
   .usuarios-table {
     font-size: 0.85rem;
 
-    th, td {
+    th,
+    td {
       padding: 0.4rem;
     }
   }

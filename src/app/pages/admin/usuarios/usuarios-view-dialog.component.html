@@ -1,0 +1,40 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">visibility</mat-icon>
+  Detalle de Usuario
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="detalle-item">
+    <span class="detalle-label">Usuario</span>
+    <span class="detalle-value">{{ data.usuario }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Email</span>
+    <span class="detalle-value">{{ data.email }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Nombre</span>
+    <span class="detalle-value">{{ data.nombre }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Apellido</span>
+    <span class="detalle-value">{{ data.apellido }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Estado</span>
+    <span class="detalle-value">
+      <mat-chip class="estado-chip" [class.mat-primary]="data.activo" [class.mat-warn]="!data.activo">
+      {{ data.activo ? 'Activo' : 'Inactivo' }}
+      </mat-chip>
+    </span>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cerrar" mat-dialog-close>
+    <mat-icon>close</mat-icon> Cerrar</button>
+</mat-dialog-actions>

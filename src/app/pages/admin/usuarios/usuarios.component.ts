@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { RouterModule } from '@angular/router';
 import { UsuariosDialogComponent } from './usuarios-dialog.component';
+import { UsuariosViewDialogComponent } from './usuarios-view-dialog.component';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
@@ -141,6 +142,13 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
+  verUsuario(usuario: Usuario) {
+    this.dialog.open(UsuariosViewDialogComponent, {
+      width: '480px',
+      data: usuario,
+    });
+  }
+
   editarUsuario(usuario: Usuario) {
     const dialogRef = this.dialog.open(UsuariosDialogComponent, {
       width: '500px',
@@ -206,7 +214,69 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  resetPassword(usuario: Usuario) {
-    console.log('Reseteando contraseña de:', usuario);
+  eliminarUsuario(usuario: Usuario) {
+    Swal.fire({
+      title: `¿Eliminar usuario "${usuario.usuario}"?`,
+      text: "Esta acción no se puede deshacer.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Eliminar",
+      cancelButtonText: "Cancelar",
+      confirmButtonColor: "#d33", // rojo
+      cancelButtonColor: "#6c757d",
+      reverseButtons: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        this.usuariosService.deleteUsuario(usuario.usuario_id!).subscribe({
+          next: (res) => {
+            // ✅ Éxito
+            Swal.fire({
+              toast: true,
+              position: "top-end",
+              icon: "success",
+              title: res.message || "Usuario eliminado correctamente",
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: "#f0fdf4",
+              color: "#14532d",
+            });
+            this.cargarUsuarios();
+          },
+          error: (err) => {
+            console.error("❌ Error eliminando usuario:", err);
+
+            // ⚠️ Caso controlado: tiene auditorías
+            if (err.error?.code === "USER_HAS_AUDIT_LOGS") {
+              Swal.fire({
+                icon: "info",
+                title: "No se puede eliminar",
+                text: "Este usuario tiene registros de auditoría y no puede eliminarse.",
+                confirmButtonColor: "#2b3e4c",
+              });
+              return;
+            }
+
+            // ⚠️ Caso genérico o inesperado
+            Swal.fire({
+              toast: true,
+              position: "top-end",
+              icon: "error",
+              title:
+                err.error?.error ||
+                "Error al eliminar el usuario. Intenta nuevamente.",
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: "#fee2e2",
+              color: "#7f1d1d",
+            });
+          },
+        });
+      }
+    });
   }
+
+
+
 }
