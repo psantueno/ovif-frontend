@@ -8,6 +8,9 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
 import { UsuariosComponent } from './pages/admin/usuarios/usuarios.component';
 import { MainLayout } from './shared/layouts/main-layout.component';
+import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
+import { SinAccesoComponent } from './pages/sin-acceso/sin-acceso.component';
 // cuando crees estos módulos, importalos acá
 // import { RolesComponent } from './pages/admin/roles/roles.component';
 // import { EjerciciosComponent } from './pages/admin/ejercicios/ejercicios.component';
@@ -15,6 +18,10 @@ import { MainLayout } from './shared/layouts/main-layout.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
+  // ACCESO DENEGADO SIN MUNICIPIO ASIGNADO
+  { path: 'sin-acceso', component: SinAccesoComponent },
   {
     path: '',
     component: MainLayout,

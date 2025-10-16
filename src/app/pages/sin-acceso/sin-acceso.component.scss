@@ -1,0 +1,57 @@
+.sin-acceso-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  background-color: #fcf2dd;
+}
+
+.sin-acceso-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* 👈 centra todo el contenido horizontalmente */
+  justify-content: center; /* 👈 centra verticalmente dentro de la card */
+  padding: 2rem;
+  background-color: #ffffff;
+  color: #2b3e4c;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  text-align: center;
+  animation: fadeIn 0.6s ease-in-out;
+
+  mat-icon {
+    display: flex; /* 👈 asegura que respete el centrado del flex container */
+    justify-content: center;
+    align-items: center;
+    font-size: 55px;
+    width: 55px;
+    height: 55px;
+    color: #c0392b;
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #555;
+    margin-bottom: 2rem;
+  }
+
+  .btn-volver {
+    background-color: #2b3e4c;
+    color: #ffffff;
+    font-weight: bold;
+    border: none;
+    border-radius: 4px;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background-color: var(--color-secondary);
+      color: var(--color-on-secondary);
+    }
+  }
+}

@@ -1,9 +1,11 @@
 <div class="login-container">
   <mat-card class="login-card">
+    <!-- Imagen lateral -->
     <div class="login-left">
       <img src="assets/img/salto_agrio.svg" alt="Fotografía del Salto del Agrio" />
     </div>
 
+    <!-- Formulario de login -->
     <div class="login-right">
       <h2>BIENVENIDO</h2>
       <p>Inicie sesión con sus credenciales.</p>
@@ -14,14 +16,19 @@
           <mat-label>Nombre de usuario</mat-label>
           <input matInput formControlName="usuario" placeholder="Ingrese su usuario" />
           <mat-error *ngIf="form.get('usuario')?.hasError('required')">
-          (*) El usuario es obligatorio
+            (*) El usuario es obligatorio
           </mat-error>
         </mat-form-field>
 
         <!-- Contraseña -->
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Contraseña</mat-label>
-          <input matInput type="password" formControlName="password" placeholder="Ingrese su contraseña" />
+          <input
+            matInput
+            type="password"
+            formControlName="password"
+            placeholder="Ingrese su contraseña"
+          />
           <mat-error *ngIf="form.get('password')?.hasError('required')">
             (*) La contraseña es obligatoria
           </mat-error>
@@ -35,9 +42,7 @@
           type="submit"
           [disabled]="form.invalid || loading"
         >
-          <ng-container *ngIf="!loading; else loadingTpl">
-            INGRESAR
-          </ng-container>
+          <ng-container *ngIf="!loading; else loadingTpl">INGRESAR</ng-container>
         </button>
 
         <ng-template #loadingTpl>
@@ -49,6 +54,12 @@
 
         <!-- Error global -->
         <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+        <!-- 🔹 Enlace Olvidé mi contraseña -->
+        <div class="forgot-link">
+          Si olvidaste tu contraseña,
+          <a routerLink="/forgot-password">haz click aquí</a>
+        </div>
       </form>
     </div>
   </mat-card>

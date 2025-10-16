@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { RouterModule } from '@angular/router';
 
 // Angular Material
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +20,7 @@ import { AuthService } from '../../services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -39,7 +41,7 @@ export class LoginComponent {
   loading = false;
 
   form = this.fb.group({
-    usuario: ['', Validators.required],   // 👈 ahora se llama usuario
+    usuario: ['', Validators.required],  
     password: ['', Validators.required]
   });
 

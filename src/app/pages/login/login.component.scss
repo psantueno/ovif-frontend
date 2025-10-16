@@ -99,3 +99,22 @@
 .custom-spinner ::ng-deep circle {
   stroke: #ffffff !important; // Verde institucional, por ejemplo
 }
+
+/* === Enlace "Olvidé mi contraseña" === */
+.forgot-link {
+  margin-top: 1.2rem;
+  text-align: center;
+  width: 100%;
+
+  a {
+    color: #f4e0b6; /* mismo tono de tus textos */
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.2s ease-in-out;
+    cursor: pointer;
+
+    &:hover {
+      color: #ffffff; /* un blanco más brillante al pasar el mouse */
+    }
+  }
+}
