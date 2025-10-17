@@ -1,0 +1,15 @@
+<div class="admin-navbar">
+  <nav class="breadcrumb" *ngIf="breadcrumbs?.length">
+    <ng-container *ngFor="let crumb of breadcrumbs; let last = last">
+      <ng-container *ngIf="!last; else lastItem">
+        <a *ngIf="crumb.link" class="breadcrumb-link" [routerLink]="crumb.link">{{ crumb.label }}</a>
+        <span *ngIf="!crumb.link" class="breadcrumb-text">{{ crumb.label }}</span>
+        <span class="breadcrumb-separator">›</span>
+      </ng-container>
+      <ng-template #lastItem>
+        <span class="breadcrumb-current">{{ crumb.label }}</span>
+      </ng-template>
+    </ng-container>
+  </nav>
+
+</div>

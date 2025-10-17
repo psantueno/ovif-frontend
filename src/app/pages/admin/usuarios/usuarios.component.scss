@@ -12,62 +12,6 @@
 }
 
 /* ===========================
-🧭 HEADER
-=========================== */
-.usuarios-header {
-  width: 100%;
-  max-width: 1100px;
-  margin-bottom: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  .breadcrumb {
-    font-size: 0.95rem;
-    color: var(--color-primary-dark);
-
-    .breadcrumb-link {
-      cursor: pointer;
-      color: var(--color-secondary-dark);
-      text-decoration: underline;
-
-      &:hover {
-        color: var(--color-secondary);
-      }
-    }
-
-    .breadcrumb-current {
-      font-weight: bold;
-      margin-left: 0.3rem;
-    }
-  }
-
-  /* 🔙 Botón volver */
-  button {
-    background-color: #2b3e4c;
-    color: #fff;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 0.5rem 1.2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-    transition: background-color 0.25s ease, color 0.25s ease;
-    border: none;
-
-    &:hover {
-      background-color: var(--color-secondary);
-      color: var(--color-on-secondary);
-    }
-
-    mat-icon {
-      font-size: 20px;
-    }
-  }
-}
-
-/* ===========================
 🔍 FILTROS
 =========================== */
 .filtros-card {

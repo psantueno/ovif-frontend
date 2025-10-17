@@ -20,6 +20,7 @@ import Swal from 'sweetalert2';
 
 // services
 import { UsuariosService } from '../../../services/usuarios.service';
+import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 
 export interface Usuario {
   usuario_id?: number;
@@ -49,7 +50,8 @@ export interface Usuario {
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    AdminNavbarComponent
   ],
   templateUrl: './usuarios.component.html',
   styleUrls: ['./usuarios.component.scss'],
@@ -68,6 +70,11 @@ export class UsuariosComponent implements OnInit {
 
   municipios: any[] = [];
   roles: any[] = [];
+
+  readonly breadcrumbs: AdminBreadcrumb[] = [
+    { label: 'Admin', link: '/admin' },
+    { label: 'Usuarios' }
+  ];
 
   constructor(
     private dialog: MatDialog,

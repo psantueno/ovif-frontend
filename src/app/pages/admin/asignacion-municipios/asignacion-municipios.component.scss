@@ -1,0 +1,155 @@
+.asignacion-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  align-items: center;
+}
+
+.buscador-card {
+  padding: 1.5rem;
+  width: 50%;
+}
+
+.buscador-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+.search-field {
+  flex: 1 1 320px;
+}
+
+.contenido {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 1.5rem;
+}
+
+.usuarios-card, .municipios-card {
+  min-height: 360px;
+}
+
+// solo card usuarios
+.usuarios-card {
+width: 360px;
+}
+
+// solo card municipios
+.municipios-card {
+  width: 800px;
+}
+
+.header-icon {
+  color: #2b3e4c;
+  margin-right: 0.5rem;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 120px;
+}
+
+mat-nav-list {
+  max-height: 500px;
+  overflow: auto;
+}
+
+mat-nav-list a[mat-list-item] {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+mat-nav-list a[mat-list-item]:hover {
+  background-color: rgba(63, 81, 181, 0.08);
+}
+
+mat-nav-list a[mat-list-item].activo {
+  border-color: rgba(63, 81, 181, 0.4);
+  background-color: rgba(63, 81, 181, 0.12);
+}
+
+.usuario-nombre {
+  font-weight: 600;
+}
+
+.usuario-detalle {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.usuario-seleccionado {
+  margin-left: auto;
+  margin-top: 3px;
+  color: #4caf50;
+}
+
+.acciones-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.lista-municipios {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem 1rem;
+  margin-top: 1rem;
+  max-height: 500px;
+  overflow: auto;
+}
+
+.municipio-item {
+  display: flex;
+  align-items: center;
+}
+
+.sin-municipios {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  padding: 2rem 0;
+}
+
+.placeholder-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 220px;
+  min-width: 800px;
+}
+
+mat-card-actions {
+  padding: 1rem 1.5rem 1.5rem;
+}
+
+@media (max-width: 960px) {
+  .contenido {
+    grid-template-columns: 1fr;
+  }
+
+  mat-nav-list {
+    max-height: none;
+  }
+
+  .lista-municipios {
+    max-height: none;
+  }
+}

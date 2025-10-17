@@ -1,0 +1,116 @@
+<div class="asignacion-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="buscador-card">
+    <form [formGroup]="filtroForm" (ngSubmit)="buscarUsuarios()" class="buscador-form">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar usuario</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput formControlName="search" placeholder="Nombre, usuario o correo" />
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" type="submit">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </form>
+  </mat-card>
+
+  <div class="contenido" *ngIf="busquedaEjecutada">
+    <mat-card class="usuarios-card">
+      <mat-card-header>
+        <mat-icon class="header-icon">group</mat-icon>
+        <mat-card-title>Usuarios</mat-card-title>
+        <mat-card-subtitle>Selecciona un usuario para gestionar sus municipios.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="estado" *ngIf="cargandoUsuarios">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Buscando usuarios...</span>
+        </div>
+
+        <div class="estado" *ngIf="!cargandoUsuarios && usuarios.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <span>No hay usuarios para mostrar.</span>
+        </div>
+
+        <mat-nav-list *ngIf="!cargandoUsuarios && usuarios.length > 0">
+          <a mat-list-item *ngFor="let usuario of usuarios" (click)="seleccionarUsuario(usuario)"
+            [class.activo]="selectedUsuario?.usuario_id === usuario.usuario_id">
+            <div matListItemTitle class="usuario-nombre">
+              {{ usuario.nombre }} {{ usuario.apellido }}
+            </div>
+            <div matListItemLine class="usuario-detalle">
+              {{ usuario.usuario }} · {{ usuario.email }}
+            </div>
+            <mat-icon *ngIf="selectedUsuario?.usuario_id === usuario.usuario_id" class="usuario-seleccionado" color="primary">check_circle</mat-icon>
+          </a>
+        </mat-nav-list>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="municipios-card" *ngIf="selectedUsuario">
+      <mat-card-header>
+        <mat-icon class="header-icon">map</mat-icon>
+        <mat-card-title>Municipios asignados</mat-card-title>
+        <mat-card-subtitle>
+          {{ selectedUsuario.nombre }} {{ selectedUsuario.apellido }} · {{ selectedUsuario.usuario }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="acciones-top">
+          <button mat-stroked-button color="primary" (click)="seleccionarTodos()">
+            <mat-icon>checklist</mat-icon>
+            Seleccionar todos
+          </button>
+          <button mat-stroked-button color="warn" (click)="limpiarSeleccion()">
+            <mat-icon>close</mat-icon>
+            Limpiar selección
+          </button>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="estado" *ngIf="cargandoAsignaciones">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Cargando asignación...</span>
+        </div>
+
+        <div class="lista-municipios" *ngIf="!cargandoAsignaciones">
+          <div class="municipio-item" *ngFor="let municipio of municipios">
+            <mat-checkbox [checked]="municipioSeleccionado(municipio.municipio_id)"
+              (change)="toggleMunicipio($event, municipio.municipio_id)">
+              {{ municipio.municipio_nombre }}
+            </mat-checkbox>
+          </div>
+
+          <div class="sin-municipios" *ngIf="municipios.length === 0">
+            <mat-icon>map_off</mat-icon>
+            <span>No hay municipios configurados.</span>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary" (click)="guardarAsignacion()"
+          [disabled]="guardandoAsignacion || cargandoAsignaciones">
+          <mat-icon>save</mat-icon>
+          <ng-container *ngIf="!guardandoAsignacion; else guardando">
+            Guardar cambios
+          </ng-container>
+        </button>
+        <ng-template #guardando>
+          Guardando...
+        </ng-template>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="placeholder-card" *ngIf="!selectedUsuario">
+      <mat-card-content>
+        <mat-icon>person_search</mat-icon>
+        <p>Busca y selecciona un usuario para asignar municipios.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

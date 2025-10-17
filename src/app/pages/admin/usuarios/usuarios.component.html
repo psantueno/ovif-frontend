@@ -1,17 +1,6 @@
 <div class="usuarios-container">
 
-  <!-- Encabezado -->
-  <div class="usuarios-header">
-    <nav class="breadcrumb">
-      <a [routerLink]="'/admin'" class="breadcrumb-link">Admin</a> ›
-      <span class="breadcrumb-current">Usuarios</span>
-    </nav>
-
-    <button mat-stroked-button color="primary" [routerLink]="'/admin'">
-      <mat-icon>arrow_back</mat-icon>
-      Volver
-    </button>
-  </div>
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
   <!-- 🔍 Filtros -->
   <mat-card class="filtros-card">

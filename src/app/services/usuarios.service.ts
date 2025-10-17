@@ -47,20 +47,29 @@ export class UsuariosService {
     );
   }
 
+  // 🔹 Obtener municipios asignados a un usuario específico
+  getMunicipiosPorUsuario(id: number): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/usuarios/${id}/municipios`);
+  }
+
+  // 🔹 Actualizar la asignación de municipios del usuario
+  actualizarMunicipiosUsuario(id: number, municipios: number[]): Observable<any> {
+    return this.http.put(`${this.apiUrl}/usuarios/${id}/municipios`, { municipios });
+  }
+
   // Crear usuario
-createUsuario(data: any): Observable<any> {
-  return this.http.post(`${this.apiUrl}/usuarios`, data);
-}
+  createUsuario(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/usuarios`, data);
+  }
 
-// Actualizar usuario
-updateUsuario(id: number, data: any): Observable<any> {
-  return this.http.put(`${this.apiUrl}/usuarios/${id}`, data);
-}
+  // Actualizar usuario
+  updateUsuario(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/usuarios/${id}`, data);
+  }
 
-
-// Eliminar usuario permanentemente con verificacion previa de registros.
-deleteUsuario(id: number): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/usuarios/${id}`);
-}
+  // Eliminar usuario permanentemente con verificacion previa de registros.
+  deleteUsuario(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/usuarios/${id}`);
+  }
 
 }
