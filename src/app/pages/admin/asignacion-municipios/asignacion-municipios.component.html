@@ -9,7 +9,7 @@
         <input matInput formControlName="search" placeholder="Nombre, usuario o correo" />
       </mat-form-field>
 
-      <button mat-raised-button color="primary" type="submit">
+      <button mat-raised-button type="submit" class="btn-accion">
         <mat-icon>search</mat-icon>
         Buscar
       </button>
@@ -60,11 +60,11 @@
 
       <mat-card-content>
         <div class="acciones-top">
-          <button mat-stroked-button color="primary" (click)="seleccionarTodos()">
+          <button mat-raised-button class="btn-accion" (click)="seleccionarTodos()">
             <mat-icon>checklist</mat-icon>
             Seleccionar todos
           </button>
-          <button mat-stroked-button color="warn" (click)="limpiarSeleccion()">
+          <button mat-raised-button class="btn-accion" (click)="limpiarSeleccion()">
             <mat-icon>close</mat-icon>
             Limpiar selección
           </button>
@@ -93,7 +93,7 @@
       </mat-card-content>
 
       <mat-card-actions align="end">
-        <button mat-raised-button color="primary" (click)="guardarAsignacion()"
+        <button mat-raised-button class="btn-accion" (click)="guardarAsignacion()"
           [disabled]="guardandoAsignacion || cargandoAsignaciones">
           <mat-icon>save</mat-icon>
           <ng-container *ngIf="!guardandoAsignacion; else guardando">

@@ -1,4 +1,4 @@
-.asignacion-container {
+.roles-container {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -28,18 +28,17 @@
   gap: 1.5rem;
 }
 
-.usuarios-card, .municipios-card {
-  min-height: 360px;
+.usuarios-card,
+.roles-card {
+  min-height: 320px;
 }
 
-// solo card usuarios
 .usuarios-card {
-width: 360px;
+  width: 360px;
 }
 
-// solo card municipios
-.municipios-card {
-  width: 800px;
+.roles-card {
+  width: 640px;
 }
 
 .header-icon {
@@ -57,7 +56,7 @@ width: 360px;
 }
 
 mat-nav-list {
-  max-height: 500px;
+  max-height: 480px;
   overflow: auto;
 }
 
@@ -100,21 +99,31 @@ mat-nav-list a[mat-list-item].activo {
   margin-bottom: 1rem;
 }
 
-.lista-municipios {
+.lista-roles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 0.5rem 1rem;
   margin-top: 1rem;
-  max-height: 500px;
-  overflow: auto;
+  max-height: 480px;
+  // overflow: auto;
 }
 
-.municipio-item {
+.rol-item {
   display: flex;
   align-items: center;
 }
 
-.sin-municipios {
+.rol-nombre {
+  font-weight: 600;
+}
+
+.rol-descripcion {
+  display: block;
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.sin-roles {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -122,6 +131,12 @@ mat-nav-list a[mat-list-item].activo {
   gap: 0.5rem;
   color: #6c757d;
   padding: 2rem 0;
+}
+
+.ayuda {
+  margin: 1rem 0 0;
+  color: #6c757d;
+  font-size: 0.85rem;
 }
 
 .placeholder-card {
@@ -133,7 +148,7 @@ mat-nav-list a[mat-list-item].activo {
   gap: 0.75rem;
   color: #6c757d;
   min-height: 220px;
-  min-width: 800px;
+  min-width: 640px;
 }
 
 mat-card-actions {
@@ -142,7 +157,7 @@ mat-card-actions {
 
 .btn-accion {
   align-self: baseline;
-  padding: 1.50rem 1.5rem;
+  padding: 1.5rem 1.5rem;
   background-color: #2b3e4c;
   color: #ffffff;
   font-weight: 600;
@@ -164,20 +179,18 @@ mat-card-actions {
   }
 }
 
-
-
-
-
 @media (max-width: 960px) {
   .contenido {
     grid-template-columns: 1fr;
   }
 
-  mat-nav-list {
-    max-height: none;
+  .usuarios-card,
+  .roles-card,
+  .placeholder-card {
+    width: 100%;
   }
 
-  .lista-municipios {
+  mat-nav-list {
     max-height: none;
   }
 }

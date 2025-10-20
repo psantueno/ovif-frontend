@@ -1,0 +1,150 @@
+<div class="roles-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="buscador-card">
+    <form [formGroup]="filtroForm" (ngSubmit)="buscarUsuarios()" class="buscador-form">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Buscar usuario</mat-label>
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput formControlName="search" placeholder="Nombre, usuario o correo" />
+      </mat-form-field>
+
+      <button mat-raised-button type="submit" class="btn-accion">
+        <mat-icon>search</mat-icon>
+        Buscar
+      </button>
+    </form>
+  </mat-card>
+
+  <div class="contenido" *ngIf="busquedaEjecutada">
+    <mat-card class="usuarios-card">
+      <mat-card-header>
+        <mat-icon class="header-icon">group</mat-icon>
+        <mat-card-title>Usuarios</mat-card-title>
+        <mat-card-subtitle>Selecciona un usuario para asignar roles.</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="estado" *ngIf="cargandoUsuarios">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Buscando usuarios...</span>
+        </div>
+
+        <div class="estado" *ngIf="!cargandoUsuarios && usuarios.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <span>No hay usuarios para mostrar.</span>
+        </div>
+
+        <mat-nav-list *ngIf="!cargandoUsuarios && usuarios.length > 0">
+          <a
+            mat-list-item
+            *ngFor="let usuario of usuarios"
+            (click)="seleccionarUsuario(usuario)"
+            [class.activo]="selectedUsuario?.usuario_id === usuario.usuario_id"
+          >
+            <div matListItemTitle class="usuario-nombre">
+              {{ usuario.nombre }} {{ usuario.apellido }}
+            </div>
+            <div matListItemLine class="usuario-detalle">
+              {{ usuario.usuario }} · {{ usuario.email }}
+            </div>
+            <mat-icon
+              *ngIf="selectedUsuario?.usuario_id === usuario.usuario_id"
+              class="usuario-seleccionado"
+              color="primary"
+            >check_circle</mat-icon>
+          </a>
+        </mat-nav-list>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="roles-card" *ngIf="selectedUsuario">
+      <mat-card-header>
+        <mat-icon class="header-icon">admin_panel_settings</mat-icon>
+        <mat-card-title>Roles y permisos</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="estado" *ngIf="cargandoRolesCatalogo">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Cargando roles disponibles...</span>
+        </div>
+
+        <div class="estado" *ngIf="!cargandoRolesCatalogo && cargandoRolesAsignados">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Cargando roles del usuario...</span>
+        </div>
+
+        <ng-container *ngIf="!cargandoRolesCatalogo">
+          <div class="acciones-top" *ngIf="roles.length > 0">
+            <button
+              mat-raised-button
+              type="button"
+              class="btn-accion"
+              (click)="seleccionarTodosRoles()"
+              [disabled]="guardandoRoles || cargandoRolesAsignados"
+            >
+              <mat-icon>checklist</mat-icon>
+              Seleccionar todos
+            </button>
+            <button
+              mat-raised-button
+              type="button"
+              class="btn-accion"
+              (click)="limpiarSeleccionRoles()"
+              [disabled]="rolesAsignados.size === 0 || cargandoRolesAsignados"
+            >
+              <mat-icon>close</mat-icon>
+              Limpiar selección
+            </button>
+          </div>
+
+          <mat-divider *ngIf="roles.length > 0"></mat-divider>
+
+          <div class="lista-roles" *ngIf="roles.length > 0 && !cargandoRolesAsignados">
+            <div class="rol-item" *ngFor="let rol of roles">
+              <mat-checkbox
+                [checked]="rolSeleccionado(rol.rol_id)"
+                (change)="toggleRol($event, rol.rol_id)"
+                [disabled]="guardandoRoles || cargandoRolesAsignados"
+              >
+                <span class="rol-nombre">{{ rol.nombre }}</span>
+                <span class="rol-descripcion" *ngIf="rol.descripcion">{{ rol.descripcion }}</span>
+              </mat-checkbox>
+            </div>
+          </div>
+
+          <div class="sin-roles" *ngIf="roles.length === 0 && !cargandoRolesAsignados">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>No hay roles disponibles para asignar.</span>
+          </div>
+
+          <p class="ayuda" *ngIf="roles.length > 0 && !cargandoRolesAsignados">
+            Podés asignar uno o más roles a la vez. Para remover, desmarcá el rol del listado.
+          </p>
+        </ng-container>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button
+          mat-raised-button
+          class="btn-accion"
+          (click)="guardarRoles()"
+          [disabled]="guardandoRoles || cargandoRolesCatalogo || cargandoRolesAsignados"
+        >
+          <mat-icon>save</mat-icon>
+          <ng-container *ngIf="!guardandoRoles; else guardando">
+            Guardar
+          </ng-container>
+        </button>
+        <ng-template #guardando>Guardando...</ng-template>
+      </mat-card-actions>
+    </mat-card>
+
+    <mat-card class="placeholder-card" *ngIf="!selectedUsuario">
+      <mat-card-content>
+        <mat-icon>admin_panel_settings</mat-icon>
+        <p>Busca y selecciona un usuario para asignar roles.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

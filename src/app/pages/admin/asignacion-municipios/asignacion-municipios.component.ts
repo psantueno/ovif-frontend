@@ -141,22 +141,23 @@ export class AsignacionMunicipiosComponent implements OnInit {
 
     this.usuariosService.getMunicipiosPorUsuario(usuario.usuario_id).subscribe({
       next: (res) => {
-        const ids = Array.isArray(res)
-          ? res.map((item: any) => {
-              if (typeof item === 'number') {
-                return item;
+        const payload = Array.isArray(res) ? res : Array.isArray((res as any)?.municipios) ? (res as any).municipios : [];
+        const ids = payload
+          .map((item: any) => {
+            if (typeof item === 'number') {
+              return item;
+            }
+            if (item && typeof item === 'object') {
+              if ('municipio_id' in item) {
+                return Number(item.municipio_id);
               }
-              if (item && typeof item === 'object') {
-                if ('municipio_id' in item) {
-                  return Number(item.municipio_id);
-                }
-                if ('id' in item) {
-                  return Number(item.id);
-                }
+              if ('id' in item) {
+                return Number(item.id);
               }
-              return NaN;
-            }).filter((id: number) => !Number.isNaN(id))
-          : [];
+            }
+            return NaN;
+          })
+          .filter((id: number) => !Number.isNaN(id));
 
         ids.forEach((id: number) => this.municipiosAsignados.add(id));
       },
