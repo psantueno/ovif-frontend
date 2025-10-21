@@ -98,9 +98,12 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
 
   onMunicipioChange(id: number) {
     const seleccionado = this.municipios.find((m) => m.municipio_id === id);
-    if (seleccionado) {
-      this.municipioService.setMunicipio(seleccionado);
+    if (!seleccionado) {
+      return;
     }
+
+    this.municipioActual = seleccionado;
+    this.municipioService.setMunicipio(seleccionado);
   }
 
   onLogout() {

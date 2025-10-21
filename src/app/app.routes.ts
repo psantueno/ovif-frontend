@@ -27,6 +27,10 @@ export const routes: Routes = [
     children: [
       { path: '', component: SeleccionarMunicipioComponent },
       { path: 'home', component: HomeComponent },
+      {
+        path: 'subir-archivos',
+        loadComponent: () => import('./pages/subir-archivos/subir-archivos.component').then((m) => m.SubirArchivosComponent)
+      },
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/usuarios', component: UsuariosComponent },
       { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent },

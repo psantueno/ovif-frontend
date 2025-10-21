@@ -1,0 +1,128 @@
+<div class="archivos-page">
+  <div class="page-header">
+    <button class="link-back" type="button" (click)="volverAlInicio()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Volver al inicio</span>
+    </button>
+
+    <div class="context">
+      <h1>Gestión de archivos</h1>
+      <p class="municipio">Municipio: <strong>{{ municipioActual?.municipio_nombre }}</strong></p>
+      <p class="ejercicio" *ngIf="ejercicioSeleccionado && mesSeleccionado">
+        {{ nombreMesSeleccionado }} {{ ejercicioSeleccionado }}
+      </p>
+    </div>
+  </div>
+
+  <section class="upload-card">
+    <div class="upload-header">
+      <div>
+        <h2>Subir Archivo</h2>
+        <p>Adjuntá documentos relacionados al ejercicio seleccionado. Peso máximo 8 MB.</p>
+      </div>
+      <div class="upload-meta">
+        <mat-icon>info</mat-icon>
+        <span>Formatos permitidos: {{ extensionesPermitidas.join(', ') }}</span>
+      </div>
+    </div>
+
+    <form class="upload-form" [formGroup]="formulario" (ngSubmit)="subirArchivo()">
+      <label class="file-drop" [class.has-file]="archivoSeleccionado">
+        <input
+          #fileInput
+          type="file"
+          (change)="onFileSelected($event)"
+          [accept]="acceptExt"
+        />
+
+        <ng-container *ngIf="!archivoSeleccionado; else archivoSeleccionadoTpl">
+          <mat-icon>cloud_upload</mat-icon>
+          <h3>Arrastrá tu archivo o hacé clic para seleccionarlo</h3>
+          <p>Hasta 8 MB · Se aceptan {{ extensionesPermitidas.length }} formatos</p>
+        </ng-container>
+      </label>
+
+      <ng-template #archivoSeleccionadoTpl>
+        <div class="file-selected">
+          <div class="file-info">
+            <mat-icon>attach_file</mat-icon>
+            <div>
+              <p class="file-name">{{ nombreArchivoSeleccionado }}</p>
+              <p class="file-size">{{ (archivoSeleccionado?.size || 0) / 1024 / 1024 | number:'1.2-2' }} MB</p>
+            </div>
+          </div>
+          <button type="button" class="cambiar-archivo" (click)="resetArchivoSeleccionado()">
+            <mat-icon>close</mat-icon>
+            <span>Cambiar archivo</span>
+          </button>
+        </div>
+      </ng-template>
+
+      <div class="descripcion-group">
+        <label for="descripcion">Descripción opcional</label>
+        <textarea
+          id="descripcion"
+          placeholder="Breve descripción para identificar el archivo"
+          formControlName="descripcion"
+          maxlength="200"
+          rows="3"
+        ></textarea>
+        <span class="char-counter">{{ descripcionControl?.value?.length || 0 }}/200</span>
+      </div>
+
+      <button mat-raised-button color="primary" type="submit" [disabled]="subiendoArchivo">
+        <mat-icon *ngIf="!subiendoArchivo">cloud_done</mat-icon>
+        <mat-icon *ngIf="subiendoArchivo" class="spinner-icon">hourglass_top</mat-icon>
+        <span>{{ subiendoArchivo ? 'Subiendo...' : 'Guardar archivo' }}</span>
+      </button>
+    </form>
+  </section>
+
+  <section class="list-card">
+    <header>
+      <h2>Archivos cargados</h2>
+      <button mat-button type="button" class="refresh" (click)="cargarArchivos()" [disabled]="cargandoLista">
+        <mat-icon>refresh</mat-icon>
+        Actualizar
+      </button>
+    </header>
+
+    <div class="list-content" *ngIf="cargandoLista">
+      <div class="loading-state">
+        <mat-icon>sync</mat-icon>
+        <span>Cargando archivos...</span>
+      </div>
+    </div>
+
+    <div class="list-content" *ngIf="!cargandoLista && archivos.length > 0">
+      <div class="archivo-item" *ngFor="let archivo of archivos">
+        <div class="archivo-info">
+          <mat-icon>insert_drive_file</mat-icon>
+          <div>
+            <p class="archivo-descripcion">{{ archivo.archivo_descripcion || obtenerNombreArchivo(archivo) }}</p>
+            <p class="archivo-detalle">{{ obtenerNombreArchivo(archivo) }}</p>
+          </div>
+        </div>
+
+        <div class="archivo-actions">
+          <span class="archivo-fecha" *ngIf="archivo.created_at">Subido el {{ formatearFecha(archivo.created_at) }}</span>
+          <a
+            class="download-link"
+            [href]="archivo.archivo_path"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <mat-icon>download</mat-icon>
+            Descargar
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="list-content empty" *ngIf="!cargandoLista && archivos.length === 0">
+      <mat-icon>folder_open</mat-icon>
+      <p>No hay archivos cargados para este período.</p>
+      <p class="hint">Una vez que cargues documentos los verás listados en esta sección.</p>
+    </div>
+  </section>
+</div>

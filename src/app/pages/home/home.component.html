@@ -32,19 +32,16 @@
     <span>Personal</span>
   </div>
 
-  <div
-    class="home-card"
-    *ngIf="municipioSeleccionado?.municipio_subir_archivos === 1"
-    (click)="irA('archivos')"
-  >
+  <div class="home-card" (click)="irA('subir-archivos')">
     <mat-icon>folder</mat-icon>
     <span>Archivos</span>
   </div>
+
 </div>
 
-  <!-- Acción cerrar mes -->
-  <div class="cerrar-mes">
-  <button mat-raised-button color="tertiary" class="btn-cerrar" (click)="cerrarMes()">
+<!-- Acción cerrar mes -->
+<div class="cerrar-mes">
+  <button mat-raised-button class="btn-cerrar" (click)="cerrarMes()">
     <mat-icon>event_busy</mat-icon>
     <span>Cerrar Mes</span>
   </button>

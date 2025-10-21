@@ -4,8 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-
-
+import { MunicipioService } from '../../services/municipio.service';
+import { take } from 'rxjs/operators';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-home',
@@ -18,19 +19,98 @@ export class HomeComponent implements OnInit {
   municipioSeleccionado: any = null;
   ejercicioMes: string = '';
   ejerciciosMeses: any[] = [];
+  cargando = false;
 
-  constructor(private router: Router) {}
+  constructor(private router: Router, private readonly municipioService: MunicipioService) {}
 
   ngOnInit(): void {
-    // Recuperar municipio seleccionado desde localStorage
-    this.municipioSeleccionado = JSON.parse(localStorage.getItem('municipioSeleccionado') || 'null');
+    this.municipioSeleccionado = this.municipioService.getMunicipioActual();
 
-    // Simulación de carga desde backend (ejercicios y meses)
-    this.ejerciciosMeses = [
-      { valor: '2025_3', texto: '2025 - Marzo (cierra el 31/03/2025)' },
-      { valor: '2025_2', texto: '2025 - Febrero (cierra el 28/02/2025)' },
-      { valor: '2025_1', texto: '2025 - Enero (cierra el 31/01/2025)' }
+    if (!this.municipioSeleccionado?.municipio_id) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Municipio no seleccionado',
+        text: 'Debes elegir un municipio para consultar los ejercicios disponibles.',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    this.cargarEjerciciosDisponibles(this.municipioSeleccionado.municipio_id);
+  }
+
+  private cargarEjerciciosDisponibles(municipioId: number): void {
+    this.cargando = true;
+    this.ejerciciosMeses = [];
+    this.ejercicioMes = '';
+
+    this.municipioService
+      .getEjerciciosDisponibles(municipioId)
+      .pipe(take(1))
+      .subscribe({
+        next: (ejercicios) => {
+          this.ejerciciosMeses = ejercicios.map((item: any) => ({
+            valor: `${item.ejercicio}_${item.mes}`,
+            texto: `${item.ejercicio} - ${this.obtenerNombreMes(item.mes)} (cierra el ${this.formatearFecha(item.fecha_fin || item.fecha_fin_oficial)})`,
+            metadata: item,
+          }));
+
+          if (this.ejerciciosMeses.length === 0) {
+            Swal.fire({
+              icon: 'info',
+              title: 'Sin ejercicios disponibles',
+              text: 'No hay ejercicios abiertos para este municipio en este momento.',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#3085d6',
+            });
+          }
+        },
+        error: () => {
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No fue posible obtener los ejercicios disponibles.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#d33',
+          });
+          this.cargando = false;
+        },
+        complete: () => {
+          this.cargando = false;
+        },
+      });
+  }
+
+  private obtenerNombreMes(mes: number): string {
+    const meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
     ];
+    return meses[Math.max(0, Math.min(mes - 1, meses.length - 1))];
+  }
+
+  private formatearFecha(fecha: string | null): string {
+    if (!fecha) {
+      return 'Sin fecha';
+    }
+
+    const parsed = new Date(fecha);
+    if (Number.isNaN(parsed.getTime())) {
+      return fecha;
+    }
+
+    return parsed.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   }
 
   irA(modulo: string) {
