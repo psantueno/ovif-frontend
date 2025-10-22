@@ -1,6 +1,12 @@
 <div class="municipios-container">
   <div class="municipios-card">
-    <h2 class="municipios-title">Seleccione un municipio</h2>
+    <h2 class="municipios-title">
+      <mat-icon class="municipios-title-icon" aria-hidden="true">check_circle</mat-icon>
+      Seleccione un municipio
+    </h2>
+    <p class="municipios-helper">
+      Elija el municipio con el que va a gestionar la carga de información fiscal.
+    </p>
 
     <div *ngIf="municipios.length > 1; else unicoMunicipio">
       <div class="municipio-list">

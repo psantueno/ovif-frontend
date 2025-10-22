@@ -31,6 +31,10 @@ export const routes: Routes = [
         path: 'subir-archivos',
         loadComponent: () => import('./pages/subir-archivos/subir-archivos.component').then((m) => m.SubirArchivosComponent)
       },
+      {
+        path: 'gastos',
+        loadComponent: () => import('./pages/gastos/gastos.component').then((m) => m.GastosComponent)
+      },
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/usuarios', component: UsuariosComponent },
       { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent },

@@ -53,6 +53,8 @@ export class MunicipioService {
       return Promise.resolve();
     }
 
+    this.blurActiveElement();
+
     return Swal.fire({
       title: 'Cambiaste de municipio',
       text: `Ahora vas a gestionar la carga de datos de ${municipio.municipio_nombre}. Serás redirigido al menu principal para continuar.`,
@@ -81,5 +83,16 @@ export class MunicipioService {
         return of([]);
       })
     );
+  }
+
+  private blurActiveElement(): void {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const activeElement = document.activeElement as HTMLElement | null;
+    if (activeElement && typeof activeElement.blur === 'function') {
+      activeElement.blur();
+    }
   }
 }

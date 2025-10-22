@@ -14,31 +14,83 @@
   h1 {
     font-size: 2rem;
     color: #2B3E4C;
-    margin-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
   }
 
-  p {
+  .municipio-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     color: #2B3E4C;
     font-weight: 500;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 2rem;
+
+    mat-icon {
+      font-size: 18px;
+      height: 18px;
+      min-width: 18px;
+      line-height: 16px;
+    }
+
+    span {
+      font-weight: 500;
+    }
+  }
+
+
+  .selector-helper {
+    margin: 0;
+    color: rgba(0, 0, 0, 0.65);
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+
+    mat-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
   }
 }
 
 .ejercicio-selector {
   margin-bottom: 2rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
 
-  label {
-    font-weight: bold;
-    margin-right: 0.5rem;
-    color: #2B3E4C;
+  .selector-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
   }
 
-  select {
+  .selector-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: bold;
+    color: #2B3E4C;
+
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+  }
+
+  .selector-row select {
     padding: 0.5rem 1rem;
     border: 1px solid #C2B394;
     border-radius: 6px;
     font-size: 1rem;
   }
+
 }
 
 .home-actions {
@@ -55,11 +107,12 @@
   color: #ffffff;
   padding: 1.25rem 0rem;
   border-radius: 12px;
+  border: none;
   cursor: pointer;
   font-weight: 600;
-  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  display: flex;
+  display: inline-flex;
   min-width: 165px;
   align-items: center;
   justify-content: center;
@@ -75,18 +128,37 @@
     transition: color 0.25s ease;
   }
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: var(--color-secondary);
     color: var(--color-on-secondary);
     transform: translateY(-4px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   }
+
+  &:focus-visible {
+    outline: 3px solid rgba(var(--color-secondary-rgb), 0.6);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+  }
+}
+
+menu-icon-municipio {
+  font-size: 22px;
+  height: 22px;
+  min-width: 22px;
+  color: var(--color-primary);
 }
 
 .cerrar-mes {
   margin-top: 1.5rem;
   display: flex;
   justify-content: center;
+  cursor: not-allowed;
 
   .btn-cerrar {
     display: inline-flex;
@@ -108,13 +180,18 @@
     min-width: 26px;
     }
 
-    &:hover {
+    &:hover:not(:disabled) {
       background-color: #c0392b;
       color: #ffffff;
 
       mat-icon {
         color: inherit;
       }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      box-shadow: none;
     }
   }
 }

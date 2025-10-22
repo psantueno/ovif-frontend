@@ -1,49 +1,62 @@
 <div class="home-container">
   <div class="home-header">
-    <h1>Bienvenido a la Plataforma OVIF</h1>
-    <p>Municipio: {{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</p>
+    <h1>MENU PRINCIPAL DE GESTIÓN DE INFORMACIÓN FISCAL</h1>
+    <p class="municipio-info">
+      <mat-icon>location_on</mat-icon>
+      <span>Municipio:</span>
+      <strong>{{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</strong>
+    </p>
+    <div class="container-helper">
+      <p class="selector-helper">
+        <mat-icon>info</mat-icon>
+        <span>Seleccioná ejercicio y mes para habilitar las funciones disponibles.</span>
+      </p>
+    </div>
   </div>
-
+  
   <!-- Selector de Ejercicio/Mes -->
   <div class="ejercicio-selector">
-    <label for="ejercicioMes">Ejercicio y Mes:</label>
-    <select id="ejercicioMes" [(ngModel)]="ejercicioMes">
-      <option value="">Seleccione un ejercicio/mes</option>
-      <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
-        {{ em.texto }}
-      </option>
-    </select>
+    <div class="selector-row">
+      <label for="ejercicioMes" class="selector-label">
+        <mat-icon>event</mat-icon>
+        <span>Ejercicio y Mes:</span>
+      </label>
+      <select id="ejercicioMes" [(ngModel)]="ejercicioMes">
+        <option value="">Seleccione un ejercicio/mes</option>
+        <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
+          {{ em.texto }}
+        </option>
+      </select>
+    </div>
   </div>
 
   <!-- Acciones principales -->
   <div class="home-actions">
-  <div class="home-card" (click)="irA('gastos')">
-    <mat-icon>payments</mat-icon>
-    <span>Gastos</span>
+    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!ejercicioMes">
+      <mat-icon>payments</mat-icon>
+      <span>Gastos</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!ejercicioMes">
+      <mat-icon>savings</mat-icon>
+      <span>Recursos</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('personal')" [disabled]="!ejercicioMes">
+      <mat-icon>groups</mat-icon>
+      <span>Personal</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('subir-archivos')" [disabled]="!ejercicioMes">
+      <mat-icon>folder</mat-icon>
+      <span>Archivos</span>
+    </button>
   </div>
 
-  <div class="home-card" (click)="irA('recursos')">
-    <mat-icon>savings</mat-icon>
-    <span>Recursos</span>
+  <!-- Acción cerrar mes -->
+  <div class="cerrar-mes">
+    <button mat-raised-button class="btn-cerrar" (click)="cerrarMes()" [disabled]="!ejercicioMes">
+      <mat-icon>event_busy</mat-icon>
+      <span>Cerrar Mes</span>
+    </button>
   </div>
-
-  <div class="home-card" (click)="irA('personal')">
-    <mat-icon>groups</mat-icon>
-    <span>Personal</span>
-  </div>
-
-  <div class="home-card" (click)="irA('subir-archivos')">
-    <mat-icon>folder</mat-icon>
-    <span>Archivos</span>
-  </div>
-
-</div>
-
-<!-- Acción cerrar mes -->
-<div class="cerrar-mes">
-  <button mat-raised-button class="btn-cerrar" (click)="cerrarMes()">
-    <mat-icon>event_busy</mat-icon>
-    <span>Cerrar Mes</span>
-  </button>
-</div>
-

@@ -6,22 +6,34 @@
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
+
+  >.page-header,
+  >.upload-card,
+  >.list-card {
+    width: 100%;
+    max-width: 1100px;
+  }
 }
 
-
-.archivos-page > .page-header,
-.archivos-page > .upload-card,
-.archivos-page > .list-card {
-  width: 100%;
-  max-width: 1100px;
-}
-
+/* === ENCABEZADO === */
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+
+  h1 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 1.8rem;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: rgba(0, 0, 0, 0.6);
+    font-weight: 500;
+  }
 }
 
 .link-back {
@@ -31,96 +43,105 @@
   padding: 0.4rem 0.85rem;
   border-radius: 999px;
   border: none;
-  background: rgba(var(--color-primary-rgb), 0.08);
-  color: var(--color-primary);
+  background-color: #2b3e4c;
+  color: #ffffff;
+  transition: all 0.25s ease;
   font-weight: 600;
   cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
 }
 
-.page-header h1 {
-  margin: 0;
-  color: var(--color-primary);
-  font-size: 1.8rem;
-}
-
-.page-header p {
-  margin: 0.2rem 0 0;
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: 500;
-}
-
-.upload-card,
-.list-card {
+/* === TARJETA DE SUBIDA === */
+.upload-card {
   background: #fff;
   border-radius: 18px;
   padding: 1.5rem;
   box-shadow: 0 14px 30px rgba(43, 62, 76, 0.08);
+
+  h2 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 1.4rem;
+  }
+
+  p {
+    margin: 0.3rem 0 0;
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .upload-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 12px;
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-top: 2rem;
+  }
 }
 
-.upload-card h2,
-.list-card h2 {
-  margin: 0;
-  color: var(--color-primary);
-  font-size: 1.4rem;
-}
-
-.upload-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 0.85rem;
-  border-radius: 12px;
-  background: var(--color-accent-light);
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.upload-card p {
-  margin: 0.3rem 0 0;
-  color: rgba(0, 0, 0, 0.6);
-}
-
+/* === ZONA DE ARRASTRE (DROP ZONE) === */
 .file-drop {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 180px;
   margin-top: 1rem;
-  padding: 1.75rem;
+  padding: 2rem 1rem;
   border: 2px dashed rgba(var(--color-primary-rgb), 0.35);
   border-radius: 16px;
-  text-align: center;
   background: rgba(var(--color-primary-rgb), 0.05);
-}
-
-.file-drop.has-file {
-  border-color: var(--color-secondary);
-  background: rgba(var(--color-secondary-rgb), 0.08);
-}
-
-.file-drop input[type='file'] {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
   cursor: pointer;
+  transition: all 0.25s ease;
+  text-align: center;
+
+  &:hover {
+    border-color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.08);
+  }
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    line-height: 56px;
+    color: var(--color-primary);
+    margin-bottom: 0.75rem;
+  }
+
+  h3 {
+    margin: 0.4rem 0 0.2rem;
+    font-size: 1.05rem;
+    color: var(--color-primary);
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  &.has-file {
+    border-color: var(--color-secondary);
+    background: rgba(var(--color-secondary-rgb), 0.08);
+  }
+
+  input[type='file'] {
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
 }
 
-.file-drop mat-icon {
-  color: var(--color-primary);
-  font-size: 40px;
-  height: 40px;
-  width: 40px;
-}
-
-.file-drop h3 {
-  margin: 0.45rem 0 0;
-  font-size: 1.05rem;
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.file-drop p {
-  margin: 0.25rem 0 0;
-  color: rgba(0, 0, 0, 0.55);
-}
-
+/* === ARCHIVO SELECCIONADO === */
 .file-selected {
   display: flex;
   justify-content: space-between;
@@ -130,165 +151,201 @@
   padding: 0.9rem 1.1rem;
   border-radius: 14px;
   background: rgba(var(--color-secondary-rgb), 0.12);
+
+  .file-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+
+    mat-icon {
+      color: var(--color-secondary);
+    }
+
+    .file-name {
+      margin: 0;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    .file-size {
+      margin: 0;
+      font-size: 0.85rem;
+      color: rgba(0, 0, 0, 0.55);
+    }
+  }
+
+  .cambiar-archivo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border: none;
+    background: none;
+    color: var(--color-primary);
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
 }
 
-.file-info {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.file-info mat-icon {
-  color: var(--color-secondary);
-}
-
-.file-name {
-  margin: 0;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.file-size {
-  margin: 0;
-  font-size: 0.85rem;
-  color: rgba(0, 0, 0, 0.55);
-}
-
-.cambiar-archivo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border: none;
-  background: none;
-  color: var(--color-primary);
-  font-weight: 600;
-  cursor: pointer;
-}
-
+/* === DESCRIPCIÓN === */
 .descripcion-group {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
-  margin-top: 0.5rem;
+  margin-top: 3rem;
+
+  label {
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  textarea {
+    padding: 0.7rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    font-size: 0.95rem;
+    resize: vertical;
+    min-height: 110px;
+  }
+
+  .char-counter {
+    font-size: 0.78rem;
+    color: rgba(0, 0, 0, 0.5);
+    text-align: right;
+  }
 }
 
-.descripcion-group label {
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.descripcion-group textarea {
-  padding: 0.7rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.18);
-  font-size: 0.95rem;
-  resize: vertical;
-  min-height: 110px;
-}
-
-.descripcion-group .char-counter {
-  font-size: 0.78rem;
-  color: rgba(0, 0, 0, 0.5);
-  text-align: right;
-}
-
+/* === BOTÓN GUARDAR === */
 .upload-card button[type='submit'] {
-  margin-top: 0.5rem;
+  margin-top: 0.8rem;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   font-weight: 700;
   border-radius: 12px;
+  background-color: #2b3e4c;
+  color: #ffffff;
+  transition: all 0.25s ease;
+
+  &:hover {
+    background-color: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
 }
 
-.list-card header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.6rem;
+/* === LISTADO DE ARCHIVOS === */
+.list-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 14px 30px rgba(43, 62, 76, 0.08);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.6rem;
+
+    h2 {
+      margin: 0;
+      color: var(--color-primary);
+      font-size: 1.4rem;
+    }
+
+    .refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      color: var(--color-primary);
+      font-weight: 600;
+
+      &:hover {
+        color: var(--color-secondary-dark);
+      }
+    }
+  }
+
+  .list-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-top: 1rem;
+
+    .archivo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.9rem 1.1rem;
+      border-radius: 14px;
+      background: rgba(var(--color-primary-rgb), 0.05);
+
+      .archivo-info {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+
+        mat-icon {
+          color: var(--color-primary);
+        }
+
+        .archivo-descripcion {
+          margin: 0;
+          font-weight: 600;
+          color: var(--color-primary);
+        }
+
+        .archivo-detalle {
+          margin: 0.2rem 0 0;
+          color: rgba(0, 0, 0, 0.6);
+          font-size: 0.9rem;
+        }
+      }
+
+      .archivo-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+
+        .archivo-fecha {
+          color: rgba(0, 0, 0, 0.55);
+          font-size: 0.9rem;
+        }
+
+        .download-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.3rem;
+          padding: 0.48rem 0.9rem;
+          border-radius: 999px;
+          background: var(--color-primary);
+          color: #fff;
+          text-decoration: none;
+          font-weight: 600;
+
+          &:hover {
+            background: var(--color-primary-light);
+          }
+        }
+      }
+    }
+
+    &.empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 2.2rem 1rem;
+      color: rgba(0, 0, 0, 0.55);
+      text-align: center;
+    }
+  }
 }
 
-.refresh {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  color: var(--color-primary);
-  font-weight: 600;
-}
-
-.list-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 1rem;
-}
-
-.archivo-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1.1rem;
-  border-radius: 14px;
-  background: rgba(var(--color-primary-rgb), 0.05);
-}
-
-.archivo-info {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.archivo-info mat-icon {
-  color: var(--color-primary);
-}
-
-.archivo-descripcion {
-  margin: 0;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.archivo-detalle {
-  margin: 0.2rem 0 0;
-  color: rgba(0, 0, 0, 0.6);
-  font-size: 0.9rem;
-}
-
-.archivo-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-}
-
-.archivo-fecha {
-  color: rgba(0, 0, 0, 0.55);
-  font-size: 0.9rem;
-}
-
-.download-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.48rem 0.9rem;
-  border-radius: 999px;
-  background: var(--color-primary);
-  color: #fff;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.loading-state,
-.empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 2.2rem 1rem;
-  color: rgba(0, 0, 0, 0.55);
-  text-align: center;
-}
-
+/* === RESPONSIVE === */
 @media (max-width: 900px) {
   .archivos-page {
     padding: 1.5rem;

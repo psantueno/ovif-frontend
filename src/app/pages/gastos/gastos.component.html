@@ -1,0 +1,171 @@
+<div class="gastos-page">
+  <div class="page-header">
+    <button class="link-back" type="button" (click)="volverAlInicio()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Menu principal</span>
+    </button>
+
+    <div class="context">
+      <h1>Carga de gastos</h1>
+      <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
+      <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
+    </div>
+  </div>
+
+  <section class="status-card" *ngIf="mesCerrado || mensaje">
+    <div *ngIf="mesCerrado" class="alert alert--warning">
+      Este mes est&aacute; cerrado. Las modificaciones no se guardar&aacute;n.
+    </div>
+    <div
+      *ngIf="mensaje"
+      class="alert"
+      [ngClass]="mensaje.tipo === 'info' ? 'alert--success' : 'alert--error'"
+    >
+      {{ mensaje.texto }}
+    </div>
+  </section>
+
+  <section class="gastos-card">
+    <header class="gastos-card__header">
+      <div>
+        <h2>Importes devengados</h2>
+        <p>Ingresá los valores correspondientes a cada partida para el período seleccionado.</p>
+      </div>
+      <div class="gastos-card__total">
+        <span>Total acumulado</span>
+        <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+      </div>
+    </header>
+
+    <form class="gastos-form" (ngSubmit)="onSubmitGuardar()" novalidate>
+      <div class="tabla-wrapper">
+        <table class="gastos-tabla">
+          <thead>
+            <tr>
+              <th>Partida</th>
+              <th>Importe Devengado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargandoPartidas">
+              <td colspan="2" class="tabla-info">Cargando partidas...</td>
+            </tr>
+            <tr *ngIf="!cargandoPartidas && errorAlCargarPartidas">
+              <td colspan="2" class="tabla-info tabla-info--error">No pudimos obtener las partidas. Intentá nuevamente.</td>
+            </tr>
+            <tr
+              *ngIf="!cargandoPartidas && !errorAlCargarPartidas && partidasPlanas.length === 0"
+            >
+              <td colspan="2" class="tabla-info">No hay partidas de gasto disponibles.</td>
+            </tr>
+            <ng-container *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
+              <ng-container *ngFor="let partida of partidasPlanas">
+                <tr
+                  [class.grupo]="!partida.node.carga"
+                  [class.tiene-error]="partida.node.tieneError"
+                >
+                  <td
+                    [attr.colspan]="partida.node.carga ? null : 2"
+                    [style.padding-left.px]="partida.nivel * 20 + 4"
+                  >
+                    <span
+                      [class.partida-titulo]="!partida.node.carga"
+                      [class.partida-item]="partida.node.carga"
+                    >
+                      {{ partida.node.descripcion }}
+                    </span>
+                  </td>
+                  <td *ngIf="partida.node.carga" class="importe">
+                    <input
+                      type="text"
+                      class="importe-input"
+                      [class.input-error]="partida.node.tieneError"
+                      [name]="'importe_' + partida.node.codigo"
+                      [attr.id]="'importe_' + partida.node.codigo"
+                      [readOnly]="mesCerrado"
+                      inputmode="decimal"
+                      (keydown)="permitirSoloNumeros($event)"
+                      (paste)="sanearPegado($event, partida.node)"
+                      [(ngModel)]="partida.node.importeTexto"
+                      (ngModelChange)="updateImporte(partida.node, $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">TOTAL</td>
+              <td class="total-valor">
+                <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="acciones">
+        <button type="submit" [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas">Guardar cambios</button>
+        <button
+          type="button"
+          (click)="generarInforme()"
+          [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas"
+        >
+          Generar informe
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="modalVisible">
+    <div class="modal">
+      <div class="modal__header">
+        <h3>Informe de Gastos</h3>
+        <button type="button" class="modal__close" (click)="cerrarModal()">
+          &times;
+        </button>
+      </div>
+      <p class="modal__subtitulo">
+        {{ municipioNombre }} &mdash; {{ mesActualLabel }}
+      </p>
+      <table class="modal__tabla">
+        <thead>
+          <tr>
+            <th>Partida</th>
+            <th>Importe Devengado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let partida of partidasPlanas">
+            <tr [class.grupo]="!partida.node.carga">
+              <td
+                [attr.colspan]="partida.node.carga ? null : 2"
+                [style.padding-left.px]="partida.nivel * 16"
+              >
+                <span [class.partida-titulo]="!partida.node.carga">
+                  {{ partida.node.descripcion }}
+                </span>
+              </td>
+              <td *ngIf="partida.node.carga" class="importe">
+                {{ (partida.node.importe ?? 0) | number: '1.0-2' }}
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="total-label">TOTAL</td>
+            <td class="total-valor">
+              <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="modal__acciones">
+        <button type="button" (click)="cerrarModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
