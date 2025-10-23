@@ -8,7 +8,7 @@
     </p>
     <div class="container-helper">
       <p class="selector-helper">
-        <mat-icon>info</mat-icon>
+        <mat-icon>info_outline</mat-icon>
         <span>Seleccioná ejercicio y mes para habilitar las funciones disponibles.</span>
       </p>
     </div>
@@ -21,7 +21,7 @@
         <mat-icon>event</mat-icon>
         <span>Ejercicio y Mes:</span>
       </label>
-      <select id="ejercicioMes" [(ngModel)]="ejercicioMes">
+      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
         <option value="">Seleccione un ejercicio/mes</option>
         <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
           {{ em.texto }}

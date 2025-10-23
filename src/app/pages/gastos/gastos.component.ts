@@ -1,20 +1,21 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { take } from 'rxjs/operators';
+import { finalize, take } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
-import { MunicipioService } from '../../services/municipio.service';
-import { GastosService, PartidaGastoResponse } from '../../services/gastos.service';
+import { MunicipioService, PartidaGastoResponse, PartidaGastoUpsertPayload } from '../../services/municipio.service';
 
 interface PartidaNode {
   codigo: number;
   descripcion: string;
   carga: boolean;
   importe: number | null;
+  importeOriginal: number | null;
   importeTexto: string;
+  importeOriginalTexto: string;
   tieneError: boolean;
   hijos?: PartidaNode[];
 }
@@ -35,7 +36,6 @@ type MensajeTipo = 'info' | 'error';
 })
 export class GastosComponent implements OnInit, OnDestroy {
   private readonly municipioService = inject(MunicipioService);
-  private readonly gastosService = inject(GastosService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -58,6 +58,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   municipioNombre = '';
   ejercicioSeleccionado?: number;
   mesSeleccionado?: number;
+  periodoSeleccionado: { ejercicio: number; mes: number } | null = null;
 
   mesCerrado = false;
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
@@ -66,9 +67,11 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
+  guardando = false;
 
   partidas: PartidaNode[] = [];
   partidasPlanas: PartidaDisplay[] = [];
+  private cambiosPendientes = false;
 
   ngOnInit(): void {
     this.municipioActual = this.municipioService.getMunicipioActual();
@@ -119,6 +122,8 @@ export class GastosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
+      this.periodoSeleccionado = { ejercicio, mes };
+      this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
 
       this.cargarPartidas();
     });
@@ -130,14 +135,48 @@ export class GastosComponent implements OnInit, OnDestroy {
     }
   }
 
+  @HostListener('window:beforeunload', ['$event'])
+  onBeforeUnload(event: BeforeUnloadEvent): void {
+    if (this.tieneCambiosPendientes()) {
+      event.preventDefault();
+      event.returnValue = '';
+    }
+  }
+
+  tieneCambiosPendientes(): boolean {
+    return this.cambiosPendientes;
+  }
+
+  private actualizarEstadoCambios(): void {
+    this.cambiosPendientes = this.partidasPlanas.some((partida) => {
+      const nodo = partida.node;
+      if (!nodo.carga) {
+        return false;
+      }
+      if (nodo.tieneError) {
+        return true;
+      }
+      return nodo.importeOriginal !== nodo.importe;
+    });
+  }
+
+  private actualizarBaseCambios(): void {
+    this.partidasPlanas.forEach((partida) => {
+      partida.node.importeOriginal = partida.node.importe;
+      partida.node.importeOriginalTexto = partida.node.importeTexto;
+    });
+    this.cambiosPendientes = false;
+  }
+
   get mesActualLabel(): string {
-    if (!this.mesSeleccionado || !this.ejercicioSeleccionado) {
+    const periodo = this.periodoSeleccionado;
+    if (!periodo?.mes || !periodo?.ejercicio) {
       return '';
     }
 
-    const index = this.mesSeleccionado - 1;
+    const index = periodo.mes - 1;
     const nombreMes = this.meses[index] ?? '';
-    return nombreMes ? `${nombreMes} ${this.ejercicioSeleccionado}` : '';
+    return nombreMes ? `${nombreMes} ${periodo.ejercicio}` : '';
   }
 
   get totalImportes(): number {
@@ -164,8 +203,12 @@ export class GastosComponent implements OnInit, OnDestroy {
       this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
       return;
     }
+    if (this.guardando) {
+      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
+      return;
+    }
     if (this.errorAlCargarPartidas) {
-      this.mostrarMensaje('error', 'No pudimos cargar las partidas. Reintentá más tarde.');
+      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
       return;
     }
     if (!this.partidasPlanas.length) {
@@ -173,13 +216,53 @@ export class GastosComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.validarImportes()) {
-      this.mostrarMensaje('error', 'Ingrese solo valores válidos');
+      this.mostrarError('Ingrese solo valores válidos');
       return;
     }
-    this.mostrarMensaje(
-      'info',
-      'Los importes han sido guardados correctamente (simulación)'
-    );
+
+    const municipioId = this.municipioActual?.municipio_id ?? null;
+    const periodo = this.periodoSeleccionado;
+    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
+    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
+
+    if (!municipioId || !ejercicio || !mes) {
+      this.mostrarError('No pudimos identificar el municipio o período seleccionado.');
+      return;
+    }
+
+    const partidasPayload: PartidaGastoUpsertPayload[] = this.partidasPlanas
+      .map((partida) => partida.node)
+      .filter((node) => node.carga)
+      .map((node) => ({
+        partidas_gastos_codigo: node.codigo,
+        gastos_importe_devengado: node.importe,
+      }));
+
+    if (!partidasPayload.length) {
+      this.mostrarMensaje('info', 'No hay partidas editables para guardar en este período.');
+      return;
+    }
+
+    this.guardando = true;
+
+    this.municipioService
+      .guardarPartidasGastos({ municipioId, ejercicio, mes, partidas: partidasPayload })
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.guardando = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.actualizarBaseCambios();
+          this.mostrarToastExito('Los importes fueron guardados correctamente.');
+        },
+        error: (error) => {
+          console.error('Error al guardar las partidas de gastos:', error);
+          this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+        },
+      });
   }
 
   generarInforme(): void {
@@ -190,8 +273,12 @@ export class GastosComponent implements OnInit, OnDestroy {
       this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
       return;
     }
+    if (this.guardando) {
+      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
+      return;
+    }
     if (this.errorAlCargarPartidas) {
-      this.mostrarMensaje('error', 'No pudimos cargar las partidas. Reintentá más tarde.');
+      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
       return;
     }
     if (!this.partidasPlanas.length) {
@@ -199,7 +286,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       return;
     }
     if (!this.validarImportes()) {
-      this.mostrarMensaje('error', 'Ingrese solo valores válidos');
+      this.mostrarError('Ingrese solo valores válidos');
       return;
     }
     this.mostrarMensaje(
@@ -255,6 +342,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       partida.importeTexto = '';
       partida.importe = null;
       partida.tieneError = false;
+      this.actualizarEstadoCambios();
       return;
     }
 
@@ -268,47 +356,78 @@ export class GastosComponent implements OnInit, OnDestroy {
       partida.importeTexto = rawValue;
       partida.tieneError = true;
     }
+
+    this.actualizarEstadoCambios();
   }
 
   private cargarPartidas(): void {
     this.cargandoPartidas = true;
     this.errorAlCargarPartidas = false;
 
-    this.gastosService
-      .obtenerPartidas()
+    const municipioId = this.municipioActual?.municipio_id ?? null;
+    let periodo = this.periodoSeleccionado;
+
+    if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
+      periodo = { ejercicio: this.ejercicioSeleccionado, mes: this.mesSeleccionado };
+      this.periodoSeleccionado = periodo;
+      this.persistirPeriodoSeleccionado(periodo);
+    }
+
+    const ejercicio = periodo?.ejercicio ?? null;
+    const mes = periodo?.mes ?? null;
+
+    if (!municipioId || !ejercicio || !mes) {
+      this.partidas = [];
+      this.partidasPlanas = [];
+      this.cargandoPartidas = false;
+      this.errorAlCargarPartidas = true;
+      this.cambiosPendientes = false;
+      this.mostrarError('No pudimos obtener las partidas de gastos. Verificá el municipio o período seleccionado.');
+      return;
+    }
+
+    this.municipioService
+      .obtenerPartidasGastos({ municipioId, ejercicio, mes })
       .pipe(take(1))
       .subscribe({
         next: (response) => {
-            console.log('Respuesta de partidas de gastos:', response);
           this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
           this.partidasPlanas = this.flattenPartidas(this.partidas);
+          this.actualizarBaseCambios();
           this.cargandoPartidas = false;
+
+          if (!this.periodoSeleccionado) {
+            this.periodoSeleccionado = { ejercicio, mes };
+          }
+
+          this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
         },
         error: () => {
           this.partidas = [];
           this.partidasPlanas = [];
           this.cargandoPartidas = false;
           this.errorAlCargarPartidas = true;
-          this.mostrarMensaje(
-            'error',
-            'No pudimos obtener las partidas de gastos. Intentá nuevamente más tarde.'
-          );
+          this.cambiosPendientes = false;
+          this.mostrarError('No pudimos obtener las partidas de gastos. Intentá nuevamente más tarde.');
         },
       });
   }
 
   private transformarPartida(partida: PartidaGastoResponse): PartidaNode {
-    const importe = this.parseImporte(partida.gastos_importe_devengado);
+    const importe = this.parseImporte(partida.importe_devengado ?? partida.gastos_importe_devengado);
     const hijos = Array.isArray(partida.children)
       ? partida.children.map((child) => this.transformarPartida(child))
       : [];
+    const importeTexto = importe !== null ? String(importe) : '';
 
     const node: PartidaNode = {
       codigo: Number(partida.partidas_gastos_codigo),
       descripcion: partida.partidas_gastos_descripcion ?? 'Partida sin nombre',
-      carga: Boolean(partida.partidas_gastos_carga),
+      carga: Boolean(partida.partidas_gastos_carga ?? partida.puede_cargar),
       importe,
-      importeTexto: importe !== null ? String(importe) : '',
+      importeOriginal: importe,
+      importeTexto,
+      importeOriginalTexto: importeTexto,
       tieneError: false,
     };
 
@@ -346,6 +465,16 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {
+    if (tipo === 'error') {
+      if (this.mensajeTimeout) {
+        clearTimeout(this.mensajeTimeout);
+      }
+      this.mensaje = null;
+      this.mensajeTimeout = null;
+      this.mostrarError(texto);
+      return;
+    }
+
     this.mensaje = { tipo, texto };
     if (this.mensajeTimeout) {
       clearTimeout(this.mensajeTimeout);
@@ -368,6 +497,45 @@ export class GastosComponent implements OnInit, OnDestroy {
       confirmButtonText: 'Aceptar',
       confirmButtonColor: '#3085d6',
     });
+  }
+
+  private mostrarError(mensaje: string, titulo = 'Ocurrió un problema'): void {
+    Swal.fire({
+      icon: 'error',
+      title: titulo,
+      text: mensaje,
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#e53935',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+    });
+  }
+
+  private mostrarToastExito(mensaje: string): Promise<void> {
+    return Swal.fire({
+      toast: true,
+      icon: 'success',
+      title: mensaje,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 2500,
+      timerProgressBar: true,
+    }).then(() => undefined);
+  }
+
+
+  private persistirPeriodoSeleccionado(periodo: { ejercicio: number; mes: number } | null): void {
+    const municipioId = this.municipioActual?.municipio_id;
+    if (!municipioId) {
+      return;
+    }
+
+    if (!periodo) {
+      this.municipioService.clearPeriodoSeleccionado(municipioId);
+      return;
+    }
+
+    this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
   }
 
   private flattenPartidas(
