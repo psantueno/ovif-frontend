@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, catchError, of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { API_URL } from '../app.config';
@@ -123,6 +123,18 @@ export class MunicipioService {
       );
   }
 
+
+  descargarInformeGastos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
 
   guardarPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaGastoUpsertPayload[] }): Observable<void> {
     const { municipioId, ejercicio, mes, partidas } = params;

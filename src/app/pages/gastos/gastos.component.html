@@ -124,12 +124,24 @@
         <button
           type="button"
           (click)="generarInforme()"
-          [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando"
+          [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando || descargandoInforme"
         >
-          <mat-icon aria-hidden="true">picture_as_pdf</mat-icon>
-          <span>Generar informe</span>
+          <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
+          <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
+            <span>Generar informe</span>
+          </ng-container>
+          <ng-template #generandoInformeTexto>
+            <span>Generando informe...</span>
+          </ng-template>
         </button>
       </div>
+      <p class="acciones__helper" role="note">
+        <span class="acciones__helper-icon" aria-hidden="true">!</span>
+        <span>
+          <strong>Importante:</strong>
+          guardá los cambios antes de generar el informe para visualizarlo con los datos actualizados.
+        </span>
+      </p>
     </form>
 
     <div class="guardando-overlay" *ngIf="guardando" aria-live="assertive">

@@ -68,6 +68,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
   guardando = false;
+  descargandoInforme = false;
 
   partidas: PartidaNode[] = [];
   partidasPlanas: PartidaDisplay[] = [];
@@ -289,11 +290,53 @@ export class GastosComponent implements OnInit, OnDestroy {
       this.mostrarError('Ingrese solo valores válidos');
       return;
     }
-    this.mostrarMensaje(
-      'info',
-      'Informe generado correctamente (simulación)'
-    );
-    this.modalVisible = true;
+    if (this.tieneCambiosPendientes()) {
+      this.mostrarError('Guardá los cambios antes de generar el informe para visualizarlo actualizado.');
+      return;
+    }
+    if (this.descargandoInforme) {
+      return;
+    }
+
+    const municipioId = this.municipioActual?.municipio_id ?? null;
+    const periodo = this.periodoSeleccionado;
+    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
+    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
+
+    if (!municipioId || !ejercicio || !mes) {
+      this.mostrarError('No pudimos identificar el municipio o período seleccionado.');
+      return;
+    }
+
+    this.descargandoInforme = true;
+
+    this.municipioService
+      .descargarInformeGastos({ municipioId, ejercicio, mes })
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.descargandoInforme = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          const blob = response.body;
+          if (!blob || blob.size === 0) {
+            this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');
+            return;
+          }
+
+          const contentDisposition = response.headers?.get('Content-Disposition') ?? null;
+          const filename = this.obtenerNombreArchivo(contentDisposition) ?? this.construirNombreArchivoInforme(ejercicio, mes);
+
+          this.descargarArchivo(blob, filename);
+          this.mostrarToastExito('Informe descargado correctamente.');
+        },
+        error: (error) => {
+          console.error('Error al generar el informe de gastos:', error);
+          this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+        },
+      });
   }
 
   cerrarModal(): void {
@@ -523,6 +566,58 @@ export class GastosComponent implements OnInit, OnDestroy {
     }).then(() => undefined);
   }
 
+
+  private descargarArchivo(blob: Blob, filename: string): void {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }
+
+  private obtenerNombreArchivo(contentDisposition: string | null): string | null {
+    if (!contentDisposition) {
+      return null;
+    }
+
+    const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+    if (utf8Match?.[1]) {
+      try {
+        return decodeURIComponent(utf8Match[1]);
+      } catch {
+        return utf8Match[1];
+      }
+    }
+
+    const asciiMatch = /filename="?([^";]+)"?/i.exec(contentDisposition);
+    if (asciiMatch?.[1]) {
+      return asciiMatch[1];
+    }
+
+    return null;
+  }
+
+  private construirNombreArchivoInforme(ejercicio: number, mes: number): string {
+    const slugMunicipio = this.normalizarTextoParaArchivo(this.municipioNombre || 'municipio');
+    const mesStr = mes.toString().padStart(2, '0');
+    return `informe_gastos_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`;
+  }
+
+  private normalizarTextoParaArchivo(texto: string): string {
+    return texto
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'municipio';
+  }
 
   private persistirPeriodoSeleccionado(periodo: { ejercicio: number; mes: number } | null): void {
     const municipioId = this.municipioActual?.municipio_id;

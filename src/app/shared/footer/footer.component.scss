@@ -18,6 +18,8 @@
   .footer-links {
     flex: 1; // Cada columna ocupa el mismo espacio
     min-width: 200px; // Ancho mínimo para columnas pequeñas
+    color: #ffffff;
+    text-decoration: none;
 
     ul {
       list-style: none;
@@ -27,6 +29,11 @@
       li {
         margin-bottom: 0.3rem;
         font-weight: normal; // Texto normal para los elementos de la lista
+
+         &:hover {
+      text-decoration: underline; // Subraya el enlace al pasar el mouse
+      cursor: pointer;
+    }
       }
     }
   }
