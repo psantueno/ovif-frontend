@@ -20,6 +20,26 @@ export interface PartidaGastoUpsertPayload {
   gastos_importe_devengado: number | null;
 }
 
+export interface PartidaRecursoResponse {
+  partidas_recursos_codigo: number;
+  partidas_recursos_descripcion: string;
+  partidas_recursos_padre?: number | null;
+  partidas_recursos_carga?: number | boolean;
+  partidas_recursos_sl?: number | boolean;
+  recursos_importe_percibido?: number | string | null;
+  recursos_cantidad_contribuyentes?: number | string | null;
+  recursos_cantidad_pagaron?: number | string | null;
+  puede_cargar?: boolean;
+  children?: PartidaRecursoResponse[];
+}
+
+export interface PartidaRecursoUpsertPayload {
+  partidas_recursos_codigo: number;
+  recursos_importe_percibido: number | null;
+  recursos_cantidad_contribuyentes: number | null;
+  recursos_cantidad_pagaron: number | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class MunicipioService {
   private readonly apiUrl = inject(API_URL);
@@ -144,6 +164,48 @@ export class MunicipioService {
 
     return this.http
       .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos`, { partidas })
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
+  obtenerPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<PartidaRecursoResponse[]> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return of([]);
+    }
+
+    return this.http
+      .get<PartidaRecursoResponse[] | null | undefined>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos/partidas`)
+      .pipe(
+        map((response) => {
+          if (!response) {
+            return [];
+          }
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  descargarInformeRecursos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de recursos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  guardarPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaRecursoUpsertPayload[] }): Observable<void> {
+    const { municipioId, ejercicio, mes, partidas } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar los recursos.'));
+    }
+
+    return this.http
+      .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos`, { partidas })
       .pipe(catchError((error) => throwError(() => error)));
   }
 

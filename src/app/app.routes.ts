@@ -4,6 +4,7 @@ import { HomeComponent } from './pages/home/home.component';
 import { SeleccionarMunicipioComponent } from './pages/seleccionar-municipio/seleccionar-municipio.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard';
+import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
 
 // Admin
 import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
@@ -36,6 +37,11 @@ export const routes: Routes = [
         path: 'gastos',
         canDeactivate: [PendingChangesGuard],
         loadComponent: () => import('./pages/gastos/gastos.component').then((m) => m.GastosComponent)
+      },
+      {
+        path: 'recursos',
+        canDeactivate: [RecursosPendingChangesGuard],
+        loadComponent: () => import('./pages/recursos/recursos.component').then((m) => m.RecursosComponent)
       },
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/usuarios', component: UsuariosComponent },

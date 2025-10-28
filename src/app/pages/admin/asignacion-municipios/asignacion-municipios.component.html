@@ -1,6 +1,18 @@
 <div class="asignacion-container">
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
+  <mat-card class="helper-card">
+    <div class="helper-content">
+      <h3><mat-icon class="helper-icon" color="primary">info</mat-icon> Asignar municipios a un usuario</h3>
+      <ol>
+        <li>Busca al usuario por nombre, usuario o correo.</li>
+        <li>Selecciona al usuario para cargar sus municipios actuales.</li>
+        <li>Marca o desmarca los municipios que desees asignar.</li>
+        <li>Presiona "Guardar cambios" para confirmar la asignación.</li>
+      </ol>
+    </div>
+  </mat-card>
+
   <mat-card class="buscador-card">
     <form [formGroup]="filtroForm" (ngSubmit)="buscarUsuarios()" class="buscador-form">
       <mat-form-field appearance="outline" class="search-field">

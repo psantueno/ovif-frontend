@@ -1,0 +1,267 @@
+
+<div class="recursos-page">
+  <div class="page-header">
+    <button class="link-back" type="button" (click)="volverAlInicio()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Menú principal</span>
+    </button>
+
+    <div class="context">
+      <h1>Carga de recursos</h1>
+      <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
+      <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
+    </div>
+  </div>
+
+  <section class="status-card" *ngIf="mesCerrado || mensaje">
+    <div *ngIf="mesCerrado" class="alert alert--warning">
+      Este mes está cerrado. Las modificaciones no se guardarán.
+    </div>
+    <div
+      *ngIf="mensaje"
+      class="alert"
+      [ngClass]="mensaje.tipo === 'info' ? 'alert--success' : 'alert--error'"
+    >
+      {{ mensaje.texto }}
+    </div>
+  </section>
+
+  <section class="recursos-card">
+    <header class="recursos-card__header">
+      <div>
+        <h2>Importes percibidos</h2>
+        <p>Ingresá los datos correspondientes a cada partida para el período seleccionado.</p>
+      </div>
+      <div class="recursos-card__total">
+        <span>Total percibido</span>
+        <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+      </div>
+    </header>
+
+    <form class="recursos-form" (ngSubmit)="onSubmitGuardar()" novalidate>
+      <div class="tabla-wrapper">
+        <table class="recursos-tabla">
+          <thead>
+            <tr>
+              <th>Partida</th>
+              <th>Importe Percibido</th>
+              <th>Total de Contribuyentes</th>
+              <th>Contribuyentes que Pagaron</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="cargandoPartidas">
+              <td colspan="4" class="tabla-info">
+                <div class="tabla-loader" role="status" aria-live="polite">
+                  <span class="tabla-loader__spinner" aria-hidden="true"></span>
+                  <span class="tabla-loader__label">Cargando partidas...</span>
+                </div>
+              </td>
+            </tr>
+            <tr *ngIf="!cargandoPartidas && errorAlCargarPartidas">
+              <td colspan="4" class="tabla-info tabla-info--error">No pudimos obtener las partidas. Intentá nuevamente.</td>
+            </tr>
+            <tr
+              *ngIf="!cargandoPartidas && !errorAlCargarPartidas && partidasPlanas.length === 0"
+            >
+              <td colspan="4" class="tabla-info">No hay partidas de recursos disponibles.</td>
+            </tr>
+            <ng-container *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
+              <ng-container *ngFor="let partida of partidasPlanas">
+                <tr
+                  [class.grupo]="!partida.node.carga"
+                  [class.tiene-error]="partida.node.errorImporte || partida.node.errorContribuyentes || partida.node.errorPagaron"
+                >
+                  <td
+                    [attr.colspan]="partida.node.carga ? null : 4"
+                    [style.padding-left.px]="partida.nivel * 20 + 4"
+                  >
+                    <span
+                      [class.partida-titulo]="!partida.node.carga"
+                      [class.partida-item]="partida.node.carga"
+                    >
+                      {{ partida.node.descripcion }}
+                    </span>
+                  </td>
+                  <td *ngIf="partida.node.carga" class="importe">
+                    <input
+                      type="text"
+                      class="importe-input"
+                      [class.input-error]="partida.node.errorImporte"
+                      [name]="'importe_' + partida.node.codigo"
+                      [attr.id]="'importe_' + partida.node.codigo"
+                      [readOnly]="mesCerrado"
+                      inputmode="decimal"
+                      (keydown)="permitirSoloNumeros($event)"
+                      (paste)="sanearPegado($event, partida.node, 'importe')"
+                      [(ngModel)]="partida.node.importePercibidoTexto"
+                      (ngModelChange)="updateCampo(partida.node, 'importe', $event)"
+                      [ngModelOptions]="{ standalone: true }"
+                    />
+                  </td>
+                  <td *ngIf="partida.node.carga" class="cantidad">
+                    <ng-container *ngIf="!partida.node.soloImporte; else sinDatoContribuyentes">
+                      <input
+                        type="text"
+                        class="cantidad-input"
+                        [class.input-error]="partida.node.errorContribuyentes"
+                        [name]="'contribuyentes_' + partida.node.codigo"
+                        [attr.id]="'contribuyentes_' + partida.node.codigo"
+                        [readOnly]="mesCerrado"
+                        inputmode="decimal"
+                        (keydown)="permitirSoloNumeros($event)"
+                        (paste)="sanearPegado($event, partida.node, 'contribuyentes')"
+                        [(ngModel)]="partida.node.cantidadContribuyentesTexto"
+                        (ngModelChange)="updateCampo(partida.node, 'contribuyentes', $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      />
+                    </ng-container>
+                    <ng-template #sinDatoContribuyentes>
+                      <span class="valor-inhabilitado">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td *ngIf="partida.node.carga" class="cantidad">
+                    <ng-container *ngIf="!partida.node.soloImporte; else sinDatoPagaron">
+                      <input
+                        type="text"
+                        class="cantidad-input"
+                        [class.input-error]="partida.node.errorPagaron"
+                        [name]="'pagaron_' + partida.node.codigo"
+                        [attr.id]="'pagaron_' + partida.node.codigo"
+                        [readOnly]="mesCerrado"
+                        inputmode="decimal"
+                        (keydown)="permitirSoloNumeros($event)"
+                        (paste)="sanearPegado($event, partida.node, 'pagaron')"
+                        [(ngModel)]="partida.node.cantidadPagaronTexto"
+                        (ngModelChange)="updateCampo(partida.node, 'pagaron', $event)"
+                        [ngModelOptions]="{ standalone: true }"
+                      />
+                    </ng-container>
+                    <ng-template #sinDatoPagaron>
+                      <span class="valor-inhabilitado">N/A</span>
+                    </ng-template>
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="total-label">TOTAL</td>
+              <td class="total-valor">
+                <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+              </td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="acciones">
+        <button type="submit" [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando">
+          <mat-icon aria-hidden="true">save</mat-icon>
+          <ng-container *ngIf="!guardando; else guardandoTexto">
+            <span>Guardar cambios</span>
+          </ng-container>
+          <ng-template #guardandoTexto>
+            <span>Guardando...</span>
+          </ng-template>
+        </button>
+        <button
+          type="button"
+          (click)="generarInforme()"
+          [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando || descargandoInforme"
+        >
+          <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
+          <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
+            <span>Generar informe</span>
+          </ng-container>
+          <ng-template #generandoInformeTexto>
+            <span>Generando informe...</span>
+          </ng-template>
+        </button>
+      </div>
+      <p class="acciones__helper" role="note">
+        <span class="acciones__helper-icon" aria-hidden="true">!</span>
+        <span>
+          <strong>Importante:</strong>
+          guardá los cambios antes de generar el informe para visualizarlo con los datos actualizados.
+        </span>
+      </p>
+    </form>
+
+    <div class="guardando-overlay" *ngIf="guardando" aria-live="assertive">
+      <div class="guardando-overlay__content">
+        <span class="guardando-overlay__spinner" aria-hidden="true"></span>
+        <span class="guardando-overlay__label">Guardando cambios...</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="modal-backdrop" *ngIf="modalVisible">
+    <div class="modal">
+      <div class="modal__header">
+        <h3>Informe de Recursos</h3>
+        <button type="button" class="modal__close" (click)="cerrarModal()">
+          &times;
+        </button>
+      </div>
+      <p class="modal__subtitulo">
+        {{ municipioNombre }} &mdash; {{ mesActualLabel }}
+      </p>
+      <table class="modal__tabla">
+        <thead>
+          <tr>
+            <th>Partida</th>
+            <th>Importe Percibido</th>
+            <th>Total de Contribuyentes</th>
+            <th>Contribuyentes que Pagaron</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let partida of partidasPlanas">
+            <tr [class.grupo]="!partida.node.carga">
+              <td
+                [attr.colspan]="partida.node.carga ? null : 4"
+                [style.padding-left.px]="partida.nivel * 16"
+              >
+                <span [class.partida-titulo]="!partida.node.carga">
+                  {{ partida.node.descripcion }}
+                </span>
+              </td>
+              <td *ngIf="partida.node.carga" class="importe">
+                {{ (partida.node.importePercibido ?? 0) | number: '1.0-2' }}
+              </td>
+              <td *ngIf="partida.node.carga" class="importe">
+                <ng-container *ngIf="!partida.node.soloImporte; else modalSinContribuyentes">
+                  {{ (partida.node.cantidadContribuyentes ?? 0) | number: '1.0-2' }}
+                </ng-container>
+                <ng-template #modalSinContribuyentes>—</ng-template>
+              </td>
+              <td *ngIf="partida.node.carga" class="importe">
+                <ng-container *ngIf="!partida.node.soloImporte; else modalSinPagaron">
+                  {{ (partida.node.cantidadPagaron ?? 0) | number: '1.0-2' }}
+                </ng-container>
+                <ng-template #modalSinPagaron>—</ng-template>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="total-label">TOTAL</td>
+            <td class="total-valor">
+              <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+            </td>
+            <td class="total-placeholder">—</td>
+            <td class="total-placeholder">—</td>
+          </tr>
+        </tfoot>
+      </table>
+      <div class="modal__acciones">
+        <button type="button" (click)="cerrarModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
