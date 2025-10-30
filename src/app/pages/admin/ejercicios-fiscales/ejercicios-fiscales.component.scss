@@ -1,0 +1,274 @@
+.ejercicios-container {
+  padding: 2rem;
+  background-color: var(--color-neutral);
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.admin-card {
+  width: 100%;
+  max-width: 900px;
+  background: var(--color-surface);
+  padding: 1.75rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.helper-card {
+  .helper-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    mat-icon {
+      font-size: 34px;
+      height: 34px;
+      min-width: 34px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    p {
+      margin: 0;
+      color: #546e7a;
+      line-height: 1.45;
+    }
+  }
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  padding: 0;
+
+  .header-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(var(--color-secondary-rgb, 48, 117, 171), 0.1);
+    border-radius: 50%;
+
+    mat-icon {
+      color: var(--color-secondary);
+    }
+  }
+
+  mat-card-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  mat-card-subtitle {
+    color: #667a8a;
+  }
+
+  .header-spacer {
+    flex: 1;
+  }
+}
+
+.btn-accion {
+  padding: 0.9rem 1.6rem;
+  background-color: #2b3e4c;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.25s ease, color 0.25s ease;
+  border: none;
+
+  mat-icon {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background-color: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+}
+
+.list-card {
+  .list-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #607d8b;
+    min-height: 120px;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 38px;
+      height: 38px;
+      width: 38px;
+      color: #90a4ae;
+    }
+  }
+
+  .filters {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+
+    mat-form-field {
+      width: 200px;
+    }
+
+    mat-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filter-label-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  .tabla-wrapper {
+    overflow: auto;
+    margin-top: 1.5rem;
+  }
+
+  mat-paginator {
+    margin-top: 1rem;
+  }
+}
+
+.ejercicios-table {
+  width: 100%;
+  min-width: 620px;
+  table-layout: fixed;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.5rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    border-bottom: 2px solid rgba(var(--color-primary-rgb), 0.2);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  td {
+    font-size: 0.95rem;
+    color: var(--color-on-surface);
+    overflow: visible;
+  }
+
+  th.mat-column-ejercicio,
+  td.mat-column-ejercicio {
+    width: 18%;
+  }
+
+  th.mat-column-mes,
+  td.mat-column-mes {
+    width: 24%;
+  }
+
+  th.mat-column-fecha_inicio,
+  td.mat-column-fecha_inicio,
+  th.mat-column-fecha_fin,
+  td.mat-column-fecha_fin {
+    width: 22%;
+  }
+
+  th.mat-column-acciones,
+  td.mat-column-acciones {
+    width: 14%;
+    text-align: center;
+  }
+
+  button[mat-icon-button] {
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 8px;
+    color: var(--color-primary);
+
+    mat-icon {
+      font-size: 20px;
+    }
+
+    &:hover {
+      background-color: rgba(var(--color-secondary-rgb, 48, 117, 171), 0.12);
+    }
+  }
+
+  button[mat-icon-button][color='warn'] {
+    color: #d32f2f;
+  }
+
+  button[mat-icon-button][color='warn']:hover {
+    background-color: rgba(211, 47, 47, 0.12);
+    color: #d32f2f;
+  }
+
+  mat-progress-spinner {
+    --mat-progress-spinner-stroke-width: 6px;
+  }
+}
+
+.acciones-cell {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .ejercicios-container {
+    padding: 1.5rem;
+  }
+
+  .admin-card {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .helper-card .helper-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ejercicios-table {
+    min-width: unset;
+  }
+
+  .btn-accion {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.fab-add {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(43, 62, 76, 0.25);
+}
+
+@media (max-width: 480px) {
+  .fab-add {
+    bottom: 20px;
+    right: 20px;
+  }
+}

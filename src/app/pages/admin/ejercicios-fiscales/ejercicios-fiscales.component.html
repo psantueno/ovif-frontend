@@ -1,0 +1,122 @@
+<div class="ejercicios-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="helper-card admin-card">
+    <div class="helper-content">
+      <mat-icon color="primary">info</mat-icon>
+      <div>
+        <h3>Gestión de Ejercicios Fiscales</h3>
+        <hr>
+        <p>
+          Cree nuevos ejercicios-meses teniendo en cuenta que las fechas oficiales de apertura y cierre se calculan automáticamente. Recuerde que un ejercicio
+          no podrá eliminarse si ya tiene información cargada por los municipios.
+        </p>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card class="list-card admin-card">
+    <mat-card-header>
+      <div mat-card-avatar class="header-avatar">
+        <mat-icon>calendar_month</mat-icon>
+      </div>
+      <mat-card-title>Ejercicios configurados</mat-card-title>
+      <mat-card-subtitle>Listado de ejercicios fiscales oficiales</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="filters">
+        <mat-form-field appearance="outline">
+          <mat-label>
+            <mat-icon aria-hidden="true" class="filter-label-icon">filter_list</mat-icon>
+            Ejercicio
+          </mat-label>
+          <input matInput type="text" maxlength="4" placeholder="Ej. 2025" [formControl]="yearControl">
+          <button mat-icon-button type="button" matSuffix *ngIf="yearControl.value" (click)="yearControl.reset()" aria-label="Limpiar filtro">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+      </div>
+
+      <div class="list-state" *ngIf="cargando">
+        <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+        <span>Cargando ejercicios...</span>
+      </div>
+
+      <div class="list-state" *ngIf="!cargando && totalRegistros === 0">
+        <mat-icon>inventory_2</mat-icon>
+        <span>No hay ejercicios cargados.</span>
+      </div>
+
+      <div class="tabla-wrapper" *ngIf="!cargando && totalRegistros > 0">
+        <table mat-table [dataSource]="ejercicios" class="ejercicios-table mat-elevation-z1">
+          <ng-container matColumnDef="ejercicio">
+            <th mat-header-cell *matHeaderCellDef>Ejercicio</th>
+            <td mat-cell *matCellDef="let row">{{ row.ejercicio }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="mes">
+            <th mat-header-cell *matHeaderCellDef>Mes</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.mes }} - {{ mesLabel(row.mes) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha_inicio">
+            <th mat-header-cell *matHeaderCellDef>Fecha inicio</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.fecha_inicio | date: 'dd-MM-yyyy' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha_fin">
+            <th mat-header-cell *matHeaderCellDef>Fecha cierre</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.fecha_fin | date: 'dd-MM-yyyy' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="acciones-cell">
+                <button mat-icon-button color="primary" (click)="abrirDialogEditar(row)" matTooltip="Editar ejercicio">
+                  <mat-icon>edit</mat-icon>
+                </button>
+
+                <button
+                  mat-icon-button
+                  color="warn"
+                  (click)="eliminarEjercicio(row)"
+                  [disabled]="estaEliminando(row.ejercicio, row.mes)"
+                  matTooltip="Eliminar ejercicio"
+                >
+                  <ng-container *ngIf="!estaEliminando(row.ejercicio, row.mes); else deleting">
+                    <mat-icon>delete</mat-icon>
+                  </ng-container>
+                  <ng-template #deleting>
+                    <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+                  </ng-template>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        *ngIf="!cargando && totalRegistros > 0"
+        [length]="totalRegistros"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="cambiarPagina($event)">
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+  <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">
+    <mat-icon>add</mat-icon>
+  </button>
+</div>

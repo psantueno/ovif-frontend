@@ -11,6 +11,7 @@ import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.componen
 import { UsuariosComponent } from './pages/admin/usuarios/usuarios.component';
 import { AsignacionMunicipiosComponent } from './pages/admin/asignacion-municipios/asignacion-municipios.component';
 import { RolesComponent } from './pages/admin/roles/roles.component';
+import { EjerciciosFiscalesComponent } from './pages/admin/ejercicios-fiscales/ejercicios-fiscales.component';
 import { MainLayout } from './shared/layouts/main-layout.component';
 import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
@@ -46,9 +47,8 @@ export const routes: Routes = [
       { path: 'admin', component: AdminMenuComponent },
       { path: 'admin/usuarios', component: UsuariosComponent },
       { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent },
+      { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent },
       { path: 'admin/roles', component: RolesComponent },
-      // { path: 'admin/ejercicios', component: EjerciciosComponent },
-      // { path: 'admin/auditorias', component: AuditoriasComponent },
     ]
   },
   { path: '**', redirectTo: '' }

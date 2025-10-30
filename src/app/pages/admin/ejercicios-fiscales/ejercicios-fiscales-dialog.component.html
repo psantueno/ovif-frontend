@@ -1,0 +1,76 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">
+    {{ data?.ejercicio ? 'edit_calendar' : 'event_available' }}
+  </mat-icon>
+  {{ data?.ejercicio ? 'Editar ejercicio fiscal' : 'Nuevo ejercicio fiscal' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content" [attr.aria-busy]="enviando">
+  <div class="loading-overlay" *ngIf="enviando">
+    <mat-progress-spinner diameter="36" mode="indeterminate" color="primary"></mat-progress-spinner>
+    <span>Guardando cambios...</span>
+  </div>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Ejercicio</mat-label>
+    <input matInput type="number" formControlName="ejercicio" [readonly]="!!data?.ejercicio" />
+    <mat-error *ngIf="form.get('ejercicio')?.hasError('required') && form.get('ejercicio')?.touched">
+      El ejercicio es obligatorio.
+    </mat-error>
+    <mat-error *ngIf="form.get('ejercicio')?.hasError('min') && form.get('ejercicio')?.touched">
+      Ingrese un ejercicio válido.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Mes</mat-label>
+    <mat-select formControlName="mes" [disabled]="!!data?.ejercicio">
+      <mat-option *ngFor="let mes of meses" [value]="mes.value">
+        {{ mes.value }} - {{ mes.label }}
+      </mat-option>
+    </mat-select>
+    <mat-error *ngIf="form.get('mes')?.hasError('required') && form.get('mes')?.touched">
+      El mes es obligatorio.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Fecha de inicio</mat-label>
+    <input matInput type="date" formControlName="fecha_inicio" />
+    <mat-error *ngIf="form.get('fecha_inicio')?.hasError('required') && form.get('fecha_inicio')?.touched">
+      Debe indicar la fecha de inicio.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Fecha de fin</mat-label>
+    <input matInput type="date" formControlName="fecha_fin" />
+    <mat-error *ngIf="form.get('fecha_fin')?.hasError('required') && form.get('fecha_fin')?.touched">
+      Debe indicar la fecha de cierre.
+    </mat-error>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button mat-dialog-close class="btn-cancelar">
+    <mat-icon>close</mat-icon>
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando"
+  >
+    <ng-container *ngIf="!enviando; else guardando">
+      <mat-icon>save</mat-icon>
+      Guardar
+    </ng-container>
+  </button>
+  <ng-template #guardando>
+    <mat-progress-spinner class="btn-spinner" diameter="18" mode="indeterminate" color="accent"></mat-progress-spinner>
+    Guardando...
+  </ng-template>
+</mat-dialog-actions>
