@@ -1,0 +1,219 @@
+<div class="prorroga-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="helper-card">
+    <div class="helper-content">
+      <h3>
+        <mat-icon class="helper-icon" color="primary">info</mat-icon>
+        Gestionar prórrogas de cierre
+      </h3>
+      <ol>
+        <li>Seleccioná el municipio filtrando por nombre.</li>
+        <li>Elegí el periodo cerrado que querés modificar.</li>
+        <li>Revisá la fecha oficial y la prórroga vigente.</li>
+        <li>Ingresá la nueva fecha de cierre y guardá los cambios.</li>
+      </ol>
+    </div>
+  </mat-card>
+
+  <mat-card class="selector-card">
+    <div class="selector-content">
+      <mat-form-field appearance="outline" class="selector-field">
+        <mat-label>Seleccionar municipio</mat-label>
+        <input
+          matInput
+          [matAutocomplete]="municipioAuto"
+          [formControl]="municipioControl"
+          placeholder="Escribí para filtrar"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          *ngIf="municipioControl.value"
+          (click)="limpiarSeleccionMunicipio()"
+          aria-label="Limpiar selección"
+        >
+          <mat-icon>clear</mat-icon>
+        </button>
+        <mat-autocomplete
+          #municipioAuto="matAutocomplete"
+          (optionSelected)="onMunicipioSelected($event)"
+          [displayWith]="displayMunicipio.bind(this)"
+        >
+          <mat-option
+            *ngFor="let municipio of filteredMunicipios$ | async"
+            [value]="municipio"
+          >
+            {{ municipio.municipio_nombre }}
+          </mat-option>
+          <mat-option
+            *ngIf="!(filteredMunicipios$ | async)?.length && !cargandoMunicipios"
+            disabled
+          >
+            No se encontraron municipios.
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <div class="selector-helper" *ngIf="!cargandoMunicipios">
+        <mat-icon>help_outline</mat-icon>
+        <span>Seleccioná un municipio para ver sus periodos cerrados.</span>
+      </div>
+
+      <div class="selector-loading" *ngIf="cargandoMunicipios">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Cargando municipios...</span>
+      </div>
+    </div>
+  </mat-card>
+
+  <div class="contenido" *ngIf="busquedaRealizada">
+    <mat-card class="periodos-card">
+      <mat-card-header>
+        <mat-card-title class="card-title-with-icon">
+          <mat-icon class="header-icon">event_busy</mat-icon>
+          Periodos cerrados
+        </mat-card-title>
+        <mat-card-subtitle>
+          Municipio: <b>{{ selectedMunicipio?.municipio_nombre }}</b>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="estado" *ngIf="cargandoPeriodos">
+          <mat-spinner diameter="32"></mat-spinner>
+          <span>Obteniendo periodos...</span>
+        </div>
+
+        <div class="estado" *ngIf="!cargandoPeriodos && periodos.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <span>No hay periodos cerrados para este municipio.</span>
+        </div>
+
+        <mat-nav-list *ngIf="!cargandoPeriodos && periodos.length > 0">
+          <a
+            mat-list-item
+            *ngFor="let periodo of periodos"
+            (click)="seleccionarPeriodo(periodo)"
+            [class.activo]="selectedPeriodo === periodo"
+          >
+            <div matListItemTitle class="periodo-titulo">
+              {{ getMesNombre(periodo.mes) }} {{ periodo.ejercicio }}
+            </div>
+            <div matListItemLine class="periodo-detalle">
+              Cierre vigente: {{ formatDate(periodo.fecha_fin) }}
+            </div>
+            <mat-icon
+              class="periodo-seleccionado"
+              color="primary"
+              *ngIf="selectedPeriodo === periodo"
+            >
+              check_circle
+            </mat-icon>
+            <mat-icon class="periodo-prorroga" *ngIf="tieneProrroga(periodo)" color="primary">
+              schedule
+            </mat-icon>
+          </a>
+        </mat-nav-list>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="detalle-card" *ngIf="selectedPeriodo">
+      <mat-card-header>
+        <mat-card-title class="card-title-with-icon">
+          <mat-icon class="header-icon">schedule</mat-icon>
+          {{ getMesNombre(selectedPeriodo.mes) }} {{ selectedPeriodo.ejercicio }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          Gestioná la prórroga de cierre para este periodo.
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="detalle-info">
+          <div class="detalle-item">
+            <span class="detalle-label">Fecha oficial de cierre</span>
+            <span class="detalle-value">
+              {{ formatDate(selectedPeriodo.fecha_fin_oficial) }}
+            </span>
+          </div>
+          <div class="detalle-item">
+            <span class="detalle-label">Prórroga vigente</span>
+            <span class="detalle-value">
+              {{ selectedPeriodo.fecha_prorroga ? formatDate(selectedPeriodo.fecha_prorroga) : 'Sin prórroga aplicada' }}
+            </span>
+          </div>
+          <div class="detalle-item">
+            <span class="detalle-label">Fecha de cierre registrada</span>
+            <span class="detalle-value">
+              {{ formatDate(selectedPeriodo.fecha_fin) }}
+            </span>
+          </div>
+          <div class="detalle-item" *ngIf="selectedPeriodo.fecha_cierre">
+            <span class="detalle-label">Fecha de cierre informada</span>
+            <span class="detalle-value">
+              {{ formatDate(selectedPeriodo.fecha_cierre) }}
+            </span>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <form [formGroup]="prorrogaForm" class="prorroga-form">
+          <mat-form-field appearance="outline" class="fecha-field">
+            <mat-label>Nueva fecha de cierre</mat-label>
+            <input
+              matInput
+              [matDatepicker]="picker"
+              formControlName="fechaFin"
+          placeholder="Seleccioná la nueva fecha"
+          [min]="minFechaSeleccionable"
+        />
+        <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+        <mat-datepicker #picker></mat-datepicker>
+        <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('required')">
+          Seleccioná una fecha para aplicar la prórroga.
+        </mat-error>
+        <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('fechaAnteriorOficial')">
+          No puede ser anterior a la fecha oficial de cierre.
+        </mat-error>
+        <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('fechaEnPasado')">
+          La fecha debe ser igual o posterior a hoy.
+        </mat-error>
+        <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('fechaInvalida')">
+          Ingresá una fecha válida.
+        </mat-error>
+      </mat-form-field>
+
+      <div class="form-actions">
+        <button
+          mat-raised-button
+          class="btn-accion"
+          type="button"
+          (click)="guardarProrroga()"
+          [disabled]="guardandoProrroga || prorrogaForm.invalid"
+        >
+              <mat-icon>save</mat-icon>
+              <ng-container *ngIf="!guardandoProrroga; else guardando">
+                Guardar prórroga
+              </ng-container>
+            </button>
+            <ng-template #guardando>
+              Guardando...
+            </ng-template>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card
+      class="placeholder-card"
+      *ngIf="!selectedPeriodo && !cargandoPeriodos && periodos.length > 0"
+    >
+      <mat-card-content>
+        <mat-icon>calendar_view_month</mat-icon>
+        <p>Seleccioná un periodo para gestionar su prórroga.</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

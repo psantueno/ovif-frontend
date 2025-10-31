@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, catchError, of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { API_URL } from '../app.config';
@@ -38,6 +38,24 @@ export interface PartidaRecursoUpsertPayload {
   recursos_importe_percibido: number | null;
   recursos_cantidad_contribuyentes: number | null;
   recursos_cantidad_pagaron: number | null;
+}
+
+export interface MunicipioSelectOption {
+  municipio_id: number;
+  municipio_nombre: string;
+}
+
+export interface EjercicioCerradoResponse {
+  ejercicio: number;
+  mes: number;
+  fecha_inicio?: string | null;
+  fecha_fin_oficial?: string | null;
+  fecha_fin?: string | null;
+  fecha_prorroga?: string | null;
+  fecha_cierre?: string | null;
+  tiene_prorroga?: boolean;
+  raw?: any;
+  [key: string]: unknown;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -122,6 +140,111 @@ export class MunicipioService {
         return of([]);
       })
     );
+  }
+
+  getCatalogoMunicipios(): Observable<MunicipioSelectOption[]> {
+    return this.http.get<any>(`${this.apiUrl}/municipios/select`).pipe(
+      map((res) => {
+        const raw = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.municipios)
+            ? res.municipios
+            : [];
+
+        return raw
+          .map((item: any) => ({
+            municipio_id: Number(item?.municipio_id ?? item?.id ?? 0),
+            municipio_nombre: String(item?.municipio_nombre ?? item?.nombre ?? '').trim()
+          }))
+          .filter((item: MunicipioSelectOption) => Number.isInteger(item.municipio_id) && item.municipio_id > 0);
+      }),
+      catchError((err) => {
+        console.error('Error obteniendo catálogo de municipios:', err);
+        return of([]);
+      })
+    );
+  }
+
+  getEjerciciosCerradosMunicipio(params: { municipioId: number; anio?: number }): Observable<EjercicioCerradoResponse[]> {
+    const { municipioId, anio } = params;
+    if (!municipioId) {
+      return of([]);
+    }
+
+    const url = `${this.apiUrl}/municipios/${municipioId}/ejercicios/cerrados`;
+    const options = anio ? { params: new HttpParams().set('anio', String(anio)) } : {};
+
+    return this.http.get<any>(url, options).pipe(
+      map((res) => {
+        const cierres = Array.isArray(res?.cierres)
+          ? res.cierres
+          : Array.isArray(res)
+            ? res
+            : [];
+
+        return cierres.map((item: any) => {
+          const fechas = item?.fechas ?? {};
+          const datosOficiales = item?.datosOficiales ?? {};
+          const datosProrroga = item?.prorroga ?? {};
+          const cierreInfo = item?.cierre ?? {};
+
+          const fechaInicioOficial =
+            fechas.inicio_oficial ??
+            datosOficiales.fecha_inicio ??
+            null;
+          const fechaFinOficial =
+            fechas.fin_oficial ??
+            datosOficiales.fecha_fin ??
+            null;
+          const fechaInicioProrroga =
+            fechas.inicio_prorroga ??
+            datosProrroga.fecha_inicio ??
+            null;
+          const fechaFinProrroga =
+            fechas.fin_prorroga ??
+            datosProrroga.fecha_fin ??
+            null;
+          const fechaVigente =
+            fechas.fin_vigente ??
+            fechaFinProrroga ??
+            fechaFinOficial ??
+            null;
+          const fechaCierre =
+            fechas.fecha_cierre ??
+            cierreInfo.fecha ??
+            null;
+
+          return {
+            ejercicio: Number(item?.ejercicio ?? res?.ejercicio ?? item?.anio ?? item?.year ?? 0),
+            mes: Number(item?.mes ?? item?.month ?? 0),
+            fecha_inicio: fechaInicioProrroga ?? fechaInicioOficial ?? null,
+            fecha_fin_oficial: fechaFinOficial,
+            fecha_fin: fechaVigente,
+            fecha_prorroga: fechaFinProrroga ?? null,
+            fecha_cierre: fechaCierre,
+            tiene_prorroga: Boolean(item?.tiene_prorroga ?? fechaFinProrroga),
+            raw: item
+          };
+        });
+      }),
+      catchError((err) => {
+        console.error('Error obteniendo ejercicios cerrados del municipio:', err);
+        return of([]);
+      })
+    );
+  }
+
+  actualizarProrrogaMunicipio(params: { municipioId: number; ejercicio: number; mes: number; fechaFin: string | null }): Observable<void> {
+    const { municipioId, ejercicio, mes, fechaFin } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para actualizar la prórroga.'));
+    }
+
+    const payload = { fecha_fin: fechaFin };
+
+    return this.http
+      .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/prorroga`, payload)
+      .pipe(catchError((error) => throwError(() => error)));
   }
 
   obtenerPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<PartidaGastoResponse[]> {

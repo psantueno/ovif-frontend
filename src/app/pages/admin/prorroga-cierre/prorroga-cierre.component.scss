@@ -1,0 +1,287 @@
+.prorroga-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  align-items: center;
+}
+
+.helper-card,
+.selector-card {
+  width: 50%;
+  padding: 1.5rem;
+}
+
+.helper-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.helper-content h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2b3e4c;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.helper-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.helper-content ol {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #4a5568;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.selector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.selector-field {
+  width: 100%;
+}
+
+.selector-helper,
+.selector-loading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.selector-loading mat-spinner {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.contenido {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) 1fr;
+  gap: 1.5rem;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.periodos-card,
+.detalle-card {
+  min-height: 360px;
+}
+
+.periodos-card {
+  width: 360px;
+}
+
+.detalle-card {
+  width: 800px;
+}
+
+.card-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-title-with-icon .header-icon {
+  margin-right: 0;
+}
+
+.header-icon {
+  color: #2b3e4c;
+  margin-right: 0.5rem;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 120px;
+}
+
+mat-nav-list {
+  max-height: 500px;
+  overflow: auto;
+}
+
+mat-nav-list a[mat-list-item] {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  position: relative;
+  padding-right: 64px;
+}
+
+mat-nav-list a[mat-list-item]:hover {
+  background-color: rgba(63, 81, 181, 0.08);
+}
+
+mat-nav-list a[mat-list-item].activo {
+  border-color: rgba(63, 81, 181, 0.4);
+  background-color: rgba(63, 81, 181, 0.12);
+}
+
+.periodo-titulo {
+  font-weight: 600;
+}
+
+.periodo-detalle {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.periodo-seleccionado {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.periodo-prorroga {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.detalle-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detalle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detalle-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detalle-value {
+  font-weight: 600;
+  color: #2b3e4c;
+}
+
+.prorroga-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.fecha-field {
+  max-width: 280px;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.form-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-accion {
+  padding: 1.25rem 1.5rem;
+  background-color: #2b3e4c;
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.25s ease, color 0.25s ease;
+
+  &:disabled {
+    cursor: not-allowed !important;
+    opacity: 0.5;
+    box-shadow: none;
+  }
+
+
+  &:hover {
+    background-color: var(--color-secondary);
+    color: var(--color-on-secondary);
+  }
+
+  mat-icon {
+    font-size: 20px;
+  }
+
+}
+
+.btn-accion--disabled {
+  cursor: not-allowed;
+}
+
+.placeholder-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 220px;
+  min-width: 800px;
+}
+
+.placeholder-card mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 1200px) {
+  .detalle-card {
+    width: 100%;
+  }
+
+  .placeholder-card {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 960px) {
+
+  .helper-card,
+  .selector-card {
+    width: 100%;
+  }
+
+  .contenido {
+    grid-template-columns: 1fr;
+  }
+
+  .periodos-card {
+    width: 100%;
+  }
+}

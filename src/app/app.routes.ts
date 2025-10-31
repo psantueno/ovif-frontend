@@ -12,6 +12,7 @@ import { UsuariosComponent } from './pages/admin/usuarios/usuarios.component';
 import { AsignacionMunicipiosComponent } from './pages/admin/asignacion-municipios/asignacion-municipios.component';
 import { RolesComponent } from './pages/admin/roles/roles.component';
 import { EjerciciosFiscalesComponent } from './pages/admin/ejercicios-fiscales/ejercicios-fiscales.component';
+import { ProrrogaCierreComponent } from './pages/admin/prorroga-cierre/prorroga-cierre.component';
 import { MainLayout } from './shared/layouts/main-layout.component';
 import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
@@ -48,6 +49,7 @@ export const routes: Routes = [
       { path: 'admin/usuarios', component: UsuariosComponent },
       { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent },
       { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent },
+      { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent },
       { path: 'admin/roles', component: RolesComponent },
     ]
   },
