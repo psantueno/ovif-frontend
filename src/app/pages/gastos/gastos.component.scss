@@ -7,12 +7,6 @@
   align-items: center;
   gap: 1.5rem;
 
-  >.page-header,
-  >.status-card,
-  >.gastos-card {
-    width: 100%;
-    max-width: 1100px;
-  }
 }
 
 .page-header {
@@ -121,6 +115,8 @@
   gap: 1.5rem;
 }
 
+
+
 .gastos-card__header {
   display: flex;
   justify-content: space-between;
@@ -169,6 +165,7 @@
   gap: 1.5rem;
 }
 
+
 .tabla-wrapper {
   overflow-x: auto;
 }
@@ -179,6 +176,7 @@
   font-size: 0.95rem;
   background: var(--color-surface);
 }
+
 
 .gastos-tabla th {
   background: var(--color-accent);
@@ -379,6 +377,7 @@
     box-shadow: none;
   }
 }
+
 
 .acciones__helper {
   display: flex;

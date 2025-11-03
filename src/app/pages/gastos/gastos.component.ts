@@ -25,6 +25,15 @@ interface PartidaDisplay {
   nivel: number;
 }
 
+interface GastoCargaPreview {
+  fila: number;
+  codigo: string;
+  descripcion: string;
+  importeTexto: string;
+  importe: number | null;
+  errores: string[];
+}
+
 type MensajeTipo = 'info' | 'error';
 
 @Component({
@@ -64,6 +73,13 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
   modalVisible = false;
+
+  vistaActual: 'manual' | 'masiva' = 'manual';
+  readonly plantillaGastosCsvUrl = 'assets/plantillas/plantilla-carga-gastos.csv';
+  archivoMasivoSeleccionado: File | null = null;
+  previsualizacionMasiva: GastoCargaPreview[] = [];
+  erroresCargaMasiva: string[] = [];
+  cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
@@ -194,6 +210,83 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   volverAlInicio(): void {
     this.router.navigate(['/home']);
+  }
+
+  cambiarVista(vista: 'manual' | 'masiva'): void {
+    if (this.vistaActual === vista) {
+      return;
+    }
+
+    this.vistaActual = vista;
+  }
+
+  get previsualizacionMasivaConErrores(): boolean {
+    return this.previsualizacionMasiva.some((fila) => fila.errores.length > 0);
+  }
+
+  onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
+    const target = event.target as HTMLInputElement | null;
+    const archivo = target?.files?.[0] ?? null;
+
+    this.resetEstadoCargaMasiva();
+    this.archivoMasivoSeleccionado = null;
+
+    if (!archivo) {
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.archivoMasivoSeleccionado = archivo;
+
+    if (!archivo.name.toLowerCase().endsWith('.csv')) {
+      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .csv.');
+      return;
+    }
+
+    this.cargandoArchivoMasivo = true;
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      this.cargandoArchivoMasivo = false;
+      const contenido = typeof lector.result === 'string' ? lector.result : '';
+
+      if (!contenido) {
+        this.erroresCargaMasiva.push('No pudimos leer el archivo seleccionado.');
+        return;
+      }
+
+      this.procesarContenidoCsv(contenido);
+    };
+
+    lector.onerror = () => {
+      this.cargandoArchivoMasivo = false;
+      this.erroresCargaMasiva.push('Ocurrió un error al leer el archivo. Intentá nuevamente.');
+    };
+
+    lector.readAsText(archivo, 'utf-8');
+  }
+
+  limpiarArchivoMasiva(input?: HTMLInputElement): void {
+    if (input) {
+      input.value = '';
+    }
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+  }
+
+  simularEnvioMasivo(): void {
+    if (!this.previsualizacionMasiva.length || this.previsualizacionMasivaConErrores || this.cargandoArchivoMasivo) {
+      return;
+    }
+
+    this.mostrarAlerta(
+      'Carga masiva pendiente de integración',
+      'Cuando el servicio de backend esté disponible enviaremos estos datos a OVIF. Mientras tanto, asegurate de que el archivo sea correcto.',
+      'info'
+    );
   }
 
   onSubmitGuardar(): void {
@@ -617,6 +710,158 @@ export class GastosComponent implements OnInit, OnDestroy {
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9]+/g, '_')
       .replace(/^_+|_+$/g, '') || 'municipio';
+  }
+
+  private resetEstadoCargaMasiva(): void {
+    this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+    this.cargandoArchivoMasivo = false;
+  }
+
+  private procesarContenidoCsv(contenido: string): void {
+    const texto = contenido.replace(/^[\ufeff]+/, '');
+    const lineas = texto
+      .split(/\r?\n/)
+      .map((linea) => linea.trim())
+      .filter((linea) => linea.length > 0);
+
+    if (!lineas.length) {
+      this.erroresCargaMasiva.push('El archivo está vacío.');
+      return;
+    }
+
+    const separador = this.detectarSeparador(lineas[0]);
+    const encabezados = this.descomponerFila(lineas[0], separador).map((columna) => columna.trim().toLowerCase());
+    const indiceCodigo = encabezados.indexOf('codigo_partida');
+    const indiceDescripcion = encabezados.indexOf('descripcion');
+    const indiceImporte = encabezados.indexOf('importe_devengado');
+
+    if (indiceCodigo === -1 || indiceDescripcion === -1 || indiceImporte === -1) {
+      this.erroresCargaMasiva.push('La cabecera del archivo no coincide con la plantilla esperada.');
+      return;
+    }
+
+    const preview: GastoCargaPreview[] = [];
+
+    for (let i = 1; i < lineas.length; i++) {
+      const columnas = this.descomponerFila(lineas[i], separador);
+      if (columnas.every((valor) => valor.trim() === '')) {
+        continue;
+      }
+
+      const codigo = columnas[indiceCodigo]?.trim() ?? '';
+      const descripcion = columnas[indiceDescripcion]?.trim() ?? '';
+      const importeTexto = columnas[indiceImporte]?.trim() ?? '';
+      const errores: string[] = [];
+
+      if (!codigo) {
+        errores.push('Código de partida faltante.');
+      }
+
+      if (!descripcion) {
+        errores.push('Descripción faltante.');
+      }
+
+      let importe: number | null = null;
+
+      if (importeTexto) {
+        importe = this.convertirAImporte(importeTexto);
+        if (importe === null) {
+          errores.push('Importe inválido.');
+        }
+      } else {
+        errores.push('Importe faltante.');
+      }
+
+      preview.push({
+        fila: i + 1,
+        codigo,
+        descripcion,
+        importeTexto,
+        importe,
+        errores,
+      });
+    }
+
+    if (!preview.length) {
+      this.erroresCargaMasiva.push('No se detectaron filas con datos en el archivo.');
+      return;
+    }
+
+    this.previsualizacionMasiva = preview;
+  }
+
+  private detectarSeparador(linea: string): string {
+    const candidatos: Array<{ separador: string; conteo: number }> = [
+      { separador: ';', conteo: (linea.match(/;/g) ?? []).length },
+      { separador: ',', conteo: (linea.match(/,/g) ?? []).length },
+      { separador: '\t', conteo: (linea.match(/\t/g) ?? []).length },
+    ];
+
+    const mejor = candidatos.reduce((previo, actual) => (actual.conteo > previo.conteo ? actual : previo));
+    return mejor.conteo > 0 ? mejor.separador : ',';
+  }
+
+  private descomponerFila(linea: string, separador: string): string[] {
+    const resultado: string[] = [];
+    let actual = '';
+    let dentroDeComillas = false;
+    const caracterSeparador = separador === '\t' ? '\t' : separador;
+
+    for (let i = 0; i < linea.length; i++) {
+      const caracter = linea[i];
+
+      if (caracter === '"') {
+        const siguiente = linea[i + 1];
+        if (dentroDeComillas && siguiente === '"') {
+          actual += '"';
+          i++;
+        } else {
+          dentroDeComillas = !dentroDeComillas;
+        }
+        continue;
+      }
+
+      if (caracter === caracterSeparador && !dentroDeComillas) {
+        resultado.push(actual);
+        actual = '';
+        continue;
+      }
+
+      if (!dentroDeComillas && (caracter === '\r' || caracter === '\n')) {
+        continue;
+      }
+
+      actual += caracter;
+    }
+
+    resultado.push(actual);
+    return resultado;
+  }
+
+  private convertirAImporte(valor: string): number | null {
+    const texto = valor.trim();
+    if (!texto) {
+      return null;
+    }
+
+    const sinEspacios = texto.replace(/\s+/g, '');
+    const ultimaComa = sinEspacios.lastIndexOf(',');
+    const ultimoPunto = sinEspacios.lastIndexOf('.');
+    let normalizado = sinEspacios;
+
+    if (ultimaComa > -1 && ultimoPunto > -1) {
+      if (ultimaComa > ultimoPunto) {
+        normalizado = normalizado.replace(/\./g, '').replace(/,/g, '.');
+      } else {
+        normalizado = normalizado.replace(/,/g, '');
+      }
+    } else if (ultimaComa > -1) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
+    const numero = Number(normalizado);
+    return Number.isFinite(numero) ? numero : null;
   }
 
   private persistirPeriodoSeleccionado(periodo: { ejercicio: number; mes: number } | null): void {
