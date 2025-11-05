@@ -39,6 +39,19 @@ interface PartidaDisplay {
   nivel: number;
 }
 
+interface RecursoCargaPreview {
+  fila: number;
+  codigo: string;
+  descripcion: string;
+  importeTexto: string;
+  importe: number | null;
+  contribuyentesTexto: string;
+  contribuyentes: number | null;
+  pagaronTexto: string;
+  pagaron: number | null;
+  errores: string[];
+}
+
 @Component({
   selector: 'app-recursos',
   standalone: true,
@@ -76,6 +89,13 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
   modalVisible = false;
+
+  vistaActual: 'manual' | 'masiva' = 'manual';
+  readonly plantillaRecursosCsvUrl = 'assets/plantillas/plantilla-carga-recursos.csv';
+  archivoMasivoSeleccionado: File | null = null;
+  previsualizacionMasiva: RecursoCargaPreview[] = [];
+  erroresCargaMasiva: string[] = [];
+  cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
@@ -211,8 +231,85 @@ export class RecursosComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
+  get previsualizacionMasivaConErrores(): boolean {
+    return this.previsualizacionMasiva.some((fila) => fila.errores.length > 0);
+  }
+
   volverAlInicio(): void {
     this.router.navigate(['/home']);
+  }
+
+  cambiarVista(vista: 'manual' | 'masiva'): void {
+    if (this.vistaActual === vista) {
+      return;
+    }
+
+    this.vistaActual = vista;
+  }
+
+  onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
+    const target = event.target as HTMLInputElement | null;
+    const archivo = target?.files?.[0] ?? null;
+
+    this.resetEstadoCargaMasiva();
+    this.archivoMasivoSeleccionado = null;
+
+    if (!archivo) {
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    this.archivoMasivoSeleccionado = archivo;
+
+    if (!archivo.name.toLowerCase().endsWith('.csv')) {
+      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .csv.');
+      return;
+    }
+
+    this.cargandoArchivoMasivo = true;
+
+    const lector = new FileReader();
+    lector.onload = () => {
+      this.cargandoArchivoMasivo = false;
+      const contenido = typeof lector.result === 'string' ? lector.result : '';
+
+      if (!contenido) {
+        this.erroresCargaMasiva.push('No pudimos leer el archivo seleccionado.');
+        return;
+      }
+
+      this.procesarContenidoCsv(contenido);
+    };
+
+    lector.onerror = () => {
+      this.cargandoArchivoMasivo = false;
+      this.erroresCargaMasiva.push('Ocurrió un error al leer el archivo. Intentá nuevamente.');
+    };
+
+    lector.readAsText(archivo, 'utf-8');
+  }
+
+  limpiarArchivoMasiva(input?: HTMLInputElement): void {
+    if (input) {
+      input.value = '';
+    }
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+  }
+
+  simularEnvioMasivo(): void {
+    if (!this.previsualizacionMasiva.length || this.previsualizacionMasivaConErrores || this.cargandoArchivoMasivo) {
+      return;
+    }
+
+    this.mostrarAlerta(
+      'Carga masiva pendiente de integración',
+      'Cuando el servicio de backend esté disponible enviaremos estos datos a OVIF. Mientras tanto, asegurate de que el archivo sea correcto.',
+      'info'
+    );
   }
 
   onSubmitGuardar(): void {
@@ -584,6 +681,228 @@ export class RecursosComponent implements OnInit, OnDestroy {
     }
 
     const normalizado = String(valor).replace(',', '.');
+    const numero = Number(normalizado);
+    return Number.isFinite(numero) ? numero : null;
+  }
+
+  private resetEstadoCargaMasiva(): void {
+    this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+    this.cargandoArchivoMasivo = false;
+  }
+
+  private procesarContenidoCsv(contenido: string): void {
+    this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+
+    const texto = contenido.replace(/^[\ufeff]+/, '');
+    const lineas = texto
+      .split(/\r?\n/)
+      .map((linea) => linea.trim())
+      .filter((linea) => linea.length > 0);
+
+    if (!lineas.length) {
+      this.erroresCargaMasiva.push('El archivo está vacío.');
+      return;
+    }
+
+    const separador = this.detectarSeparador(lineas[0]);
+    const encabezados = this.descomponerFila(lineas[0], separador).map((columna) => columna.trim().toLowerCase());
+    const indiceCodigo = encabezados.indexOf('codigo_partida');
+    const indiceDescripcion = encabezados.indexOf('descripcion');
+    const indiceImporte = encabezados.indexOf('importe_percibido');
+    const indiceContribuyentes = encabezados.indexOf('total_contribuyentes');
+    const indicePagaron = encabezados.indexOf('contribuyentes_pagaron');
+
+    if (
+      indiceCodigo === -1 ||
+      indiceDescripcion === -1 ||
+      indiceImporte === -1 ||
+      indiceContribuyentes === -1 ||
+      indicePagaron === -1
+    ) {
+      this.erroresCargaMasiva.push('La cabecera del archivo no coincide con la plantilla esperada.');
+      return;
+    }
+
+    const preview: RecursoCargaPreview[] = [];
+
+    for (let i = 1; i < lineas.length; i++) {
+      const columnas = this.descomponerFila(lineas[i], separador);
+      if (columnas.every((valor) => valor.trim() === '')) {
+        continue;
+      }
+
+      const codigoTexto = columnas[indiceCodigo]?.trim() ?? '';
+      const descripcion = columnas[indiceDescripcion]?.trim() ?? '';
+      const importeTexto = columnas[indiceImporte]?.trim() ?? '';
+      const contribuyentesTexto = columnas[indiceContribuyentes]?.trim() ?? '';
+      const pagaronTexto = columnas[indicePagaron]?.trim() ?? '';
+
+      const errores: string[] = [];
+      const codigoNumerico = Number(codigoTexto);
+      const partida = this.partidasPlanas.find((partidaDisplay) => {
+        if (codigoTexto === '') {
+          return false;
+        }
+        if (Number.isFinite(codigoNumerico)) {
+          return partidaDisplay.node.codigo === codigoNumerico;
+        }
+        return String(partidaDisplay.node.codigo) === codigoTexto;
+      })?.node;
+
+      if (!codigoTexto) {
+        errores.push('Código de partida faltante.');
+      } else if (!partida) {
+        errores.push('Código de partida no encontrado en el período seleccionado.');
+      }
+
+      if (!descripcion) {
+        errores.push('Descripción faltante.');
+      }
+
+      let importe: number | null = null;
+      if (importeTexto) {
+        importe = this.convertirAImporte(importeTexto);
+        if (importe === null) {
+          errores.push('Importe inválido.');
+        } else if (importe < 0) {
+          errores.push('El importe no puede ser negativo.');
+        }
+      } else {
+        errores.push('Importe faltante.');
+      }
+
+      const requiereDetalle = partida ? !partida.soloImporte : false;
+
+      let contribuyentes: number | null = null;
+      if (contribuyentesTexto) {
+        const valor = this.convertirAImporte(contribuyentesTexto);
+        if (valor === null) {
+          errores.push('Total de contribuyentes inválido.');
+        } else if (!Number.isInteger(valor) || valor < 0) {
+          errores.push('Total de contribuyentes debe ser un entero positivo.');
+        } else {
+          contribuyentes = valor;
+        }
+      }
+
+      let pagaron: number | null = null;
+      if (pagaronTexto) {
+        const valor = this.convertirAImporte(pagaronTexto);
+        if (valor === null) {
+          errores.push('Contribuyentes que pagaron inválido.');
+        } else if (!Number.isInteger(valor) || valor < 0) {
+          errores.push('Contribuyentes que pagaron debe ser un entero positivo.');
+        } else {
+          pagaron = valor;
+        }
+      }
+
+      if (importe !== null && importe > 0 && requiereDetalle) {
+        if (contribuyentes === null) {
+          errores.push('Ingresá el total de contribuyentes.');
+        }
+        if (pagaron === null) {
+          errores.push('Ingresá los contribuyentes que pagaron.');
+        }
+      }
+
+      if (contribuyentes !== null && pagaron !== null && pagaron > contribuyentes) {
+        errores.push('Los contribuyentes que pagaron no pueden superar al total informado.');
+      }
+
+      preview.push({
+        fila: i + 1,
+        codigo: codigoTexto || (Number.isFinite(codigoNumerico) ? String(codigoNumerico) : ''),
+        descripcion,
+        importeTexto,
+        importe,
+        contribuyentesTexto,
+        contribuyentes,
+        pagaronTexto,
+        pagaron,
+        errores,
+      });
+    }
+
+    if (!preview.length) {
+      this.erroresCargaMasiva.push('No se detectaron filas con datos en el archivo.');
+      return;
+    }
+
+    this.previsualizacionMasiva = preview;
+  }
+
+  private detectarSeparador(linea: string): string {
+    const candidatos: Array<{ separador: string; conteo: number }> = [
+      { separador: ';', conteo: (linea.match(/;/g) ?? []).length },
+      { separador: ',', conteo: (linea.match(/,/g) ?? []).length },
+      { separador: '\t', conteo: (linea.match(/\t/g) ?? []).length },
+    ];
+
+    const mejor = candidatos.reduce((previo, actual) => (actual.conteo > previo.conteo ? actual : previo));
+    return mejor.conteo > 0 ? mejor.separador : ',';
+  }
+
+  private descomponerFila(linea: string, separador: string): string[] {
+    const resultado: string[] = [];
+    let actual = '';
+    let dentroDeComillas = false;
+    const caracterSeparador = separador === '\t' ? '\t' : separador;
+
+    for (let i = 0; i < linea.length; i++) {
+      const caracter = linea[i];
+
+      if (caracter === '"') {
+        const siguiente = linea[i + 1];
+        if (dentroDeComillas && siguiente === '"') {
+          actual += '"';
+          i++;
+        } else {
+          dentroDeComillas = !dentroDeComillas;
+        }
+        continue;
+      }
+
+      if (caracter === caracterSeparador && !dentroDeComillas) {
+        resultado.push(actual);
+        actual = '';
+        continue;
+      }
+
+      if (!dentroDeComillas && (caracter === '\r' || caracter === '\n')) {
+        continue;
+      }
+
+      actual += caracter;
+    }
+
+    resultado.push(actual);
+    return resultado;
+  }
+
+  private convertirAImporte(valor: string): number | null {
+    const texto = valor.trim();
+    if (!texto) {
+      return null;
+    }
+
+    const sinEspacios = texto.replace(/\s+/g, '');
+    const ultimaComa = sinEspacios.lastIndexOf(',');
+    const ultimoPunto = sinEspacios.lastIndexOf('.');
+    let normalizado = sinEspacios;
+
+    if (ultimaComa > -1 && ultimoPunto > -1) {
+      if (ultimaComa > ultimoPunto) {
+        normalizado = normalizado.replace(/\./g, '').replace(/,/g, '.');
+      } else {
+        normalizado = normalizado.replace(/,/g, '');
+      }
+    } else if (ultimaComa > -1) {
+      normalizado = normalizado.replace(/,/g, '.');
+    }
+
     const numero = Number(normalizado);
     return Number.isFinite(numero) ? numero : null;
   }
