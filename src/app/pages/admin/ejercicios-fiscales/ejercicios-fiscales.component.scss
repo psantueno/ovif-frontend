@@ -10,7 +10,7 @@
 
 .admin-card {
   width: 100%;
-  max-width: 900px;
+  max-width: 1000px;
   background: var(--color-surface);
   padding: 1.75rem 2rem;
   border-radius: 12px;
@@ -152,12 +152,12 @@ mat-card-header {
 .ejercicios-table {
   width: 100%;
   min-width: 620px;
-  table-layout: fixed;
+  table-layout: auto;
   border-collapse: collapse;
 
   th,
   td {
-    padding: 0.5rem;
+    padding: 0;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
@@ -168,34 +168,46 @@ mat-card-header {
     border-bottom: 2px solid rgba(var(--color-primary-rgb), 0.2);
     text-transform: uppercase;
     font-size: 0.85rem;
+    text-align: center;
   }
 
   td {
     font-size: 0.95rem;
     color: var(--color-on-surface);
     overflow: visible;
+    text-align: center;
   }
 
   th.mat-column-ejercicio,
   td.mat-column-ejercicio {
-    width: 18%;
+    width: 7%;
   }
 
   th.mat-column-mes,
   td.mat-column-mes {
-    width: 24%;
+    width: 7%;
+  }
+
+  th.mat-column-convenio,
+  td.mat-column-convenio {
+    width: 15%;
+  }
+
+  th.mat-column-pauta,
+  td.mat-column-pauta {
+    width: 15%;
   }
 
   th.mat-column-fecha_inicio,
   td.mat-column-fecha_inicio,
   th.mat-column-fecha_fin,
   td.mat-column-fecha_fin {
-    width: 22%;
+    width: 10%;
   }
 
   th.mat-column-acciones,
   td.mat-column-acciones {
-    width: 14%;
+    width: 10%;
     text-align: center;
   }
 

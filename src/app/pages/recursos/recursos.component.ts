@@ -6,7 +6,13 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, take } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
-import { MunicipioService, PartidaRecursoResponse, PartidaRecursoUpsertPayload } from '../../services/municipio.service';
+import {
+  MunicipioService,
+  PartidaRecursoResponse,
+  PartidaRecursoUpsertPayload,
+  PeriodoSeleccionadoMunicipio
+} from '../../services/municipio.service';
+import { EjerciciosService } from '../../services/ejercicios.service';
 
 type MensajeTipo = 'info' | 'error';
 type CampoEditable = 'importe' | 'contribuyentes' | 'pagaron';
@@ -63,6 +69,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   private readonly municipioService = inject(MunicipioService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly ejerciciosService = inject(EjerciciosService);
 
   readonly meses = [
     'Enero',
@@ -83,7 +90,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   municipioNombre = '';
   ejercicioSeleccionado?: number;
   mesSeleccionado?: number;
-  periodoSeleccionado: { ejercicio: number; mes: number } | null = null;
+  periodoSeleccionado: PeriodoSeleccionadoMunicipio | null = null;
 
   mesCerrado = false;
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
@@ -134,9 +141,10 @@ export class RecursosComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const [ejercicioStr, mesStr] = ejercicioMes.split('_');
-      const ejercicio = Number(ejercicioStr);
-      const mes = Number(mesStr);
+      const partes = ejercicioMes.split('_');
+      const parsedValor = this.municipioService.parsePeriodoValor(ejercicioMes);
+      const ejercicio = parsedValor?.ejercicio ?? Number(partes[0]);
+      const mes = parsedValor?.mes ?? Number(partes[1]);
 
       if (!Number.isInteger(ejercicio) || !Number.isInteger(mes) || mes < 1 || mes > 12) {
         this.mostrarAlerta(
@@ -150,8 +158,52 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
-      this.periodoSeleccionado = { ejercicio, mes };
+      const periodoGuardado = this.municipioService.getPeriodoSeleccionado(this.municipioActual.municipio_id);
+      const coincidePeriodoGuardado =
+        periodoGuardado?.ejercicio === ejercicio && periodoGuardado?.mes === mes;
+      const tipoPauta = parsedValor?.tipo_pauta ?? (coincidePeriodoGuardado ? periodoGuardado?.tipo_pauta ?? null : null);
+      const pautaId = parsedValor?.pauta_id ?? (coincidePeriodoGuardado ? periodoGuardado?.pauta_id ?? null : null);
+      const base: PeriodoSeleccionadoMunicipio = coincidePeriodoGuardado && periodoGuardado
+        ? { ...periodoGuardado }
+        : {
+            ejercicio,
+            mes
+          };
+      const valor =
+        this.municipioService.buildPeriodoValor({
+          ...base,
+          ejercicio,
+          mes,
+          pauta_id: pautaId ?? undefined,
+          tipo_pauta: tipoPauta ?? undefined
+        }) ?? ejercicioMes;
+      const modulos =
+        (base.modulos && base.modulos.length ? base.modulos : null) ??
+        (tipoPauta ? this.ejerciciosService.mapTipoPautaToModulos(tipoPauta) : null);
+      const tipoPautaLabel =
+        base.tipo_pauta_label ??
+        (tipoPauta ? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) : null);
+
+      this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes, {
+        ...base,
+        pauta_id: pautaId ?? null,
+        tipo_pauta: tipoPauta ?? null,
+        tipo_pauta_label: tipoPautaLabel ?? null,
+        valor,
+        modulos
+      });
+
       this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
+
+      if (!this.esModuloPermitido()) {
+        this.mostrarAlerta(
+          'Pauta no habilitada',
+          'El período seleccionado no permite cargar Recursos. Elegí otra opción desde el inicio.',
+          'info'
+        );
+        this.router.navigate(['/home']);
+        return;
+      }
 
       this.cargarPartidas();
     });
@@ -572,8 +624,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     let periodo = this.periodoSeleccionado;
 
     if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
-      periodo = { ejercicio: this.ejercicioSeleccionado, mes: this.mesSeleccionado };
-      this.periodoSeleccionado = periodo;
+      periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
       this.persistirPeriodoSeleccionado(periodo);
     }
 
@@ -600,10 +651,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
           this.actualizarBaseCambios();
           this.cargandoPartidas = false;
 
-          if (!this.periodoSeleccionado) {
-            this.periodoSeleccionado = { ejercicio, mes };
-          }
-
+          this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
           this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
         },
         error: () => {
@@ -1050,7 +1098,65 @@ export class RecursosComponent implements OnInit, OnDestroy {
       .replace(/^_+|_+$/g, '') || 'municipio';
   }
 
-  private persistirPeriodoSeleccionado(periodo: { ejercicio: number; mes: number } | null): void {
+  private esModuloPermitido(): boolean {
+    const tipo = this.periodoSeleccionado?.tipo_pauta ?? null;
+    if (!tipo) {
+      return true;
+    }
+
+    let modulos = this.periodoSeleccionado?.modulos ?? null;
+    if (!modulos || modulos.length === 0) {
+      modulos = this.ejerciciosService.mapTipoPautaToModulos(tipo);
+    }
+
+    if (!modulos || modulos.length === 0) {
+      return true;
+    }
+
+    return modulos.includes('recursos');
+  }
+
+  private sincronizarPeriodoSeleccionado(
+    ejercicio: number,
+    mes: number,
+    extra?: Partial<PeriodoSeleccionadoMunicipio>
+  ): PeriodoSeleccionadoMunicipio {
+    const previo = this.periodoSeleccionado ?? {};
+    const combinado: PeriodoSeleccionadoMunicipio = {
+      ...previo,
+      ...extra,
+      ejercicio,
+      mes
+    };
+
+    const tipo = combinado.tipo_pauta ?? null;
+    if (tipo) {
+      let modulos = combinado.modulos ?? null;
+      if (!modulos || modulos.length === 0) {
+        modulos = this.ejerciciosService.mapTipoPautaToModulos(tipo);
+      }
+      combinado.modulos = modulos && modulos.length ? modulos : null;
+      combinado.tipo_pauta_label =
+        combinado.tipo_pauta_label ??
+        this.ejerciciosService.obtenerEtiquetaTipoPauta(tipo);
+    }
+
+    const valorPreferido = extra?.valor ?? combinado.valor;
+    combinado.valor =
+      valorPreferido ??
+      this.municipioService.buildPeriodoValor({
+        ejercicio,
+        mes,
+        pauta_id: combinado.pauta_id ?? undefined,
+        tipo_pauta: tipo ?? undefined
+      }) ??
+      `${ejercicio}_${mes}`;
+
+    this.periodoSeleccionado = combinado;
+    return combinado;
+  }
+
+  private persistirPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
     const municipioId = this.municipioActual?.municipio_id;
     if (!municipioId) {
       return;
@@ -1061,7 +1167,26 @@ export class RecursosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
+    const valor =
+      periodo.valor ??
+      this.municipioService.buildPeriodoValor({
+        ejercicio: periodo.ejercicio,
+        mes: periodo.mes,
+        pauta_id: periodo.pauta_id ?? undefined,
+        tipo_pauta: periodo.tipo_pauta ?? undefined
+      });
+    let modulos = periodo.modulos ?? null;
+    if ((!modulos || modulos.length === 0) && periodo.tipo_pauta) {
+      modulos = this.ejerciciosService.mapTipoPautaToModulos(periodo.tipo_pauta);
+    }
+
+    const payload: PeriodoSeleccionadoMunicipio = {
+      ...periodo,
+      valor: valor ?? periodo.valor,
+      modulos: modulos && modulos.length ? modulos : null
+    };
+
+    this.municipioService.setPeriodoSeleccionado(municipioId, payload);
   }
 
   private flattenPartidas(

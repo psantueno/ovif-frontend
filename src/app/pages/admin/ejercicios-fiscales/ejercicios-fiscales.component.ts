@@ -53,7 +53,7 @@ export class EjerciciosFiscalesComponent implements OnInit {
     { label: 'Ejercicios fiscales' }
   ];
 
-  readonly displayedColumns = ['ejercicio', 'mes', 'fecha_inicio', 'fecha_fin', 'acciones'];
+  readonly displayedColumns = ['ejercicio', 'mes', 'convenio', 'pauta', 'fecha_inicio', 'fecha_fin', 'acciones'];
 
   readonly meses: MesOption[] = [
     { value: 1, label: 'Enero' },
@@ -104,6 +104,16 @@ export class EjerciciosFiscalesComponent implements OnInit {
   mesLabel(mes: number): string {
     const option = this.meses.find((m) => m.value === mes);
     return option ? option.label : `${mes}`;
+  }
+
+  formatCampo(valor: string | number | boolean | null | undefined): string {
+    if (valor === null || valor === undefined || valor === '') {
+      return '—';
+    }
+    if (typeof valor === 'boolean') {
+      return valor ? 'Sí' : 'No';
+    }
+    return String(valor);
   }
 
   eliminarEjercicio(ejercicio: EjercicioMes): void {

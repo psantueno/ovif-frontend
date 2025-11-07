@@ -28,21 +28,40 @@
         </option>
       </select>
     </div>
+    <div class="pauta-summary" *ngIf="ejercicioMes || periodoActivo">
+      <span class="pauta-badge" *ngIf="pautaActivaLabel">{{ pautaActivaLabel }}</span>
+      <p class="pauta-modulos">{{ modulosHabilitadosLabel }}</p>
+    </div>
   </div>
 
   <!-- Acciones principales -->
   <div class="home-actions">
-    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!ejercicioMes">
+    <button
+      type="button"
+      class="home-card"
+      (click)="irA('gastos')"
+      [disabled]="!isModuloHabilitado('gastos')"
+    >
       <mat-icon>payments</mat-icon>
       <span>Gastos</span>
     </button>
 
-    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!ejercicioMes">
+    <button
+      type="button"
+      class="home-card"
+      (click)="irA('recursos')"
+      [disabled]="!isModuloHabilitado('recursos')"
+    >
       <mat-icon>savings</mat-icon>
       <span>Recursos</span>
     </button>
 
-    <button type="button" class="home-card" (click)="irA('personal')" [disabled]="!ejercicioMes">
+    <button
+      type="button"
+      class="home-card"
+      (click)="irA('personal')"
+      [disabled]="!isModuloHabilitado('personal')"
+    >
       <mat-icon>groups</mat-icon>
       <span>Personal</span>
     </button>

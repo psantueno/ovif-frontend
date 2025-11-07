@@ -1,13 +1,24 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MunicipioService } from '../../services/municipio.service';
+import { MunicipioService, PeriodoSeleccionadoMunicipio } from '../../services/municipio.service';
 import { take } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { EjerciciosService } from '../../services/ejercicios.service';
+import { ModuloPauta } from '../../models/pauta.model';
+
+interface EjercicioPautaOption {
+  valor: string;
+  texto: string;
+  metadata: PeriodoSeleccionadoMunicipio & {
+    convenio?: string | number | boolean | null;
+    pauta?: string | number | boolean | null;
+  };
+}
 
 @Component({
   selector: 'app-home',
@@ -19,11 +30,14 @@ import Swal from 'sweetalert2';
 export class HomeComponent implements OnInit, OnDestroy {
   municipioSeleccionado: any = null;
   ejercicioMes: string = '';
-  ejerciciosMeses: any[] = [];
+  ejerciciosMeses: EjercicioPautaOption[] = [];
   cargando = false;
-  private periodoPersistido: { ejercicio: number; mes: number } | null = null;
+  modulosHabilitados: ModuloPauta[] = [];
+  periodoActivo: PeriodoSeleccionadoMunicipio | null = null;
+  private periodoPersistido: PeriodoSeleccionadoMunicipio | null = null;
   private municipioSub?: Subscription;
   private sinMunicipioAlertado = false;
+  private readonly ejerciciosService = inject(EjerciciosService);
 
   constructor(private router: Router, private readonly municipioService: MunicipioService) {}
 
@@ -31,6 +45,8 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.municipioSub = this.municipioService.municipio$.subscribe((municipio) => {
       this.municipioSeleccionado = municipio;
       this.periodoPersistido = null;
+      this.periodoActivo = null;
+      this.modulosHabilitados = [];
       this.ejerciciosMeses = [];
       this.ejercicioMes = '';
 
@@ -51,6 +67,18 @@ export class HomeComponent implements OnInit, OnDestroy {
 
       this.sinMunicipioAlertado = false;
       this.periodoPersistido = this.municipioService.getPeriodoSeleccionado(municipio.municipio_id);
+      if (this.periodoPersistido) {
+        this.periodoActivo = { ...this.periodoPersistido };
+        this.modulosHabilitados = this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta);
+        this.ejercicioMes =
+          this.periodoPersistido.valor ??
+          this.municipioService.buildPeriodoValor(this.periodoPersistido) ??
+          '';
+      } else {
+        this.periodoActivo = null;
+        this.modulosHabilitados = [];
+        this.ejercicioMes = '';
+      }
       this.cargarEjerciciosDisponibles(municipio.municipio_id);
     });
   }
@@ -59,29 +87,35 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.cargando = true;
     this.ejerciciosMeses = [];
     const periodoGuardado = this.periodoPersistido;
-    this.ejercicioMes = periodoGuardado ? `${periodoGuardado.ejercicio}_${periodoGuardado.mes}` : '';
+    this.ejercicioMes =
+      periodoGuardado?.valor ?? this.municipioService.buildPeriodoValor(periodoGuardado) ?? '';
 
     this.municipioService
       .getEjerciciosDisponibles(municipioId)
       .pipe(take(1))
       .subscribe({
         next: (ejercicios) => {
-          this.ejerciciosMeses = ejercicios.map((item: any) => ({
-            valor: `${item.ejercicio}_${item.mes}`,
-            texto: `${item.ejercicio} - ${this.obtenerNombreMes(item.mes)} (cierra el ${this.formatearFecha(item.fecha_fin || item.fecha_fin_oficial)})`,
-            metadata: item,
-          }));
+          this.ejerciciosMeses = ejercicios.map((item: any) => this.mapPeriodoOption(item));
 
           if (periodoGuardado) {
-            const valorPersistido = `${periodoGuardado.ejercicio}_${periodoGuardado.mes}`;
-            const disponible = this.ejerciciosMeses.some((item) => item.valor === valorPersistido);
+            const valorPersistido =
+              periodoGuardado.valor ??
+              this.municipioService.buildPeriodoValor(periodoGuardado) ??
+              '';
+            const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valorPersistido);
 
-            if (disponible) {
+            if (seleccionado) {
               this.ejercicioMes = valorPersistido;
-              this.periodoPersistido = periodoGuardado;
+              this.periodoPersistido = { ...seleccionado.metadata };
+              this.periodoActivo = { ...seleccionado.metadata };
+              this.modulosHabilitados =
+                this.periodoActivo.modulos ??
+                this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta);
             } else {
               this.ejercicioMes = '';
               this.periodoPersistido = null;
+              this.periodoActivo = null;
+              this.modulosHabilitados = [];
               if (this.municipioSeleccionado?.municipio_id) {
                 this.municipioService.clearPeriodoSeleccionado(this.municipioSeleccionado.municipio_id);
               }
@@ -89,6 +123,8 @@ export class HomeComponent implements OnInit, OnDestroy {
           } else {
             this.ejercicioMes = '';
             this.periodoPersistido = null;
+            this.periodoActivo = null;
+            this.modulosHabilitados = [];
           }
 
           if (this.ejerciciosMeses.length === 0) {
@@ -135,20 +171,6 @@ export class HomeComponent implements OnInit, OnDestroy {
     return meses[Math.max(0, Math.min(mes - 1, meses.length - 1))];
   }
 
-  private formatearFecha(fecha: string | null): string {
-    if (!fecha) {
-      return 'Sin fecha';
-    }
-
-    const parsed = new Date(fecha);
-    if (Number.isNaN(parsed.getTime())) {
-      return fecha;
-    }
-
-    return parsed.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-  }
-
-
   onPeriodoChange(valor: string): void {
     this.ejercicioMes = valor;
 
@@ -159,22 +181,26 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     if (!valor) {
       this.periodoPersistido = null;
+      this.periodoActivo = null;
+      this.modulosHabilitados = [];
       this.municipioService.clearPeriodoSeleccionado(municipioId);
       return;
     }
 
-    const [ejercicioStr, mesStr] = valor.split('_');
-    const ejercicio = Number(ejercicioStr);
-    const mes = Number(mesStr);
-
-    if (Number.isInteger(ejercicio) && Number.isInteger(mes)) {
-      const periodo = { ejercicio, mes };
-      this.periodoPersistido = periodo;
-      this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
-    } else {
+    const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valor);
+    if (!seleccionado) {
       this.periodoPersistido = null;
+      this.periodoActivo = null;
+      this.modulosHabilitados = [];
       this.municipioService.clearPeriodoSeleccionado(municipioId);
+      return;
     }
+
+    const periodo = { ...seleccionado.metadata };
+    this.periodoPersistido = periodo;
+    this.periodoActivo = periodo;
+    this.modulosHabilitados = periodo.modulos ?? this.obtenerModulosPermitidos(periodo.tipo_pauta);
+    this.persistirPeriodoActual();
   }
 
   ngOnDestroy(): void {
@@ -183,29 +209,31 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   private persistirPeriodoActual(): void {
     const municipioId = this.municipioSeleccionado?.municipio_id;
-    if (!municipioId || !this.ejercicioMes) {
-      if (municipioId) {
-        this.periodoPersistido = null;
-        this.municipioService.clearPeriodoSeleccionado(municipioId);
-      }
+    if (!municipioId) {
       return;
     }
 
-    const [ejercicioStr, mesStr] = this.ejercicioMes.split('_');
-    const ejercicio = Number(ejercicioStr);
-    const mes = Number(mesStr);
-
-    if (Number.isInteger(ejercicio) && Number.isInteger(mes)) {
-      const periodo = { ejercicio, mes };
-      this.periodoPersistido = periodo;
-      this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
+    if (!this.periodoActivo) {
+      this.periodoPersistido = null;
+      this.municipioService.clearPeriodoSeleccionado(municipioId);
+      return;
     }
+
+    const valor = this.periodoActivo.valor ?? this.municipioService.buildPeriodoValor(this.periodoActivo);
+    const periodo: PeriodoSeleccionadoMunicipio = {
+      ...this.periodoActivo,
+      valor: valor ?? undefined,
+      modulos: this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta)
+    };
+
+    this.periodoPersistido = periodo;
+    this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
   }
 
   irA(modulo: string) {
     this.persistirPeriodoActual();
 
-    if (!this.ejercicioMes) {
+    if (!this.ejercicioMes || !this.periodoActivo) {
       Swal.fire({
         icon: 'info',
         title: 'Selecciona un periodo',
@@ -215,16 +243,29 @@ export class HomeComponent implements OnInit, OnDestroy {
       });
       return;
     }
+
+    if (this.esModuloControlado(modulo) && !this.isModuloHabilitado(modulo)) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Pauta no habilitada',
+        text: 'La pauta seleccionada no habilita este módulo. Elegí otra combinación.',
+        confirmButtonText: 'Aceptar',
+        confirmButtonColor: '#3085d6',
+      });
+      return;
+    }
+
+    const valor = this.periodoActivo.valor ?? this.ejercicioMes;
     // 🚀 Lógica de navegación según módulo
     this.router.navigate([`/${modulo}`], {
-      queryParams: { ejercicioMes: this.ejercicioMes }
+      queryParams: { ejercicioMes: valor }
     });
   }
 
   async cerrarMes() {
     this.persistirPeriodoActual();
 
-    if (!this.ejercicioMes) {
+    if (!this.ejercicioMes || !this.periodoActivo) {
       await Swal.fire({
         icon: 'info',
         title: 'Selecciona un periodo',
@@ -250,6 +291,108 @@ export class HomeComponent implements OnInit, OnDestroy {
     if (isConfirmed) {
       console.log('Cerrar mes:', this.ejercicioMes);
       // 🚀 Acá iría la llamada al backend
+    }
+  }
+
+  get pautaActivaLabel(): string | null {
+    return this.periodoActivo?.tipo_pauta_label ?? this.periodoActivo?.pauta_descripcion ?? null;
+  }
+
+  get modulosHabilitadosLabel(): string {
+    if (!this.ejercicioMes) {
+      return 'Seleccioná un periodo para ver los módulos habilitados.';
+    }
+    const modulos = this.modulosHabilitados;
+    if (!modulos || modulos.length === 0) {
+      return 'Todos los módulos están habilitados para este periodo.';
+    }
+    return `Módulos habilitados: ${modulos.map((mod) => this.formatearNombreModulo(mod)).join(', ')}`;
+  }
+
+  isModuloHabilitado(modulo: ModuloPauta): boolean {
+    if (!this.ejercicioMes) {
+      return false;
+    }
+    const modulos = this.modulosHabilitados;
+    if (!modulos || modulos.length === 0) {
+      return true;
+    }
+    return modulos.includes(modulo);
+  }
+
+  private obtenerModulosPermitidos(tipo: string | null | undefined): ModuloPauta[] {
+    return this.ejerciciosService.mapTipoPautaToModulos(tipo ?? null);
+  }
+
+  private esModuloControlado(modulo: string): modulo is ModuloPauta {
+    return modulo === 'gastos' || modulo === 'recursos' || modulo === 'personal' || modulo === 'recaudaciones';
+  }
+
+  private mapPeriodoOption(item: any): EjercicioPautaOption {
+    const ejercicio = Number(item?.ejercicio) || 0;
+    const mes = Number(item?.mes) || 0;
+    const convenioNombre =
+      item?.convenio_nombre ??
+      item?.Convenio?.nombre ??
+      item?.convenio ??
+      'Convenio sin nombre';
+    const pautaDescripcion =
+      item?.pauta_descripcion ??
+      item?.PautaConvenio?.descripcion ??
+      item?.pauta ??
+      'Pauta sin descripción';
+    const tipoPauta = (item?.tipo_pauta ?? item?.PautaConvenio?.tipo_pauta ?? null) as string | null;
+    const tipoLabel =
+      item?.tipo_pauta_label ??
+      this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) ??
+      pautaDescripcion;
+
+    const metadata: PeriodoSeleccionadoMunicipio = {
+      ejercicio,
+      mes,
+      convenio_id: this.toOptionalNumber(item?.convenio_id ?? item?.Convenio?.id),
+      convenio_nombre: convenioNombre,
+      pauta_id: this.toOptionalNumber(item?.pauta_id ?? item?.PautaConvenio?.id),
+      pauta_descripcion: pautaDescripcion,
+      tipo_pauta: tipoPauta,
+      tipo_pauta_label: tipoLabel,
+      fecha_inicio: item?.fecha_inicio ?? item?.fecha_inicio_oficial ?? null,
+      fecha_fin: item?.fecha_fin ?? item?.fecha_fin_oficial ?? null,
+      modulos: this.obtenerModulosPermitidos(tipoPauta)
+    };
+
+    const valor = this.municipioService.buildPeriodoValor(metadata) ?? `${ejercicio}_${mes}`;
+    metadata.valor = valor;
+
+    const texto = `${ejercicio} / ${this.obtenerNombreMes(mes)} - Convenio: ${convenioNombre} - Pauta: ${tipoLabel}`;
+
+    return {
+      valor,
+      texto,
+      metadata
+    };
+  }
+
+  private toOptionalNumber(value: any): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const num = Number(value);
+    return Number.isNaN(num) ? null : num;
+  }
+
+  private formatearNombreModulo(modulo: ModuloPauta): string {
+    switch (modulo) {
+      case 'gastos':
+        return 'Gastos';
+      case 'recursos':
+        return 'Recursos';
+      case 'recaudaciones':
+        return 'Recaudaciones';
+      case 'personal':
+        return 'Personal';
+      default:
+        return modulo;
     }
   }
 }

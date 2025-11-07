@@ -58,7 +58,21 @@
           <ng-container matColumnDef="mes">
             <th mat-header-cell *matHeaderCellDef>Mes</th>
             <td mat-cell *matCellDef="let row">
-              {{ row.mes }} - {{ mesLabel(row.mes) }}
+              {{ row.mes }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="convenio">
+            <th mat-header-cell *matHeaderCellDef>Convenio</th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatCampo(row.convenio) }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="pauta">
+            <th mat-header-cell *matHeaderCellDef>Pauta</th>
+            <td mat-cell *matCellDef="let row">
+              {{ formatCampo(row.pauta) }}
             </td>
           </ng-container>
 

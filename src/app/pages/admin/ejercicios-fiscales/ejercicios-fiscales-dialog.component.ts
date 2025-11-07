@@ -16,12 +16,11 @@ import {
   EjerciciosService,
   EjercicioMes,
   CreateEjercicioPayload,
-  UpdateEjercicioPayload
+  UpdateEjercicioPayload,
+  ConvenioOption,
+  PautaConvenioOption,
+  PautaConvenioParametros
 } from '../../../services/ejercicios.service';
-import {
-  ParametrosService,
-  ParametrosEjercicioFiscal
-} from '../../../services/parametros.service';
 
 interface DialogData {
   ejercicio?: EjercicioMes;
@@ -52,6 +51,11 @@ interface MesOption {
 export class EjerciciosFiscalesDialogComponent implements OnInit {
   form!: FormGroup;
   enviando = false;
+  convenios: ConvenioOption[] = [];
+  pautas: PautaConvenioOption[] = [];
+  cargandoConvenios = false;
+  cargandoPautas = false;
+  cargandoParametrosPauta = false;
   readonly meses: MesOption[] = [
     { value: 1, label: 'Enero' },
     { value: 2, label: 'Febrero' },
@@ -68,13 +72,12 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
   ];
 
   private readonly esEdicion: boolean;
-  private parametrosConfig: ParametrosEjercicioFiscal = { cierreDia: 1, mesesOffset: 0 };
   private autoFechasInicializadas = false;
+  selectedPautaParametros: PautaConvenioParametros | null = null;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly ejerciciosService: EjerciciosService,
-    private readonly parametrosService: ParametrosService,
     private readonly dialogRef: MatDialogRef<EjerciciosFiscalesDialogComponent>,
     private readonly destroyRef: DestroyRef,
     @Inject(MAT_DIALOG_DATA) public readonly data: DialogData | null
@@ -96,6 +99,14 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
         this.data?.ejercicio?.mes ?? defaultMes,
         [Validators.required, Validators.min(1), Validators.max(12)]
       ],
+      convenio_id: [
+        this.data?.ejercicio?.convenio_id ?? null,
+        [Validators.required]
+      ],
+      pauta_id: [
+        this.data?.ejercicio?.pauta_id ?? null,
+        [Validators.required]
+      ],
       fecha_inicio: [
         this.data?.ejercicio?.fecha_inicio ? this.toDateInput(this.data.ejercicio.fecha_inicio) : '',
         Validators.required
@@ -109,29 +120,86 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
     if (this.data?.ejercicio) {
       this.form.get('ejercicio')?.disable();
       this.form.get('mes')?.disable();
+      this.form.get('convenio_id')?.disable();
+      this.form.get('pauta_id')?.disable();
     }
+
+    this.setupConvenioListeners();
+    this.setupFechaFinAutoUpdate();
 
     if (!this.esEdicion) {
       this.setupAutoFechas();
-      this.parametrosService
-        .getParametrosEjercicioFiscal()
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
-          next: (config) => {
-            this.parametrosConfig = config;
-            const inicio = this.form.get('fecha_inicio')?.value;
-            if (typeof inicio === 'string' && inicio) {
-              this.actualizarFechaFin(inicio);
-            }
-          },
-          error: () => {
-            const inicio = this.form.get('fecha_inicio')?.value;
-            if (typeof inicio === 'string' && inicio) {
-              this.actualizarFechaFin(inicio);
-            }
-          }
-        });
     }
+
+    this.cargarConvenios();
+  }
+
+  private cargarConvenios(): void {
+    this.cargandoConvenios = true;
+    this.ejerciciosService
+      .listarConvenios()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.cargandoConvenios = false;
+        })
+      )
+      .subscribe({
+        next: (convenios) => {
+          this.convenios = convenios;
+          const convenioCtrl = this.form.get('convenio_id');
+          const preseleccion = this.data?.ejercicio?.convenio_id ?? convenioCtrl?.value;
+          if (preseleccion) {
+            if (!convenioCtrl?.value) {
+              convenioCtrl?.setValue(preseleccion, { emitEvent: false });
+            }
+            this.cargarPautas(Number(preseleccion), this.data?.ejercicio?.pauta_id ?? null);
+          } else if (convenios.length === 1 && !this.esEdicion) {
+            convenioCtrl?.setValue(convenios[0].id);
+          }
+        },
+        error: () => {
+          this.showLoadError('No se pudieron obtener los convenios disponibles.');
+        }
+      });
+  }
+
+  private cargarPautas(convenioId: number, preseleccion?: number | null): void {
+    if (!convenioId) {
+      this.pautas = [];
+      this.form.get('pauta_id')?.reset();
+      this.selectedPautaParametros = null;
+      return;
+    }
+    this.cargandoPautas = true;
+    this.ejerciciosService
+      .listarPautasPorConvenio(convenioId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.cargandoPautas = false;
+        })
+      )
+      .subscribe({
+        next: (pautas) => {
+          this.pautas = pautas;
+          const pautaCtrl = this.form.get('pauta_id');
+          let skipFechaUpdate = false;
+          if (preseleccion) {
+            pautaCtrl?.setValue(preseleccion, { emitEvent: false });
+            skipFechaUpdate = this.esEdicion;
+          } else if (pautas.length === 1 && !this.esEdicion) {
+            pautaCtrl?.setValue(pautas[0].id);
+          }
+          this.syncSelectedPauta(skipFechaUpdate);
+        },
+        error: () => {
+          this.pautas = [];
+          this.form.get('pauta_id')?.reset();
+          this.selectedPautaParametros = null;
+          this.showLoadError('No se pudieron obtener las pautas para el convenio seleccionado.');
+        }
+      });
   }
 
   guardar(): void {
@@ -167,7 +235,9 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
         ejercicio: Number(rawValue.ejercicio),
         mes: Number(rawValue.mes),
         fecha_inicio: rawValue.fecha_inicio,
-        fecha_fin: rawValue.fecha_fin
+        fecha_fin: rawValue.fecha_fin,
+        convenio_id: Number(rawValue.convenio_id),
+        pauta_id: Number(rawValue.pauta_id)
       };
       this.crearEjercicio(payload);
     }
@@ -239,6 +309,92 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
       confirmButtonText: 'Aceptar',
       confirmButtonColor: '#d33'
     });
+  }
+
+  private showLoadError(message: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: 'Error al cargar datos',
+      text: message,
+      confirmButtonText: 'Aceptar',
+      confirmButtonColor: '#d33'
+    });
+  }
+
+  private setupConvenioListeners(): void {
+    const convenioCtrl = this.form?.get('convenio_id');
+    if (!convenioCtrl) {
+      return;
+    }
+    convenioCtrl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((valor) => {
+      const pautaCtrl = this.form.get('pauta_id');
+      if (!valor) {
+        this.pautas = [];
+        pautaCtrl?.reset();
+        this.selectedPautaParametros = null;
+        return;
+      }
+      pautaCtrl?.reset();
+      this.selectedPautaParametros = null;
+      this.cargarPautas(Number(valor));
+    });
+  }
+
+  private setupFechaFinAutoUpdate(): void {
+    const inicioCtrl = this.form?.get('fecha_inicio');
+    const pautaCtrl = this.form?.get('pauta_id');
+    if (pautaCtrl) {
+      pautaCtrl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+        this.syncSelectedPauta();
+      });
+    }
+    if (!inicioCtrl) {
+      return;
+    }
+    inicioCtrl.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((valor) => {
+      if (typeof valor === 'string' && valor) {
+        this.actualizarFechaFin(valor);
+      }
+    });
+  }
+
+  private syncSelectedPauta(skipFechaUpdate = false): void {
+    const pautaCtrl = this.form?.get('pauta_id');
+    const pautaId = Number(pautaCtrl?.value);
+    if (!pautaId) {
+      this.selectedPautaParametros = null;
+      return;
+    }
+    this.selectedPautaParametros = null;
+    const pautaSeleccionada = pautaId;
+    this.cargandoParametrosPauta = true;
+    this.ejerciciosService
+      .obtenerParametrosPauta(pautaId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => (this.cargandoParametrosPauta = false))
+      )
+      .subscribe({
+        next: (parametros) => {
+          if (Number(this.form.get('pauta_id')?.value) !== pautaSeleccionada) {
+            return;
+          }
+          this.selectedPautaParametros = parametros;
+          if (!skipFechaUpdate) {
+            const inicio = this.form.get('fecha_inicio')?.value;
+            if (typeof inicio === 'string' && inicio) {
+              this.actualizarFechaFin(inicio);
+            }
+          }
+        },
+        error: () => {
+          if (Number(this.form.get('pauta_id')?.value) !== pautaSeleccionada) {
+            return;
+          }
+          this.selectedPautaParametros = null;
+          this.showLoadError('No se pudieron obtener los parámetros de la pauta seleccionada.');
+        }
+      });
   }
 
   private resolveErrorMessages(error: any, fallback: string): string[] {
@@ -333,20 +489,12 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => aplicarPorMesEjercicio());
 
-    inicioCtrl.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((valor) => {
-        if (typeof valor === 'string' && valor) {
-          this.actualizarFechaFin(valor);
-        }
-      });
-
     aplicarPorMesEjercicio();
   }
 
   private actualizarFechaFin(fechaInicio: string): void {
     const finCtrl = this.form.get('fecha_fin');
-    if (!finCtrl) {
+    if (!finCtrl || !this.selectedPautaParametros) {
       return;
     }
     const calculada = this.calcularFechaFin(fechaInicio);
@@ -359,36 +507,57 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
   }
 
   private calcularFechaFin(fechaInicio: string): string {
-    if (!fechaInicio) {
+    if (!this.selectedPautaParametros) {
       return '';
     }
 
-    const fecha = new Date(fechaInicio);
-    if (Number.isNaN(fecha.getTime())) {
+    const ejercicio = Number(this.form.get('ejercicio')?.value);
+    const mes = Number(this.form.get('mes')?.value);
+
+    let base: Date | null = null;
+    if (ejercicio && mes) {
+      base = new Date(ejercicio, mes - 1, 1);
+    } else if (fechaInicio) {
+      const fallback = new Date(fechaInicio);
+      base = Number.isNaN(fallback.getTime()) ? null : fallback;
+    }
+
+    if (!base) {
       return '';
     }
 
-    const cierreDia = Number(this.parametrosConfig.cierreDia) || 15;
-    const mesesOffset = Number(this.parametrosConfig.mesesOffset) || 3;
-    const mesSelectCtrl = this.form.get('mes');
-    const ejercicioCtrl = this.form.get('ejercicio');
+    const diaVto = Number(this.selectedPautaParametros.dia_vto ?? 0);
+    const plazoMeses = Number(this.selectedPautaParametros.plazo_vto ?? 0);
 
-    const mesSeleccionado = Number(mesSelectCtrl?.value) || fecha.getMonth() + 1;
-    const ejercicioSeleccionado = Number(ejercicioCtrl?.value) || fecha.getFullYear();
+    if (plazoMeses) {
+      base.setMonth(base.getMonth() + plazoMeses);
+    }
 
-    const totalMeses = mesSeleccionado + mesesOffset;
-    const nuevaFecha = new Date(ejercicioSeleccionado, mesSeleccionado - 1, fecha.getDate());
-    nuevaFecha.setMonth(mesSeleccionado - 1 + mesesOffset);
+    if (diaVto > 0) {
+      const diasEnMes = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
+      base.setDate(Math.min(diaVto, diasEnMes));
+    }
 
-    const anioCalculado =
-      totalMeses > 12
-        ? ejercicioSeleccionado + Math.floor((mesSeleccionado - 1 + mesesOffset) / 12)
-        : ejercicioSeleccionado;
+    return this.formatearFecha(base);
+  }
 
-    const mesCalculado = ((mesSeleccionado - 1 + mesesOffset) % 12 + 12) % 12;
-    const resultado = new Date(anioCalculado, mesCalculado, cierreDia);
+  get pautaDiaVtoTexto(): string {
+    const valor = this.selectedPautaParametros?.dia_vto;
+    if (valor === null || valor === undefined) {
+      return 'Sin definir';
+    }
+    return `${valor}`;
+  }
 
-    return this.formatearFecha(resultado);
+  get pautaPlazoVtoTexto(): string {
+    const valor = this.selectedPautaParametros?.plazo_vto;
+    if (valor === null || valor === undefined) {
+      return 'Sin definir';
+    } else if (valor === 0) {
+      return 'mes en curso';
+    }
+    const sufijo = valor === 1 ? 'mes' : 'meses';
+    return `${valor} ${sufijo}`;
   }
 
   private formatearFecha(date: Date): string {

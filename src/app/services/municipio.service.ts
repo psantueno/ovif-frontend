@@ -3,6 +3,12 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, catchError, of, throwError } from 'rxjs';
 import Swal from 'sweetalert2';
 import { API_URL } from '../app.config';
+import {
+  ModuloPauta,
+  PautaTipo,
+  mapTipoPautaToModulos,
+  obtenerEtiquetaTipoPauta
+} from '../models/pauta.model';
 
 export interface PartidaGastoResponse {
   partidas_gastos_codigo: number;
@@ -56,6 +62,21 @@ export interface EjercicioCerradoResponse {
   tiene_prorroga?: boolean;
   raw?: any;
   [key: string]: unknown;
+}
+
+export interface PeriodoSeleccionadoMunicipio {
+  ejercicio: number;
+  mes: number;
+  valor?: string;
+  convenio_id?: number | null;
+  convenio_nombre?: string | null;
+  pauta_id?: number | null;
+  pauta_descripcion?: string | null;
+  tipo_pauta?: PautaTipo | null;
+  tipo_pauta_label?: string | null;
+  modulos?: ModuloPauta[] | null;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -332,7 +353,7 @@ export class MunicipioService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  getPeriodoSeleccionado(municipioId: number): { ejercicio: number; mes: number } | null {
+  getPeriodoSeleccionado(municipioId: number): PeriodoSeleccionadoMunicipio | null {
     if (!municipioId) {
       return null;
     }
@@ -343,22 +364,44 @@ export class MunicipioService {
       return null;
     }
 
-    const ejercicio = Number(periodo.ejercicio);
-    const mes = Number(periodo.mes);
-    if (!Number.isInteger(ejercicio) || !Number.isInteger(mes)) {
+    const normalizado = this.normalizarPeriodo(periodo);
+    if (!normalizado) {
       return null;
     }
 
-    return { ejercicio, mes };
+    return normalizado;
   }
 
-  setPeriodoSeleccionado(municipioId: number, periodo: { ejercicio: number; mes: number }): void {
-    if (!municipioId || !periodo?.ejercicio || !periodo?.mes) {
+  setPeriodoSeleccionado(municipioId: number, periodo: PeriodoSeleccionadoMunicipio): void {
+    if (
+      !municipioId ||
+      !periodo?.ejercicio ||
+      !periodo?.mes
+    ) {
       return;
     }
 
     const periodos = this.leerPeriodosSeleccionados();
-    periodos[String(municipioId)] = { ejercicio: periodo.ejercicio, mes: periodo.mes };
+    const key = String(municipioId);
+    const valor = periodo.valor ?? this.buildPeriodoValor(periodo);
+    const tipo = periodo.tipo_pauta ?? null;
+    const modulos =
+      periodo.modulos && periodo.modulos.length
+        ? periodo.modulos
+        : tipo
+          ? mapTipoPautaToModulos(tipo)
+          : null;
+    const tipoLabel =
+      periodo.tipo_pauta_label ??
+      (tipo ? obtenerEtiquetaTipoPauta(tipo) : null);
+
+    periodos[key] = {
+      ...periodo,
+      valor: valor ?? periodo.valor,
+      tipo_pauta: tipo,
+      tipo_pauta_label: tipoLabel,
+      modulos: modulos && modulos.length ? modulos : null
+    };
     this.escribirPeriodosSeleccionados(periodos);
   }
 
@@ -381,7 +424,45 @@ export class MunicipioService {
     }
   }
 
-  private leerPeriodosSeleccionados(): Record<string, { ejercicio: number; mes: number }> {
+  parsePeriodoValor(valor: string | null | undefined): Partial<PeriodoSeleccionadoMunicipio> | null {
+    if (!valor || typeof valor !== 'string') {
+      return null;
+    }
+
+    const [ejercicioStr, mesStr, pautaStr, tipoStr] = valor.split('_');
+    const ejercicio = Number(ejercicioStr);
+    const mes = Number(mesStr);
+
+    if (!Number.isInteger(ejercicio) || !Number.isInteger(mes)) {
+      return null;
+    }
+
+    const pautaId = pautaStr !== undefined && pautaStr !== '' ? Number(pautaStr) : null;
+    const tipo = tipoStr && tipoStr !== 'na' ? tipoStr : null;
+
+    return {
+      ejercicio,
+      mes,
+      pauta_id: Number.isFinite(pautaId) ? Number(pautaId) : null,
+      tipo_pauta: (tipo as PautaTipo | null) ?? null
+    };
+  }
+
+  buildPeriodoValor(periodo: Partial<PeriodoSeleccionadoMunicipio> | null | undefined): string | null {
+    if (!periodo?.ejercicio || !periodo?.mes) {
+      return null;
+    }
+
+    const pautaSegment =
+      periodo.pauta_id !== undefined && periodo.pauta_id !== null
+        ? String(periodo.pauta_id)
+        : '0';
+    const tipoSegment = periodo.tipo_pauta ?? 'na';
+
+    return `${periodo.ejercicio}_${periodo.mes}_${pautaSegment}_${tipoSegment}`;
+  }
+
+  private leerPeriodosSeleccionados(): Record<string, PeriodoSeleccionadoMunicipio> {
     const almacenado = localStorage.getItem(this.ejercicioMesKey);
     if (!almacenado) {
       return {};
@@ -396,8 +477,54 @@ export class MunicipioService {
     }
   }
 
-  private escribirPeriodosSeleccionados(periodos: Record<string, { ejercicio: number; mes: number }>): void {
+  private escribirPeriodosSeleccionados(periodos: Record<string, PeriodoSeleccionadoMunicipio>): void {
     localStorage.setItem(this.ejercicioMesKey, JSON.stringify(periodos));
+  }
+
+  private normalizarPeriodo(periodo: PeriodoSeleccionadoMunicipio | null | undefined): PeriodoSeleccionadoMunicipio | null {
+    if (!periodo) {
+      return null;
+    }
+
+    const ejercicio = Number(periodo.ejercicio);
+    const mes = Number(periodo.mes);
+    if (!Number.isInteger(ejercicio) || !Number.isInteger(mes)) {
+      return null;
+    }
+
+    const base: PeriodoSeleccionadoMunicipio = {
+      ejercicio,
+      mes,
+      valor: periodo.valor ?? this.buildPeriodoValor(periodo) ?? undefined,
+      convenio_id: periodo.convenio_id ?? null,
+      convenio_nombre: periodo.convenio_nombre ?? null,
+      pauta_id: periodo.pauta_id ?? null,
+      pauta_descripcion: periodo.pauta_descripcion ?? null,
+      tipo_pauta: periodo.tipo_pauta ?? null,
+      tipo_pauta_label: periodo.tipo_pauta_label ?? null,
+      modulos: Array.isArray(periodo.modulos) ? periodo.modulos : null,
+      fecha_inicio: periodo.fecha_inicio ?? null,
+      fecha_fin: periodo.fecha_fin ?? null
+    };
+
+    if ((!base.pauta_id || !base.tipo_pauta) && base.valor) {
+      const parsed = this.parsePeriodoValor(base.valor);
+      if (parsed) {
+        base.pauta_id = base.pauta_id ?? (parsed.pauta_id ?? null);
+        base.tipo_pauta = base.tipo_pauta ?? (parsed.tipo_pauta ?? null);
+      }
+    }
+
+    if (base.tipo_pauta && (!base.modulos || base.modulos.length === 0)) {
+      const modulos = mapTipoPautaToModulos(base.tipo_pauta);
+      base.modulos = modulos.length ? modulos : null;
+    }
+
+    if (base.tipo_pauta && !base.tipo_pauta_label) {
+      base.tipo_pauta_label = obtenerEtiquetaTipoPauta(base.tipo_pauta);
+    }
+
+    return base;
   }
 
   private blurActiveElement(): void {

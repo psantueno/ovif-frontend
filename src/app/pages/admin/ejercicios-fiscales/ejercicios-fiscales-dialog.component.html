@@ -35,6 +35,55 @@
   </mat-form-field>
 
   <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Convenio</mat-label>
+    <mat-select formControlName="convenio_id" [disabled]="cargandoConvenios || !!data?.ejercicio">
+      <mat-option *ngFor="let convenio of convenios" [value]="convenio.id">
+        {{ convenio.nombre }}
+      </mat-option>
+      <mat-option *ngIf="convenios.length === 0" [disabled]="true">
+        No hay convenios disponibles
+      </mat-option>
+    </mat-select>
+    <mat-progress-spinner
+      *ngIf="cargandoConvenios"
+      matSuffix
+      diameter="20"
+      mode="indeterminate"
+      color="accent">
+    </mat-progress-spinner>
+    <mat-error *ngIf="form.get('convenio_id')?.hasError('required') && form.get('convenio_id')?.touched">
+      El convenio es obligatorio.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Pauta</mat-label>
+    <mat-select
+      formControlName="pauta_id"
+      [disabled]="cargandoPautas || !form.get('convenio_id')?.value || !!data?.ejercicio">
+      <mat-option *ngFor="let pauta of pautas" [value]="pauta.id">
+        {{ pauta.descripcion }}
+      </mat-option>
+      <mat-option *ngIf="pautas.length === 0 && form.get('convenio_id')?.value" [disabled]="true">
+        No hay pautas para el convenio seleccionado
+      </mat-option>
+    </mat-select>
+    <mat-progress-spinner
+      *ngIf="cargandoPautas || cargandoParametrosPauta"
+      matSuffix
+      diameter="20"
+      mode="indeterminate"
+      color="accent">
+    </mat-progress-spinner>
+    <mat-hint *ngIf="selectedPautaParametros">
+      Día vto: {{ pautaDiaVtoTexto }} | Plazo vto: {{ pautaPlazoVtoTexto }}
+    </mat-hint>
+    <mat-error *ngIf="form.get('pauta_id')?.hasError('required') && form.get('pauta_id')?.touched">
+      La pauta es obligatoria.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
     <mat-label>Fecha de inicio</mat-label>
     <input matInput type="date" formControlName="fecha_inicio" />
     <mat-error *ngIf="form.get('fecha_inicio')?.hasError('required') && form.get('fecha_inicio')?.touched">
