@@ -1,8 +1,18 @@
 <div class="login-container">
   <mat-card class="login-card">
-    <!-- Imagen lateral -->
+    <!-- Imagen lateral con texto institucional -->
     <div class="login-left">
       <img src="assets/img/salto_agrio.svg" alt="Fotografía del Salto del Agrio" />
+      <div class="left-overlay">
+        <div class="institutional-text">
+          <p>OFICINA VIRTUAL DE</p>
+          <p>INFORMACIÓN FISCAL</p>
+        </div>
+        <div class="left-logos">
+          <img src="assets/img/logo_gobierno.svg" alt="Gobierno de Neuquén" />
+          <img src="assets/img/logo_neuquen.svg" alt="Provincia del Neuquén" />
+        </div>
+      </div>
     </div>
 
     <!-- Formulario de login -->
@@ -14,7 +24,7 @@
         <!-- Usuario -->
         <mat-form-field appearance="fill" class="full-width">
           <mat-label>Nombre de usuario</mat-label>
-          <input matInput formControlName="usuario" placeholder="Ingrese su usuario" />
+          <input matInput formControlName="usuario" placeholder="Nombre de usuario" />
           <mat-error *ngIf="form.get('usuario')?.hasError('required')">
             (*) El usuario es obligatorio
           </mat-error>
@@ -27,7 +37,7 @@
             matInput
             type="password"
             formControlName="password"
-            placeholder="Ingrese su contraseña"
+            placeholder="Contraseña"
           />
           <mat-error *ngIf="form.get('password')?.hasError('required')">
             (*) La contraseña es obligatoria
@@ -40,7 +50,7 @@
           color="primary"
           class="btn-ingresar"
           type="submit"
-          [disabled]="form.invalid || loading"
+          [disabled]="loading"
         >
           <ng-container *ngIf="!loading; else loadingTpl">INGRESAR</ng-container>
         </button>
@@ -53,7 +63,7 @@
         </ng-template>
 
         <!-- Error global -->
-        <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+        <p class="error" *ngIf="errorMessage"><strong>(*) Error:</strong> {{ errorMessage }}</p>
 
         <!-- 🔹 Enlace Olvidé mi contraseña -->
         <div class="forgot-link">

@@ -13,7 +13,7 @@
       </p>
     </div>
   </div>
-  
+
   <!-- Selector de Ejercicio/Mes -->
   <div class="ejercicio-selector">
     <div class="selector-row">
@@ -36,41 +36,37 @@
 
   <!-- Acciones principales -->
   <div class="home-actions">
-    <button
-      type="button"
-      class="home-card"
-      (click)="irA('gastos')"
-      [disabled]="!isModuloHabilitado('gastos')"
-    >
+    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!isModuloHabilitado('gastos')">
       <mat-icon>payments</mat-icon>
       <span>Gastos</span>
     </button>
 
-    <button
-      type="button"
-      class="home-card"
-      (click)="irA('recursos')"
-      [disabled]="!isModuloHabilitado('recursos')"
-    >
+    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!isModuloHabilitado('recursos')">
       <mat-icon>savings</mat-icon>
       <span>Recursos</span>
     </button>
 
-    <button
-      type="button"
-      class="home-card"
-      (click)="irA('personal')"
-      [disabled]="!isModuloHabilitado('personal')"
-    >
+    <button type="button" class="home-card" (click)="irA('personal')" [disabled]="!isModuloHabilitado('personal')">
       <mat-icon>groups</mat-icon>
       <span>Personal</span>
     </button>
 
-    <button type="button" class="home-card" (click)="irA('subir-archivos')" [disabled]="!ejercicioMes">
+    <button type="button" class="home-card" (click)="irA('recaudaciones')"
+      [disabled]="!isModuloHabilitado('recaudaciones')">
+      <mat-icon>assessment</mat-icon>
+      <span>Recaudaciones</span>
+    </button>
+  </div>
+
+
+
+  <!-- ARCHIVOS -> vista implementada, falta conexion con backend. Se la quita de la vista, por ahora sin uso. -->
+
+  <!-- <button type="button" class="home-card" (click)="irA('subir-archivos')" [disabled]="!ejercicioMes">
       <mat-icon>folder</mat-icon>
       <span>Archivos</span>
     </button>
-  </div>
+  </div> -->
 
   <!-- Acción cerrar mes -->
   <div class="cerrar-mes">

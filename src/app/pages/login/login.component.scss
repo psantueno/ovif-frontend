@@ -3,81 +3,130 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 60vh;
-  background-color: #FCF2DD;
+  min-height: 70vh;
+  padding: 2rem 1rem;
+  background: #f6e9cc;
 }
 
 .login-card {
   display: flex;
   flex-direction: row;
-  max-width: 855px;
+  max-width: 900px;
   width: 100%;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 20px 55px rgba(16, 28, 41, 0.35);
+  align-items: stretch;
 }
 
 .login-left {
+  position: relative;
+  flex: 1;
+  min-height: 420px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  background-color: #2B3E4C;
 
   img {
     width: 100%;
     height: 100%;
+    flex: 1 1 auto;
     object-fit: cover;
-    object-position: center;
+    display: block;
+  }
+}
+
+.left-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(6, 22, 35, 0.85), rgb(15 41 63 / 15%));
+  color: #f4e0b6;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.institutional-text {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  p {
+    margin: 0;
+  }
+}
+
+.left-logos {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+
+  img {
+    max-height: 52px;
+    width: auto;
   }
 }
 
 .login-right {
-  flex: 1;
-  padding: 2rem;
-  background-color: #2B3E4C;
-  color: #F4E0B6;
+  flex: 0.85;
+  padding: 3rem 2.5rem;
+  background-color: #2b3e4c;
+  color: #f4e0b6;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  text-align: center;
 
   h2 {
-    margin-bottom: 0.5rem;
-    font-weight: bold;
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+    letter-spacing: 1px;
   }
 
   p {
     margin-bottom: 2rem;
-    color: #F4E0B6;
-  }
-
-  .full-width {
-    width: 100%;
-    margin-bottom: 1.5rem;
-  }
-
-  .btn-ingresar {
-    background-color: #6ab04c !important;
-    color: #ffffff;
-    width: 100%;
-    padding: 0.75rem;
-    font-weight: bold;
-    width: auto;
+    color: rgba(244, 224, 182, 0.9);
   }
 
   form {
     width: 100%;
+    max-width: 320px;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  // 👇 override de mensajes de error
-   ::ng-deep .mat-mdc-form-field-error {
-    color: #fcf2dd !important;  // 👈 texto del color que pediste
+  .full-width {
+    width: 100%;
+    margin-bottom: 1.2rem;
+  }
+
+  .btn-ingresar {
+    background-color: #89b968 !important;
+    color: #ffffff;
+    width: 100%;
+    padding: 0.85rem;
+    font-weight: 700;
+    border-radius: 999px;
+    box-shadow: 0 8px 12px #0e0c0cb3;
+    transition: background-color 0.3s ease;
+
+
+    &:hover {
+      background-color: #68a142 !important;
+    }
+  }
+
+  // override mensajes de error
+  ::ng-deep .mat-mdc-form-field-error {
+    color: #fcf2dd !important;
     font-weight: 500;
   }
 
-  // error global (debajo del botón)
   .error {
     color: #fcf2dd;
     margin-top: 1rem;
@@ -86,6 +135,23 @@
     font-weight: 500;
   }
 }
+
+:host ::ng-deep .login-right .mat-mdc-text-field-wrapper {
+  background: #dfe6f0;
+  border-radius: 8px;
+  padding: 0 0.75rem;
+}
+
+:host ::ng-deep .login-right .mat-mdc-form-field-focus-overlay,
+:host ::ng-deep .login-right .mdc-line-ripple::after,
+:host ::ng-deep .login-right .mdc-line-ripple::before {
+  background-color: transparent;
+}
+
+:host ::ng-deep .login-right .mat-mdc-form-field-flex {
+  color: #1f3248;
+}
+
 
 .loading-content {
   display: flex;
@@ -97,24 +163,38 @@
 }
 
 .custom-spinner ::ng-deep circle {
-  stroke: #ffffff !important; // Verde institucional, por ejemplo
+  stroke: #ffffff !important;
 }
 
-/* === Enlace "Olvidé mi contraseña" === */
 .forgot-link {
   margin-top: 1.2rem;
   text-align: center;
   width: 100%;
+  color: rgba(244, 224, 182, 0.9);
 
   a {
-    color: #f4e0b6; /* mismo tono de tus textos */
+    color: #f4e0b6;
     text-decoration: underline;
     font-weight: 600;
     transition: color 0.2s ease-in-out;
     cursor: pointer;
 
     &:hover {
-      color: #ffffff; /* un blanco más brillante al pasar el mouse */
+      color: #89B968;
     }
+  }
+}
+
+@media (max-width: 840px) {
+  .login-card {
+    flex-direction: column;
+  }
+
+  .login-left {
+    min-height: 280px;
+  }
+
+  .login-right {
+    padding: 2.5rem 2rem;
   }
 }
