@@ -115,6 +115,24 @@
       font-size: 0.9rem;
       color: rgba(0, 0, 0, 0.75);
     }
+
+    .pauta-fecha-chip {
+      background: #f2dfbf;
+      color: #2b3e4c;
+      padding: 0.2rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+
+      mat-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+      }
+    }
   }
 
 }

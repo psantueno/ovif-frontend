@@ -5,6 +5,8 @@ import { SeleccionarMunicipioComponent } from './pages/seleccionar-municipio/sel
 import { AuthGuard } from './core/guards/auth.guard';
 import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard';
 import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
+import { MunicipioGuard } from './core/guards/municipio.guard';
+import { AdminGuard } from './core/guards/admin.guard';
 
 // Admin
 import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
@@ -28,6 +30,7 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     canActivate: [AuthGuard],
+    canActivateChild: [MunicipioGuard],
     children: [
       { path: '', component: SeleccionarMunicipioComponent },
       { path: 'home', component: HomeComponent },
@@ -45,12 +48,12 @@ export const routes: Routes = [
         canDeactivate: [RecursosPendingChangesGuard],
         loadComponent: () => import('./pages/recursos/recursos.component').then((m) => m.RecursosComponent)
       },
-      { path: 'admin', component: AdminMenuComponent },
-      { path: 'admin/usuarios', component: UsuariosComponent },
-      { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent },
-      { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent },
-      { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent },
-      { path: 'admin/roles', component: RolesComponent },
+      { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
+      { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent, canActivate: [AdminGuard] },
+      { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent, canActivate: [AdminGuard] },
+      { path: 'admin/roles', component: RolesComponent, canActivate: [AdminGuard] },
     ]
   },
   { path: '**', redirectTo: '' }

@@ -22,6 +22,7 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   cerrandoSesion = false;
   private sub?: Subscription;
   private logoutSub?: Subscription;
+  private usuarioSub?: Subscription;
 
   constructor(
     private municipioService: MunicipioService,
@@ -29,7 +30,9 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
-    this.usuarioNombre = this.readUsuarioNombre();
+    this.usuarioSub = this.authService.user$.subscribe((user) => {
+      this.usuarioNombre = this.buildUsuarioNombre(user);
+    });
     this.municipioActual = this.municipioService.getMunicipioActual();
 
     this.sub = this.municipioService.municipio$.subscribe((mun) => {
@@ -61,36 +64,26 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
     });
   }
 
-  private readUsuarioNombre(): string {
-    const posiblesKeys = ['user', 'usuario'];
+  private buildUsuarioNombre(user: any | null): string {
+    if (!user) {
+      return '';
+    }
 
-    for (const key of posiblesKeys) {
-      const guardado = localStorage.getItem(key);
-      if (!guardado) {
-        continue;
-      }
+    const nombreCompleto = [user?.nombre, user?.apellido]
+      .filter((parte) => !!parte)
+      .join(' ')
+      .trim();
 
-      try {
-        const parsed = JSON.parse(guardado);
-        const nombre = [parsed?.nombre, parsed?.apellido]
-          .filter((parte) => !!parte)
-          .join(' ')
-          .trim();
+    if (nombreCompleto) {
+      return nombreCompleto;
+    }
 
-        if (nombre) {
-          return nombre;
-        }
+    if (user?.username) {
+      return user.username;
+    }
 
-        if (parsed?.username) {
-          return parsed.username;
-        }
-
-        if (parsed?.usuario) {
-          return parsed.usuario;
-        }
-      } catch (error) {
-        console.warn('No se pudo parsear el usuario guardado', error);
-      }
+    if (user?.usuario) {
+      return user.usuario;
     }
 
     return '';
@@ -127,5 +120,6 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.sub?.unsubscribe();
     this.logoutSub?.unsubscribe();
+    this.usuarioSub?.unsubscribe();
   }
 }

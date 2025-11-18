@@ -24,14 +24,11 @@
   flex: 1;
   min-height: 420px;
   display: flex;
-
-  img {
-    width: 100%;
-    height: 100%;
-    flex: 1 1 auto;
-    object-fit: cover;
-    display: block;
-  }
+  background-color: #2b3e4c; // color de respaldo, el que quieras que se vea en los bordes
+  background-image: url('/assets/img/salto_agrio.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 .left-overlay {

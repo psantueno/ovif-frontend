@@ -358,6 +358,7 @@ export class HomeComponent implements OnInit, OnDestroy {
       tipo_pauta_label: tipoLabel,
       fecha_inicio: item?.fecha_inicio ?? item?.fecha_inicio_oficial ?? null,
       fecha_fin: item?.fecha_fin ?? item?.fecha_fin_oficial ?? null,
+      fecha_cierre: item?.fecha_cierre ?? null,
       modulos: this.obtenerModulosPermitidos(tipoPauta)
     };
 

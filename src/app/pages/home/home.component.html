@@ -22,7 +22,7 @@
         <span>Ejercicio y Mes:</span>
       </label>
       <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
-        <option value="">Seleccione un ejercicio/mes</option>
+        <option value="">Seleccione el ejercicio fiscal, convenio y pauta que desea cargar</option>
         <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
           {{ em.texto }}
         </option>
@@ -31,6 +31,10 @@
     <div class="pauta-summary" *ngIf="ejercicioMes || periodoActivo">
       <span class="pauta-badge" *ngIf="pautaActivaLabel">{{ pautaActivaLabel }}</span>
       <p class="pauta-modulos">{{ modulosHabilitadosLabel }}</p>
+      <span class="pauta-fecha-chip" *ngIf="periodoActivo?.fecha_cierre">
+        <mat-icon>event</mat-icon>
+        Fecha de cierre: {{ periodoActivo?.fecha_cierre | date: 'dd/MM/yyyy' }}
+      </span>
     </div>
   </div>
 

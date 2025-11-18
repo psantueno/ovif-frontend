@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
 import { API_URL } from '../app.config';
 import Swal from 'sweetalert2'; // 👈 asegurate de tenerlo importado
 import { MunicipioService } from './municipio.service';
+import { getUserRoleNames } from '../core/utils/roles.util';
 
 @Injectable({ providedIn: 'root' })
 
@@ -15,37 +16,52 @@ export class AuthService {
   private municipioService = inject(MunicipioService);
 
   private user: any = null;
+  private readonly userSubject = new BehaviorSubject<any | null>(null);
+  readonly user$ = this.userSubject.asObservable();
+  private profileRequest$: Observable<any | null> | null = null;
   private readonly operadorSinMunicipiosKey = 'operadorSinMunicipios';
 
-  private extractRoleNames(user: any): string[] {
-    if (!user) {
-      return [];
+  private setUser(user: any | null): void {
+    this.user = user ?? null;
+    this.userSubject.next(this.user);
+  }
+
+  private normalizeUserPayload(payload: any): any | null {
+    if (!payload) {
+      return null;
+    }
+    if (payload.user) {
+      return payload.user;
+    }
+    return payload;
+  }
+
+  ensureUser(): Observable<any | null> {
+    if (this.user) {
+      return of(this.user);
     }
 
-    const rawRoles = Array.isArray(user?.Roles)
-      ? user.Roles
-      : Array.isArray(user?.roles)
-        ? user.roles
-        : [];
+    if (!this.isLoggedIn()) {
+      return of(null);
+    }
 
-    const roleNames = rawRoles
-      .map((rol: any) => {
-        if (typeof rol === 'string') {
-          return rol;
-        }
-        if (rol && typeof rol?.nombre === 'string') {
-          return rol.nombre;
-        }
-        return null;
-      })
-      .filter((nombre: string | null | undefined): nombre is string => typeof nombre === 'string' && nombre.length > 0)
-      .map((nombre: string) => nombre.trim().toLowerCase());
+    if (!this.profileRequest$) {
+      this.profileRequest$ = this.profile().pipe(
+        map((res) => this.normalizeUserPayload(res)),
+        tap((usuario) => this.setUser(usuario)),
+        catchError((err) => {
+          console.error('Error asegurando sesión del usuario', err);
+          this.setUser(null);
+          return of(null);
+        }),
+        finalize(() => {
+          this.profileRequest$ = null;
+        }),
+        shareReplay(1)
+      );
+    }
 
-    const inlineRoles = [user?.rol, user?.Rol, user?.role]
-      .filter((nombre: unknown): nombre is string => typeof nombre === 'string' && nombre.length > 0)
-      .map((nombre: string) => nombre.trim().toLowerCase());
-
-    return Array.from(new Set([...roleNames, ...inlineRoles]));
+    return this.profileRequest$;
   }
 
   login(usuario: string, password: string): Observable<any> {
@@ -57,13 +73,13 @@ export class AuthService {
             // Limpieza previa
             localStorage.removeItem('municipioSeleccionado');
             localStorage.removeItem(this.operadorSinMunicipiosKey);
+            localStorage.removeItem('user');
 
             // Guardar datos del usuario y token
-            this.user = res.user;
+            this.setUser(res.user);
             localStorage.setItem('token', res.token);
-            localStorage.setItem('user', JSON.stringify(res.user));
 
-            const roleNames = this.extractRoleNames(this.user);
+            const roleNames = getUserRoleNames(res.user);
             const isAdmin = roleNames.includes('administrador');
             const isOperador = roleNames.includes('operador');
 
@@ -166,7 +182,8 @@ export class AuthService {
   logout(): Observable<any> {
     return this.http.post(`${this.apiUrl}/auth/logout`, {}).pipe(
       tap(() => {
-        this.user = null;
+        this.setUser(null);
+        this.profileRequest$ = null;
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('municipioSeleccionado');
@@ -193,7 +210,7 @@ export class AuthService {
   }
 
   getUser() {
-    return this.user || JSON.parse(localStorage.getItem('user') || 'null');
+    return this.user;
   }
 
   // solicitar blanqueo

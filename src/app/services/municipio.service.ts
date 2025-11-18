@@ -77,6 +77,7 @@ export interface PeriodoSeleccionadoMunicipio {
   modulos?: ModuloPauta[] | null;
   fecha_inicio?: string | null;
   fecha_fin?: string | null;
+  fecha_cierre?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

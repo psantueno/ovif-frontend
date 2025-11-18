@@ -4,39 +4,29 @@ import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { getUserRoleNames } from '../utils/roles.util';
 
-const OPERADOR_SIN_MUNICIPIOS_KEY = 'operadorSinMunicipios';
+const redirectTo = (router: Router, path: string[]): UrlTree => router.createUrlTree(path);
 
-const redirect = (router: Router, path: string[]): UrlTree => router.createUrlTree(path);
-
-export const AuthGuard: CanActivateFn = () => {
+export const AdminGuard: CanActivateFn = () => {
   const router = inject(Router);
   const authService = inject(AuthService);
 
   if (!authService.isLoggedIn()) {
-    return redirect(router, ['/login']);
+    return redirectTo(router, ['/login']);
   }
 
   return authService.ensureUser().pipe(
     map((user) => {
       if (!user) {
-        return redirect(router, ['/login']);
+        return redirectTo(router, ['/login']);
       }
 
       const roleNames = getUserRoleNames(user);
-
       if (roleNames.includes('administrador')) {
         return true;
       }
 
-      if (roleNames.includes('operador')) {
-        const operadorSinMunicipios = localStorage.getItem(OPERADOR_SIN_MUNICIPIOS_KEY) === 'true';
-        if (operadorSinMunicipios) {
-          return redirect(router, ['/sin-acceso']);
-        }
-      }
-
-      return true;
+      return redirectTo(router, ['/home']);
     }),
-    catchError(() => of(redirect(router, ['/login'])))
+    catchError(() => of(redirectTo(router, ['/login'])))
   );
 };
