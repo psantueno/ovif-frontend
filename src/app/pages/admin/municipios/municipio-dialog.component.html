@@ -1,0 +1,79 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">
+    {{ data?.municipio_id ? 'edit_location_alt' : 'add_location_alt' }}
+  </mat-icon>
+  {{ data?.municipio_id ? 'Editar municipio' : 'Nuevo municipio' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Nombre del municipio</mat-label>
+    <input matInput formControlName="municipio_nombre" />
+    <mat-error *ngIf="form.get('municipio_nombre')?.hasError('required') && form.get('municipio_nombre')?.touched">
+      El nombre es obligatorio
+    </mat-error>
+    <mat-error *ngIf="form.get('municipio_nombre')?.hasError('minlength') && form.get('municipio_nombre')?.touched">
+      Debe tener al menos 3 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <div class="campos-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>Usuario asignado</mat-label>
+      <input matInput formControlName="municipio_usuario" />
+      <mat-error *ngIf="form.get('municipio_usuario')?.hasError('required') && form.get('municipio_usuario')?.touched">
+        El usuario es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('municipio_usuario')?.hasError('minlength') && form.get('municipio_usuario')?.touched">
+        Debe tener al menos 3 caracteres
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Población estimada</mat-label>
+      <input matInput type="number" formControlName="municipio_poblacion" min="0" />
+      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('required') && form.get('municipio_poblacion')?.touched">
+        La población es obligatoria
+      </mat-error>
+      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('min') && form.get('municipio_poblacion')?.touched">
+        Debe ser un número mayor o igual a cero
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Contraseña</mat-label>
+    <input matInput type="password" formControlName="municipio_password" />
+    <mat-hint *ngIf="data?.municipio_id">Dejala vacía para mantener la contraseña actual.</mat-hint>
+    <mat-error *ngIf="form.get('municipio_password')?.hasError('required') && form.get('municipio_password')?.touched">
+      La contraseña es obligatoria
+    </mat-error>
+    <mat-error *ngIf="form.get('municipio_password')?.hasError('minlength') && form.get('municipio_password')?.touched">
+      Debe tener al menos 6 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <div class="toggle-wrapper">
+    <mat-slide-toggle formControlName="municipio_spar">SPAR habilitado</mat-slide-toggle>
+    <mat-slide-toggle formControlName="municipio_ubge">UBGE habilitado</mat-slide-toggle>
+    <mat-slide-toggle formControlName="municipio_subir_archivos">Permite subir archivos</mat-slide-toggle>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando"
+  >
+    <mat-icon *ngIf="!enviando">save</mat-icon>
+    <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
+    {{ data?.municipio_id ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>

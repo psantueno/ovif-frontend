@@ -6,12 +6,13 @@
       <span>Municipio:</span>
       <strong>{{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</strong>
     </p>
-    <div class="container-helper">
+    <mat-card class="container-helper ">
       <p class="selector-helper">
-        <mat-icon>info_outline</mat-icon>
-        <span>Seleccioná ejercicio y mes para habilitar las funciones disponibles.</span>
+        <mat-icon>info</mat-icon>
+        <span>Los módulos de carga de datos se habilitan al seleccionar el ejercicio, mes, convenio y pauta correspondiente.
+        </span>
       </p>
-    </div>
+    </mat-card>
   </div>
 
   <!-- Selector de Ejercicio/Mes -->
@@ -29,12 +30,12 @@
       </select>
     </div>
     <div class="pauta-summary" *ngIf="ejercicioMes || periodoActivo">
-      <span class="pauta-badge" *ngIf="pautaActivaLabel">{{ pautaActivaLabel }}</span>
-      <p class="pauta-modulos">{{ modulosHabilitadosLabel }}</p>
+
       <span class="pauta-fecha-chip" *ngIf="periodoActivo?.fecha_cierre">
         <mat-icon>event</mat-icon>
         Fecha de cierre: {{ periodoActivo?.fecha_cierre | date: 'dd/MM/yyyy' }}
       </span>
+      <p class="pauta-modulos">(*) {{ modulosHabilitadosLabel }}</p>
     </div>
   </div>
 
@@ -61,8 +62,6 @@
       <span>Recaudaciones</span>
     </button>
   </div>
-
-
 
   <!-- ARCHIVOS -> vista implementada, falta conexion con backend. Se la quita de la vista, por ahora sin uso. -->
 

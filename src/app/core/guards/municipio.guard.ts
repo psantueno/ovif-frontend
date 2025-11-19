@@ -1,33 +1,16 @@
 import { inject } from '@angular/core';
 import { CanActivateChildFn, Router, UrlTree } from '@angular/router';
-import { catchError, map, of } from 'rxjs';
+import { catchError, map, of, switchMap } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { MunicipioService } from '../../services/municipio.service';
 import { getUserRoleNames } from '../utils/roles.util';
 
-const MUNICIPIO_STORAGE_KEY = 'municipioSeleccionado';
 const RUTAS_RESTRINGIDAS = new Set(['home', 'gastos', 'recursos', 'personal', 'recaudaciones']);
 
-const validarMunicipioSeleccionado = (municipioService: MunicipioService): boolean => {
-  if (municipioService.getMunicipioActual()) {
-    return true;
-  }
-
-  const almacenado = localStorage.getItem(MUNICIPIO_STORAGE_KEY);
-  if (!almacenado) {
-    return false;
-  }
-
-  try {
-    const parsed = JSON.parse(almacenado);
-    return !!parsed;
-  } catch {
-    return false;
-  }
-};
-
 const redirectToSinAcceso = (router: Router): UrlTree => router.createUrlTree(['/sin-acceso']);
+const redirectToAdmin = (router: Router): UrlTree => router.createUrlTree(['/admin']);
 const redirectToLogin = (router: Router): UrlTree => router.createUrlTree(['/login']);
+const redirectToSeleccion = (router: Router): UrlTree => router.createUrlTree(['/']);
 
 export const MunicipioGuard: CanActivateChildFn = (route, state) => {
   const router = inject(Router);
@@ -44,22 +27,33 @@ export const MunicipioGuard: CanActivateChildFn = (route, state) => {
   }
 
   return authService.ensureUser().pipe(
-    map((user) => {
+    switchMap((user) => {
       if (!user) {
-        return redirectToLogin(router);
+        return of(redirectToLogin(router));
       }
 
       const roleNames = getUserRoleNames(user);
       if (roleNames.includes('administrador')) {
-        return true;
+        return of(redirectToAdmin(router));
       }
 
-      const tieneMunicipioSeleccionado = validarMunicipioSeleccionado(municipioService);
-      if (!tieneMunicipioSeleccionado) {
-        return redirectToSinAcceso(router);
+      if (municipioService.getMunicipioActual()) {
+        return of(true);
       }
 
-      return true;
+      return municipioService.ensureMunicipioSeleccionado().pipe(
+        map((resultado) => {
+          if (resultado === 'ok') {
+            return true;
+          }
+
+          if (resultado === 'seleccionar') {
+            return redirectToSeleccion(router);
+          }
+
+          return redirectToSinAcceso(router);
+        })
+      );
     }),
     catchError(() => of(redirectToLogin(router)))
   );

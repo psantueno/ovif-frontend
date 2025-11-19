@@ -39,19 +39,24 @@
     }
   }
 
-
   .selector-helper {
     margin: 0;
-    color: rgba(0, 0, 0, 0.65);
-    font-size: 0.9rem;
-    display: inline-flex;
+    color: #2B3E4C;
+    font-size: 1rem;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: center;
     gap: 0.35rem;
+    background-color: #ffffff;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
 
     mat-icon {
-      font-size: 14px;
-      height: 14px;
-      width: 14px;
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+      color:#2b3e4c
     }
   }
 }
@@ -68,6 +73,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.8rem;
+    margin-bottom: 20px;
   }
 
   .selector-label {
@@ -99,17 +105,6 @@
     max-width: 640px;
     text-align: center;
 
-    .pauta-badge {
-      background: #2b3e4c;
-      color: #fff;
-      padding: 0.2rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
     .pauta-modulos {
       margin: 0;
       font-size: 0.9rem;
@@ -117,15 +112,18 @@
     }
 
     .pauta-fecha-chip {
-      background: #f2dfbf;
-      color: #2b3e4c;
-      padding: 0.2rem 0.9rem;
-      border-radius: 999px;
-      font-size: 0.85rem;
-      font-weight: 600;
+
       display: inline-flex;
       align-items: center;
       gap: 0.3rem;
+      background: #2b3e4c;
+      color: #fff;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
 
       mat-icon {
         font-size: 16px;
@@ -198,6 +196,7 @@ menu-icon-municipio {
   color: var(--color-primary);
 }
 
+
 .cerrar-mes {
   margin-top: 1.5rem;
   display: flex;
@@ -220,8 +219,8 @@ menu-icon-municipio {
     mat-icon {
       color: inherit;
       font-size: 26px;
-    height: 26px;
-    min-width: 26px;
+      height: 26px;
+      min-width: 26px;
     }
 
     &:hover:not(:disabled) {

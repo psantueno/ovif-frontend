@@ -4,8 +4,6 @@ import { catchError, map, of } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { getUserRoleNames } from '../utils/roles.util';
 
-const OPERADOR_SIN_MUNICIPIOS_KEY = 'operadorSinMunicipios';
-
 const redirect = (router: Router, path: string[]): UrlTree => router.createUrlTree(path);
 
 export const AuthGuard: CanActivateFn = () => {
@@ -29,10 +27,7 @@ export const AuthGuard: CanActivateFn = () => {
       }
 
       if (roleNames.includes('operador')) {
-        const operadorSinMunicipios = localStorage.getItem(OPERADOR_SIN_MUNICIPIOS_KEY) === 'true';
-        if (operadorSinMunicipios) {
-          return redirect(router, ['/sin-acceso']);
-        }
+        return true;
       }
 
       return true;

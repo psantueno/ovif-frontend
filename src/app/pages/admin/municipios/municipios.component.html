@@ -1,0 +1,232 @@
+<div class="municipios-admin-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="helper-card">
+    <div class="helper-content">
+      <h3>
+        <mat-icon class="helper-icon" color="primary">info</mat-icon>
+        Administración de municipios
+      </h3>
+      <ol>
+        <li>Consultá el padrón completo paginado o filtrá por nombre.</li>
+        <li>Utilizá el buscador con autocompletado para ubicar un municipio específico.</li>
+        <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
+      </ol>
+    </div>
+  </mat-card>
+
+  <mat-card class="selector-card buscador-card">
+    <div class="selector-content">
+      <form class="buscador-form" (ngSubmit)="buscarMunicipios()">
+        <mat-form-field appearance="outline" class="selector-field">
+          <mat-label>Buscar municipio</mat-label>
+          <input
+            matInput
+            [matAutocomplete]="municipioAuto"
+            [formControl]="buscadorControl"
+            placeholder="Escribí para filtrar por nombre"
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            aria-label="Limpiar búsqueda"
+            *ngIf="buscadorControl.value"
+            (click)="limpiarBuscador()"
+          >
+            <mat-icon>clear</mat-icon>
+          </button>
+          <mat-autocomplete
+            #municipioAuto="matAutocomplete"
+            (optionSelected)="onMunicipioSelected($event)"
+            [displayWith]="displayMunicipio.bind(this)"
+          >
+            <mat-option
+              *ngFor="let municipio of filteredMunicipios$ | async"
+              [value]="municipio"
+            >
+              {{ municipio.municipio_nombre }}
+            </mat-option>
+            <mat-option *ngIf="!(filteredMunicipios$ | async)?.length">
+              No se encontraron coincidencias.
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <button
+          mat-stroked-button
+          type="button"
+          class="btn-limpiar"
+          (click)="limpiarBuscador()"
+          [disabled]="!searchTerm && !buscadorControl.value"
+        >
+          <mat-icon>refresh</mat-icon>
+          Limpiar
+        </button>
+
+        <button mat-raised-button color="primary" class="btn-buscar" type="submit">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+      </form>
+
+      <p class="selector-helper">
+        <mat-icon>info</mat-icon>
+        <span>
+          El catálogo se carga automáticamente al ingresar a la vista.
+          Si el campo queda vacío se mostrarán todos los municipios disponibles.
+        </span>
+      </p>
+
+      <div class="selector-loading" *ngIf="cargandoCatalogo">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Actualizando catálogo…</span>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card class="tabla-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">location_city</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Municipios configurados</mat-card-title>
+        <mat-card-subtitle>
+          {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrados
+        </mat-card-subtitle>
+      </div>
+
+      <span class="flex-spacer"></span>
+
+      <button mat-raised-button color="primary" class="btn-accion" type="button" (click)="abrirDialogCrear()">
+        <mat-icon>add</mat-icon>
+        Nuevo municipio
+      </button>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <div class="estado" *ngIf="cargandoLista">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Cargando municipios...</span>
+      </div>
+
+      <div class="estado" *ngIf="!cargandoLista && dataSource.data.length === 0">
+        <mat-icon>search_off</mat-icon>
+        <span>No se encontraron municipios.</span>
+      </div>
+
+      <div class="tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
+        <table mat-table [dataSource]="dataSource" class="municipios-table">
+          <ng-container matColumnDef="municipio_id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let municipio">
+              <span class="id-value">{{ municipio.municipio_id || '—' }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_nombre">
+            <th mat-header-cell *matHeaderCellDef>Municipio</th>
+            <td mat-cell *matCellDef="let municipio">
+              <div class="nombre-cell">
+                <span class="nombre">{{ municipio.municipio_nombre }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_usuario">
+            <th mat-header-cell *matHeaderCellDef>Usuario</th>
+            <td mat-cell *matCellDef="let municipio">
+              {{ municipio.municipio_usuario || '—' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_spar">
+            <th mat-header-cell *matHeaderCellDef>SPAR</th>
+            <td mat-cell *matCellDef="let municipio">
+              <mat-chip-set>
+                <mat-chip [color]="municipio.municipio_spar ? 'primary' : 'warn'" selected>
+                  {{ municipio.municipio_spar ? 'Habilitado' : 'No' }}
+                </mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_ubge">
+            <th mat-header-cell *matHeaderCellDef>UBGE</th>
+            <td mat-cell *matCellDef="let municipio">
+              <mat-chip-set>
+                <mat-chip [color]="municipio.municipio_ubge ? 'primary' : 'warn'" selected>
+                  {{ municipio.municipio_ubge ? 'Habilitado' : 'No' }}
+                </mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_subir_archivos">
+            <th mat-header-cell *matHeaderCellDef>Sube archivos</th>
+            <td mat-cell *matCellDef="let municipio">
+              <mat-chip-set>
+                <mat-chip [color]="municipio.municipio_subir_archivos ? 'primary' : 'warn'" selected>
+                  {{ municipio.municipio_subir_archivos ? 'Sí' : 'No' }}
+                </mat-chip>
+              </mat-chip-set>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio_poblacion">
+            <th mat-header-cell *matHeaderCellDef>Población</th>
+            <td mat-cell *matCellDef="let municipio">
+              {{
+                municipio.municipio_poblacion !== null && municipio.municipio_poblacion !== undefined
+                  ? (municipio.municipio_poblacion | number: '1.0-0')
+                  : '—'
+              }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="acciones-header">Acciones</th>
+            <td mat-cell *matCellDef="let municipio">
+              <div class="acciones">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  matTooltip="Editar municipio"
+                  (click)="abrirDialogEditar(municipio)"
+                  aria-label="Editar municipio"
+                >
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  matTooltip="Eliminar municipio"
+                  (click)="eliminarMunicipio(municipio)"
+                  [disabled]="estaEliminando(municipio.municipio_id)"
+                  aria-label="Eliminar municipio"
+                >
+                  <mat-icon *ngIf="!estaEliminando(municipio.municipio_id)">delete</mat-icon>
+                  <mat-icon class="girando" *ngIf="estaEliminando(municipio.municipio_id)">hourglass_top</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end" *ngIf="!cargandoLista && totalRegistros > 0">
+      <mat-paginator
+        [length]="totalRegistros"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        (page)="cambiarPagina($event)"
+      ></mat-paginator>
+    </mat-card-actions>
+  </mat-card>
+</div>

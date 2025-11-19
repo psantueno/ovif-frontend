@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
 import { MunicipioService, PeriodoSeleccionadoMunicipio } from '../../services/municipio.service';
 import { take } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -23,7 +24,7 @@ interface EjercicioPautaOption {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatCardModule],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

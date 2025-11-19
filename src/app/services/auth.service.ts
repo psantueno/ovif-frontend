@@ -19,11 +19,40 @@ export class AuthService {
   private readonly userSubject = new BehaviorSubject<any | null>(null);
   readonly user$ = this.userSubject.asObservable();
   private profileRequest$: Observable<any | null> | null = null;
-  private readonly operadorSinMunicipiosKey = 'operadorSinMunicipios';
+  private readonly userStorageKey = 'user';
+
+  constructor() {
+    this.restoreUserFromStorage();
+  }
 
   private setUser(user: any | null): void {
     this.user = user ?? null;
+    if (this.user) {
+      try {
+        localStorage.setItem(this.userStorageKey, JSON.stringify(this.user));
+      } catch {
+        // ignore storage errors
+      }
+    } else {
+      localStorage.removeItem(this.userStorageKey);
+    }
     this.userSubject.next(this.user);
+  }
+
+  private restoreUserFromStorage(): void {
+    try {
+      const raw = localStorage.getItem(this.userStorageKey);
+      if (!raw) {
+        return;
+      }
+      const parsed = JSON.parse(raw);
+      this.user = parsed;
+      this.userSubject.next(this.user);
+    } catch {
+      localStorage.removeItem(this.userStorageKey);
+      this.user = null;
+      this.userSubject.next(this.user);
+    }
   }
 
   private normalizeUserPayload(payload: any): any | null {
@@ -72,8 +101,7 @@ export class AuthService {
           next: (res: any) => {
             // Limpieza previa
             localStorage.removeItem('municipioSeleccionado');
-            localStorage.removeItem(this.operadorSinMunicipiosKey);
-            localStorage.removeItem('user');
+            localStorage.removeItem(this.userStorageKey);
 
             // Guardar datos del usuario y token
             this.setUser(res.user);
@@ -98,7 +126,6 @@ export class AuthService {
                 if (!hasMunicipios) {
                   this.municipioService.clear();
                   if (isOperador) {
-                    localStorage.setItem(this.operadorSinMunicipiosKey, 'true');
                     Swal.fire({
                       icon: 'warning',
                       title: 'Acceso no disponible',
@@ -121,16 +148,11 @@ export class AuthService {
                   this.router.navigate(['/']);
                 }
 
-                if (hasMunicipios || !isOperador) {
-                  localStorage.removeItem(this.operadorSinMunicipiosKey);
-                }
-
                 observer.next(res);
                 observer.complete();
               },
               error: (err) => {
                 console.error('❌ Error al obtener municipios:', err);
-                localStorage.removeItem(this.operadorSinMunicipiosKey);
                 Swal.fire({
                   icon: 'error',
                   title: 'Error al obtener municipios',
@@ -185,9 +207,8 @@ export class AuthService {
         this.setUser(null);
         this.profileRequest$ = null;
         localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem(this.userStorageKey);
         localStorage.removeItem('municipioSeleccionado');
-        localStorage.removeItem(this.operadorSinMunicipiosKey);
         this.router.navigate(['/login']);
       })
     );

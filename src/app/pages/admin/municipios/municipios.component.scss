@@ -1,0 +1,241 @@
+.municipios-admin-container {
+  padding: 2rem;
+  background-color: var(--color-neutral);
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.helper-card,
+.selector-card,
+.tabla-card {
+  width: 100%;
+  max-width: 1100px;
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.helper-card {
+  padding: 1.5rem;
+
+  .helper-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: #4a5568;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .helper-icon {
+      font-size: 22px;
+    }
+  }
+}
+
+.selector-card {
+  padding: 1.5rem;
+
+  .selector-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buscador-form {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) auto auto;
+    gap: 0.75rem;
+    align-items: center;
+
+    .selector-field {
+      width: 100%;
+    }
+
+    button {
+      height: 56px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn-buscar {
+      background-color: var(--color-primary);
+      color: #fff;
+
+      &:hover {
+        background-color: var(--color-secondary);
+      }
+    }
+  }
+
+  .selector-helper,
+  .selector-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .selector-loading mat-spinner {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+.tabla-card {
+  padding: 0;
+
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.25rem 1.5rem;
+
+    .header-icon {
+      font-size: 32px;
+      min-width: 32px;
+      height: 32px;
+      color: var(--color-secondary);
+    }
+
+    .header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .btn-accion {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-weight: 600;
+    }
+  }
+
+  mat-card-content {
+    padding: 1.5rem;
+  }
+}
+
+.flex-spacer {
+  flex: 1 1 auto;
+}
+
+.estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 160px;
+
+  mat-icon {
+    font-size: 30px;
+  }
+}
+
+.tabla-wrapper {
+  overflow-x: auto;
+}
+
+.municipios-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.85rem;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    white-space: nowrap;
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    background-color: rgba(43, 62, 76, 0.04);
+  }
+
+  .mat-mdc-row:hover {
+    background-color: rgba(43, 62, 76, 0.04);
+  }
+
+  .id-value {
+    font-weight: 600;
+    color: #2b3e4c;
+  }
+
+  .nombre-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+
+    .nombre {
+      font-weight: 600;
+    }
+
+  }
+
+  .acciones {
+    display: inline-flex;
+    gap: 0.25rem;
+
+    button {
+      border-radius: 8px;
+    }
+  }
+}
+
+.acciones-header {
+  text-align: center;
+}
+
+.girando {
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 768px) {
+  .municipios-admin-container {
+    padding: 1rem;
+  }
+
+  .selector-card .buscador-form {
+    grid-template-columns: 1fr;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .tabla-card mat-card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

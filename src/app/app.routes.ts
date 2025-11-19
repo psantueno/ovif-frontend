@@ -15,6 +15,7 @@ import { AsignacionMunicipiosComponent } from './pages/admin/asignacion-municipi
 import { RolesComponent } from './pages/admin/roles/roles.component';
 import { EjerciciosFiscalesComponent } from './pages/admin/ejercicios-fiscales/ejercicios-fiscales.component';
 import { ProrrogaCierreComponent } from './pages/admin/prorroga-cierre/prorroga-cierre.component';
+import { MunicipiosComponent } from './pages/admin/municipios/municipios.component';
 import { MainLayout } from './shared/layouts/main-layout.component';
 import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
@@ -50,6 +51,7 @@ export const routes: Routes = [
       },
       { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
       { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/municipios', component: MunicipiosComponent, canActivate: [AdminGuard] },
       { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent, canActivate: [AdminGuard] },
       { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent, canActivate: [AdminGuard] },
       { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent, canActivate: [AdminGuard] },

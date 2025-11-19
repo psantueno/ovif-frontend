@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, map, catchError, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, map, catchError, of, throwError, from, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
 import { API_URL } from '../app.config';
 import {
@@ -160,6 +160,28 @@ export class MunicipioService {
       catchError((err) => {
         console.error('Error en getMisMunicipios:', err);
         return of([]);
+      })
+    );
+  }
+
+  ensureMunicipioSeleccionado(): Observable<'ok' | 'sin-municipios' | 'seleccionar'> {
+    if (this.getMunicipioActual()) {
+      return of('ok');
+    }
+
+    return this.getMisMunicipios().pipe(
+      switchMap((municipios): Observable<'ok' | 'sin-municipios' | 'seleccionar'> => {
+        if (!municipios.length) {
+          this.clear();
+          return of<'sin-municipios'>('sin-municipios');
+        }
+
+        if (municipios.length === 1) {
+          return from(this.setMunicipio(municipios[0], { silent: true })).pipe(map(() => 'ok' as const));
+        }
+
+        this.clear();
+        return of<'seleccionar'>('seleccionar');
       })
     );
   }
