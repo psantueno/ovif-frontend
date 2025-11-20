@@ -103,6 +103,13 @@
             <div matListItemLine class="periodo-detalle">
               Cierre vigente: {{ formatDate(periodo.fecha_fin) }}
             </div>
+            <div
+              matListItemLine
+              class="periodo-detalle"
+              *ngIf="periodo.convenio_id || periodo.pauta_id"
+            >
+              Convenio: {{ periodo.convenio_id ?? '—' }} · Pauta: {{ periodo.pauta_id ?? '—' }}
+            </div>
             <mat-icon
               class="periodo-seleccionado"
               color="primary"
@@ -141,6 +148,12 @@
             <span class="detalle-label">Prórroga vigente</span>
             <span class="detalle-value">
               {{ selectedPeriodo.fecha_prorroga ? formatDate(selectedPeriodo.fecha_prorroga) : 'Sin prórroga aplicada' }}
+            </span>
+          </div>
+          <div class="detalle-item" *ngIf="selectedPeriodo.convenio_id || selectedPeriodo.pauta_id">
+            <span class="detalle-label">Convenio / Pauta</span>
+            <span class="detalle-value">
+              Convenio: {{ selectedPeriodo.convenio_id ?? '—' }} · Pauta: {{ selectedPeriodo.pauta_id ?? '—' }}
             </span>
           </div>
           <div class="detalle-item">

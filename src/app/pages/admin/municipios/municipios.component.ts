@@ -61,7 +61,6 @@ export class MunicipiosComponent implements OnInit {
   readonly displayedColumns = [
     'municipio_id',
     'municipio_nombre',
-    'municipio_usuario',
     'municipio_spar',
     'municipio_ubge',
     'municipio_subir_archivos',
@@ -205,22 +204,30 @@ export class MunicipiosComponent implements OnInit {
         .subscribe({
           next: () => {
             Swal.fire({
+              toast: true,
+              position: 'top-end',
               icon: 'success',
-              title: 'Municipio eliminado',
-              text: 'El municipio se eliminó correctamente.',
-              confirmButtonText: 'Aceptar',
-              confirmButtonColor: '#3085d6'
+              title: 'Municipio eliminado correctamente',
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: '#f0fdf4',
+              color: '#14532d'
             });
             this.cargarMunicipios();
           },
           error: (error) => {
             const message = this.resolveErrorMessage(error, 'No se pudo eliminar el municipio.');
             Swal.fire({
+              toast: true,
+              position: 'top-end',
               icon: 'error',
-              title: 'Error al eliminar',
-              text: message,
-              confirmButtonText: 'Aceptar',
-              confirmButtonColor: '#d33'
+              title: message,
+              showConfirmButton: false,
+              timer: 2500,
+              timerProgressBar: true,
+              background: '#fee2e2',
+              color: '#7f1d1d'
             });
           },
           complete: () => {

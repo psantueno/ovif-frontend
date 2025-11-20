@@ -9,8 +9,8 @@ export interface Municipio {
   municipio_nombre: string;
   municipio_usuario: string;
   municipio_password?: string | null;
-  municipio_spar: boolean;
-  municipio_ubge: boolean;
+  municipio_spar: number;
+  municipio_ubge: number;
   municipio_subir_archivos: boolean;
   municipio_poblacion: number;
   createdAt?: string | null;
@@ -29,8 +29,8 @@ export interface MunicipioPayload {
   municipio_nombre: string;
   municipio_usuario: string;
   municipio_password?: string | null;
-  municipio_spar: boolean;
-  municipio_ubge: boolean;
+  municipio_spar: number;
+  municipio_ubge: number;
   municipio_subir_archivos: boolean;
   municipio_poblacion: number;
 }
@@ -100,12 +100,17 @@ export class MunicipiosAdminService {
         municipio_id: 0,
         municipio_nombre: 'Municipio sin nombre',
         municipio_usuario: '',
-        municipio_spar: false,
-        municipio_ubge: false,
+        municipio_spar: 0,
+        municipio_ubge: 0,
         municipio_subir_archivos: false,
         municipio_poblacion: 0
       };
     }
+
+    const toInteger = (value: unknown): number => {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? Math.trunc(parsed) : 0;
+    };
 
     const toBoolean = (value: unknown): boolean => {
       if (typeof value === 'boolean') {
@@ -126,8 +131,8 @@ export class MunicipiosAdminService {
       municipio_nombre: String(data?.municipio_nombre ?? data?.nombre ?? 'Municipio sin nombre').trim(),
       municipio_usuario: String(data?.municipio_usuario ?? data?.usuario ?? '').trim(),
       municipio_password: data?.municipio_password ?? null,
-      municipio_spar: toBoolean(data?.municipio_spar),
-      municipio_ubge: toBoolean(data?.municipio_ubge),
+      municipio_spar: toInteger(data?.municipio_spar),
+      municipio_ubge: toInteger(data?.municipio_ubge),
       municipio_subir_archivos: toBoolean(data?.municipio_subir_archivos),
       municipio_poblacion: Number(data?.municipio_poblacion ?? data?.poblacion ?? 0),
       createdAt: data?.createdAt ?? data?.created_at ?? null,

@@ -20,31 +20,15 @@
       <form class="buscador-form" (ngSubmit)="buscarMunicipios()">
         <mat-form-field appearance="outline" class="selector-field">
           <mat-label>Buscar municipio</mat-label>
-          <input
-            matInput
-            [matAutocomplete]="municipioAuto"
-            [formControl]="buscadorControl"
-            placeholder="Escribí para filtrar por nombre"
-          />
-          <button
-            mat-icon-button
-            matSuffix
-            type="button"
-            aria-label="Limpiar búsqueda"
-            *ngIf="buscadorControl.value"
-            (click)="limpiarBuscador()"
-          >
+          <input matInput [matAutocomplete]="municipioAuto" [formControl]="buscadorControl"
+            placeholder="Escribí para filtrar por nombre" />
+          <button mat-icon-button matSuffix type="button" aria-label="Limpiar búsqueda" *ngIf="buscadorControl.value"
+            (click)="limpiarBuscador()">
             <mat-icon>clear</mat-icon>
           </button>
-          <mat-autocomplete
-            #municipioAuto="matAutocomplete"
-            (optionSelected)="onMunicipioSelected($event)"
-            [displayWith]="displayMunicipio.bind(this)"
-          >
-            <mat-option
-              *ngFor="let municipio of filteredMunicipios$ | async"
-              [value]="municipio"
-            >
+          <mat-autocomplete #municipioAuto="matAutocomplete" (optionSelected)="onMunicipioSelected($event)"
+            [displayWith]="displayMunicipio.bind(this)">
+            <mat-option *ngFor="let municipio of filteredMunicipios$ | async" [value]="municipio">
               {{ municipio.municipio_nombre }}
             </mat-option>
             <mat-option *ngIf="!(filteredMunicipios$ | async)?.length">
@@ -52,17 +36,6 @@
             </mat-option>
           </mat-autocomplete>
         </mat-form-field>
-
-        <button
-          mat-stroked-button
-          type="button"
-          class="btn-limpiar"
-          (click)="limpiarBuscador()"
-          [disabled]="!searchTerm && !buscadorControl.value"
-        >
-          <mat-icon>refresh</mat-icon>
-          Limpiar
-        </button>
 
         <button mat-raised-button color="primary" class="btn-buscar" type="submit">
           <mat-icon>search</mat-icon>
@@ -73,8 +46,8 @@
       <p class="selector-helper">
         <mat-icon>info</mat-icon>
         <span>
-          El catálogo se carga automáticamente al ingresar a la vista.
-          Si el campo queda vacío se mostrarán todos los municipios disponibles.
+          El listado se carga automáticamente al ingresar.
+          Si el campo de filtro queda vacío se mostrarán todos los municipios disponibles.
         </span>
       </p>
 
@@ -94,13 +67,6 @@
           {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrados
         </mat-card-subtitle>
       </div>
-
-      <span class="flex-spacer"></span>
-
-      <button mat-raised-button color="primary" class="btn-accion" type="button" (click)="abrirDialogCrear()">
-        <mat-icon>add</mat-icon>
-        Nuevo municipio
-      </button>
     </mat-card-header>
 
     <mat-divider></mat-divider>
@@ -134,43 +100,36 @@
             </td>
           </ng-container>
 
-          <ng-container matColumnDef="municipio_usuario">
+
+          <!-- No lo vamos a mostrar (se va a eliminar esta columna en breve) -->
+          <!-- <ng-container matColumnDef="municipio_usuario">
             <th mat-header-cell *matHeaderCellDef>Usuario</th>
             <td mat-cell *matCellDef="let municipio">
               {{ municipio.municipio_usuario || '—' }}
             </td>
-          </ng-container>
+          </ng-container> -->
 
           <ng-container matColumnDef="municipio_spar">
             <th mat-header-cell *matHeaderCellDef>SPAR</th>
             <td mat-cell *matCellDef="let municipio">
-              <mat-chip-set>
-                <mat-chip [color]="municipio.municipio_spar ? 'primary' : 'warn'" selected>
-                  {{ municipio.municipio_spar ? 'Habilitado' : 'No' }}
-                </mat-chip>
-              </mat-chip-set>
+                  {{ municipio.municipio_spar }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="municipio_ubge">
             <th mat-header-cell *matHeaderCellDef>UBGE</th>
             <td mat-cell *matCellDef="let municipio">
-              <mat-chip-set>
-                <mat-chip [color]="municipio.municipio_ubge ? 'primary' : 'warn'" selected>
-                  {{ municipio.municipio_ubge ? 'Habilitado' : 'No' }}
-                </mat-chip>
-              </mat-chip-set>
+                  {{ municipio.municipio_ubge }}
             </td>
           </ng-container>
 
           <ng-container matColumnDef="municipio_subir_archivos">
             <th mat-header-cell *matHeaderCellDef>Sube archivos</th>
             <td mat-cell *matCellDef="let municipio">
-              <mat-chip-set>
-                <mat-chip [color]="municipio.municipio_subir_archivos ? 'primary' : 'warn'" selected>
-                  {{ municipio.municipio_subir_archivos ? 'Sí' : 'No' }}
-                </mat-chip>
-              </mat-chip-set>
+              <span class="sube-valor" [class.activo]="municipio.municipio_subir_archivos"
+                [class.inactivo]="!municipio.municipio_subir_archivos">
+                {{ municipio.municipio_subir_archivos ? 'Sí' : 'No' }}
+              </span>
             </td>
           </ng-container>
 
@@ -178,9 +137,9 @@
             <th mat-header-cell *matHeaderCellDef>Población</th>
             <td mat-cell *matCellDef="let municipio">
               {{
-                municipio.municipio_poblacion !== null && municipio.municipio_poblacion !== undefined
-                  ? (municipio.municipio_poblacion | number: '1.0-0')
-                  : '—'
+              municipio.municipio_poblacion !== null && municipio.municipio_poblacion !== undefined
+              ? (municipio.municipio_poblacion | number: '1.0-0')
+              : '—'
               }}
             </td>
           </ng-container>
@@ -189,23 +148,13 @@
             <th mat-header-cell *matHeaderCellDef class="acciones-header">Acciones</th>
             <td mat-cell *matCellDef="let municipio">
               <div class="acciones">
-                <button
-                  mat-icon-button
-                  color="primary"
-                  matTooltip="Editar municipio"
-                  (click)="abrirDialogEditar(municipio)"
-                  aria-label="Editar municipio"
-                >
+                <button mat-icon-button color="primary" matTooltip="Editar municipio"
+                  (click)="abrirDialogEditar(municipio)" aria-label="Editar municipio">
                   <mat-icon>edit</mat-icon>
                 </button>
-                <button
-                  mat-icon-button
-                  color="warn"
-                  matTooltip="Eliminar municipio"
-                  (click)="eliminarMunicipio(municipio)"
-                  [disabled]="estaEliminando(municipio.municipio_id)"
-                  aria-label="Eliminar municipio"
-                >
+                <button mat-icon-button color="warn" matTooltip="Eliminar municipio"
+                  (click)="eliminarMunicipio(municipio)" [disabled]="estaEliminando(municipio.municipio_id)"
+                  aria-label="Eliminar municipio">
                   <mat-icon *ngIf="!estaEliminando(municipio.municipio_id)">delete</mat-icon>
                   <mat-icon class="girando" *ngIf="estaEliminando(municipio.municipio_id)">hourglass_top</mat-icon>
                 </button>
@@ -220,13 +169,12 @@
     </mat-card-content>
 
     <mat-card-actions align="end" *ngIf="!cargandoLista && totalRegistros > 0">
-      <mat-paginator
-        [length]="totalRegistros"
-        [pageIndex]="pageIndex"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="pageSizeOptions"
-        (page)="cambiarPagina($event)"
-      ></mat-paginator>
+      <mat-paginator [length]="totalRegistros" [pageIndex]="pageIndex" [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions" (page)="cambiarPagina($event)"></mat-paginator>
     </mat-card-actions>
   </mat-card>
+
+  <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">
+    <mat-icon>add</mat-icon>
+  </button>
 </div>

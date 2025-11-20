@@ -54,6 +54,8 @@ export interface MunicipioSelectOption {
 export interface EjercicioCerradoResponse {
   ejercicio: number;
   mes: number;
+  convenio_id?: number | null;
+  pauta_id?: number | null;
   fecha_inicio?: string | null;
   fecha_fin_oficial?: string | null;
   fecha_fin?: string | null;
@@ -229,13 +231,15 @@ export class MunicipioService {
         return cierres.map((item: any) => {
           const fechas = item?.fechas ?? {};
           const datosOficiales = item?.datosOficiales ?? {};
-          const datosProrroga = item?.prorroga ?? {};
-          const cierreInfo = item?.cierre ?? {};
+        const datosProrroga = item?.prorroga ?? {};
+        const cierreInfo = item?.cierre ?? {};
+        const convenioRaw = item?.convenio_id ?? item?.convenioId ?? item?.convenio ?? null;
+        const pautaRaw = item?.pauta_id ?? item?.pautaId ?? null;
 
-          const fechaInicioOficial =
-            fechas.inicio_oficial ??
-            datosOficiales.fecha_inicio ??
-            null;
+        const fechaInicioOficial =
+          fechas.inicio_oficial ??
+          datosOficiales.fecha_inicio ??
+          null;
           const fechaFinOficial =
             fechas.fin_oficial ??
             datosOficiales.fecha_fin ??
@@ -246,6 +250,8 @@ export class MunicipioService {
             null;
           const fechaFinProrroga =
             fechas.fin_prorroga ??
+            datosProrroga.fecha_fin_nueva ??
+            datosProrroga.fechaFinNueva ??
             datosProrroga.fecha_fin ??
             null;
           const fechaVigente =
@@ -257,10 +263,14 @@ export class MunicipioService {
             fechas.fecha_cierre ??
             cierreInfo.fecha ??
             null;
+          const convenioId = Number(convenioRaw);
+          const pautaId = Number(pautaRaw);
 
           return {
             ejercicio: Number(item?.ejercicio ?? res?.ejercicio ?? item?.anio ?? item?.year ?? 0),
             mes: Number(item?.mes ?? item?.month ?? 0),
+            convenio_id: Number.isFinite(convenioId) ? convenioId : null,
+            pauta_id: Number.isFinite(pautaId) ? pautaId : null,
             fecha_inicio: fechaInicioProrroga ?? fechaInicioOficial ?? null,
             fecha_fin_oficial: fechaFinOficial,
             fecha_fin: fechaVigente,

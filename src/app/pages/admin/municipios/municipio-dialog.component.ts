@@ -44,8 +44,14 @@ export class MunicipioDialogComponent implements OnInit {
       municipio_nombre: [this.data?.municipio_nombre || '', [Validators.required, Validators.minLength(3)]],
       municipio_usuario: [this.data?.municipio_usuario || '', [Validators.required, Validators.minLength(3)]],
       municipio_password: [''],
-      municipio_spar: [this.data?.municipio_spar ?? false],
-      municipio_ubge: [this.data?.municipio_ubge ?? false],
+      municipio_spar: [
+        this.toIntegerOrNull(this.data?.municipio_spar),
+        [Validators.required, Validators.pattern(/^-?(0|[1-9]\d*)$/)]
+      ],
+      municipio_ubge: [
+        this.toIntegerOrNull(this.data?.municipio_ubge),
+        [Validators.required, Validators.pattern(/^-?(0|[1-9]\d*)$/)]
+      ],
       municipio_subir_archivos: [this.data?.municipio_subir_archivos ?? false],
       municipio_poblacion: [
         this.data?.municipio_poblacion ?? null,
@@ -92,18 +98,25 @@ export class MunicipioDialogComponent implements OnInit {
             icon: 'success',
             title: this.data?.municipio_id ? 'Municipio actualizado' : 'Municipio creado',
             showConfirmButton: false,
-            timer: 1800
+            timer: 2000,
+            timerProgressBar: true,
+            background: '#f0fdf4',
+            color: '#14532d'
           });
           this.dialogRef.close(true);
         },
         error: (error) => {
           const message = this.resolveErrorMessage(error, 'No se pudo guardar el municipio.');
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'error',
-            title: 'Error al guardar',
-            text: message,
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
+            title: message,
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            background: '#fee2e2',
+            color: '#7f1d1d'
           });
         }
       });
@@ -121,8 +134,8 @@ export class MunicipioDialogComponent implements OnInit {
     const payload: MunicipioPayload = {
       municipio_nombre: normalizarString(formValue.municipio_nombre) ?? '',
       municipio_usuario: normalizarString(formValue.municipio_usuario) ?? '',
-      municipio_spar: !!formValue.municipio_spar,
-      municipio_ubge: !!formValue.municipio_ubge,
+      municipio_spar: this.toInteger(formValue.municipio_spar),
+      municipio_ubge: this.toInteger(formValue.municipio_ubge),
       municipio_subir_archivos: !!formValue.municipio_subir_archivos,
       municipio_poblacion: this.toNumber(formValue.municipio_poblacion)
     };
@@ -140,6 +153,25 @@ export class MunicipioDialogComponent implements OnInit {
   private toNumber(valor: unknown): number {
     const parsed = Number(valor);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private toIntegerOrNull(valor: unknown): number | null {
+    if (valor === null || valor === undefined) {
+      return null;
+    }
+    const parsed = Number(valor);
+    if (!Number.isFinite(parsed)) {
+      return null;
+    }
+    return Math.trunc(parsed);
+  }
+
+  private toInteger(valor: unknown): number {
+    const parsed = Number(valor);
+    if (!Number.isFinite(parsed)) {
+      return 0;
+    }
+    return Math.trunc(parsed);
   }
 
   private resolveErrorMessage(error: any, fallback: string): string {

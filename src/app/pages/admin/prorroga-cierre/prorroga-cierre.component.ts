@@ -303,7 +303,19 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
           if (a.ejercicio !== b.ejercicio) {
             return b.ejercicio - a.ejercicio;
           }
-          return b.mes - a.mes;
+          if (a.mes !== b.mes) {
+            return b.mes - a.mes;
+          }
+
+          const convA = Number.isFinite(a.convenio_id) ? Number(a.convenio_id) : -Infinity;
+          const convB = Number.isFinite(b.convenio_id) ? Number(b.convenio_id) : -Infinity;
+          if (convA !== convB) {
+            return convA - convB;
+          }
+
+          const pautaA = Number.isFinite(a.pauta_id) ? Number(a.pauta_id) : -Infinity;
+          const pautaB = Number.isFinite(b.pauta_id) ? Number(b.pauta_id) : -Infinity;
+          return pautaA - pautaB;
         });
 
         this.periodos = ordenados;
@@ -334,6 +346,9 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     const prorroga = periodo.fecha_prorroga ??
       raw?.fecha_fin_prorroga ??
       raw?.fechaFinProrroga ??
+      raw?.prorroga?.fecha_fin_nueva ??
+      raw?.prorroga?.fecha_fin ??
+      raw?.prorroga?.fechaFinNueva ??
       null;
     return this.parseDate(prorroga);
   }

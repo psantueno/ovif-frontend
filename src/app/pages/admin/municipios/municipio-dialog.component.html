@@ -53,9 +53,31 @@
     </mat-error>
   </mat-form-field>
 
+  <div class="campos-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>Valor SPAR (entero)</mat-label>
+      <input matInput type="number" step="1" formControlName="municipio_spar" />
+      <mat-error *ngIf="form.get('municipio_spar')?.hasError('required') && form.get('municipio_spar')?.touched">
+        El valor es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('municipio_spar')?.hasError('pattern') && form.get('municipio_spar')?.touched">
+        Debe ser un entero
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Valor UBGE (entero)</mat-label>
+      <input matInput type="number" step="1" formControlName="municipio_ubge" />
+      <mat-error *ngIf="form.get('municipio_ubge')?.hasError('required') && form.get('municipio_ubge')?.touched">
+        El valor es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('municipio_ubge')?.hasError('pattern') && form.get('municipio_ubge')?.touched">
+        Debe ser un entero
+      </mat-error>
+    </mat-form-field>
+  </div>
+
   <div class="toggle-wrapper">
-    <mat-slide-toggle formControlName="municipio_spar">SPAR habilitado</mat-slide-toggle>
-    <mat-slide-toggle formControlName="municipio_ubge">UBGE habilitado</mat-slide-toggle>
     <mat-slide-toggle formControlName="municipio_subir_archivos">Permite subir archivos</mat-slide-toggle>
   </div>
 </mat-dialog-content>

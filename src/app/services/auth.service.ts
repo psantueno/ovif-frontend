@@ -19,40 +19,10 @@ export class AuthService {
   private readonly userSubject = new BehaviorSubject<any | null>(null);
   readonly user$ = this.userSubject.asObservable();
   private profileRequest$: Observable<any | null> | null = null;
-  private readonly userStorageKey = 'user';
-
-  constructor() {
-    this.restoreUserFromStorage();
-  }
 
   private setUser(user: any | null): void {
     this.user = user ?? null;
-    if (this.user) {
-      try {
-        localStorage.setItem(this.userStorageKey, JSON.stringify(this.user));
-      } catch {
-        // ignore storage errors
-      }
-    } else {
-      localStorage.removeItem(this.userStorageKey);
-    }
     this.userSubject.next(this.user);
-  }
-
-  private restoreUserFromStorage(): void {
-    try {
-      const raw = localStorage.getItem(this.userStorageKey);
-      if (!raw) {
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      this.user = parsed;
-      this.userSubject.next(this.user);
-    } catch {
-      localStorage.removeItem(this.userStorageKey);
-      this.user = null;
-      this.userSubject.next(this.user);
-    }
   }
 
   private normalizeUserPayload(payload: any): any | null {
@@ -101,7 +71,6 @@ export class AuthService {
           next: (res: any) => {
             // Limpieza previa
             localStorage.removeItem('municipioSeleccionado');
-            localStorage.removeItem(this.userStorageKey);
 
             // Guardar datos del usuario y token
             this.setUser(res.user);
@@ -207,7 +176,6 @@ export class AuthService {
         this.setUser(null);
         this.profileRequest$ = null;
         localStorage.removeItem('token');
-        localStorage.removeItem(this.userStorageKey);
         localStorage.removeItem('municipioSeleccionado');
         this.router.navigate(['/login']);
       })
