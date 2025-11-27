@@ -55,11 +55,14 @@ export interface EjercicioCerradoResponse {
   ejercicio: number;
   mes: number;
   convenio_id?: number | null;
+  convenio_nombre?: string | null;
   pauta_id?: number | null;
+  pauta_descripcion?: string | null;
   fecha_inicio?: string | null;
   fecha_fin_oficial?: string | null;
   fecha_fin?: string | null;
   fecha_prorroga?: string | null;
+  fecha_prorroga_vigente?: string | null;
   fecha_cierre?: string | null;
   tiene_prorroga?: boolean;
   raw?: any;
@@ -231,17 +234,30 @@ export class MunicipioService {
         return cierres.map((item: any) => {
           const fechas = item?.fechas ?? {};
           const datosOficiales = item?.datosOficiales ?? {};
-        const datosProrroga = item?.prorroga ?? {};
-        const cierreInfo = item?.cierre ?? {};
-        const convenioRaw = item?.convenio_id ?? item?.convenioId ?? item?.convenio ?? null;
-        const pautaRaw = item?.pauta_id ?? item?.pautaId ?? null;
+          const datosProrroga = item?.prorroga ?? {};
+          const cierreInfo = item?.cierre ?? {};
+          const convenioRaw = item?.convenio_id ?? item?.convenioId ?? item?.convenio ?? null;
+          const pautaRaw = item?.pauta_id ?? item?.pautaId ?? null;
+          const convenioNombre =
+            item?.convenio_nombre ??
+            item?.convenioNombre ??
+            item?.convenio?.nombre ??
+            null;
+          const pautaDescripcion =
+            item?.pauta_descripcion ??
+            item?.pautaDescripcion ??
+            item?.pauta?.descripcion ??
+            null;
 
-        const fechaInicioOficial =
-          fechas.inicio_oficial ??
-          datosOficiales.fecha_inicio ??
-          null;
+          const fechaInicioOficial =
+            fechas.inicio_oficial ??
+            fechas.inicioOficial ??
+            datosOficiales.fecha_inicio ??
+            null;
           const fechaFinOficial =
+            fechas.cierre_oficial ??
             fechas.fin_oficial ??
+            fechas.finOficial ??
             datosOficiales.fecha_fin ??
             null;
           const fechaInicioProrroga =
@@ -249,6 +265,7 @@ export class MunicipioService {
             datosProrroga.fecha_inicio ??
             null;
           const fechaFinProrroga =
+            fechas.prorroga_vigente ??
             fechas.fin_prorroga ??
             datosProrroga.fecha_fin_nueva ??
             datosProrroga.fechaFinNueva ??
@@ -270,11 +287,14 @@ export class MunicipioService {
             ejercicio: Number(item?.ejercicio ?? res?.ejercicio ?? item?.anio ?? item?.year ?? 0),
             mes: Number(item?.mes ?? item?.month ?? 0),
             convenio_id: Number.isFinite(convenioId) ? convenioId : null,
+            convenio_nombre: convenioNombre,
             pauta_id: Number.isFinite(pautaId) ? pautaId : null,
+            pauta_descripcion: pautaDescripcion,
             fecha_inicio: fechaInicioProrroga ?? fechaInicioOficial ?? null,
             fecha_fin_oficial: fechaFinOficial,
             fecha_fin: fechaVigente,
             fecha_prorroga: fechaFinProrroga ?? null,
+            fecha_prorroga_vigente: fechaFinProrroga ?? null,
             fecha_cierre: fechaCierre,
             tiene_prorroga: Boolean(item?.tiene_prorroga ?? fechaFinProrroga),
             raw: item

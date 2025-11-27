@@ -101,14 +101,17 @@
               {{ getMesNombre(periodo.mes) }} {{ periodo.ejercicio }}
             </div>
             <div matListItemLine class="periodo-detalle">
-              Cierre vigente: {{ formatDate(periodo.fecha_fin) }}
+              Cierre oficial: {{ formatDate(periodo.fecha_fin_oficial) }}
             </div>
-            <div
-              matListItemLine
-              class="periodo-detalle"
-              *ngIf="periodo.convenio_id || periodo.pauta_id"
-            >
-              Convenio: {{ periodo.convenio_id ?? '—' }} · Pauta: {{ periodo.pauta_id ?? '—' }}
+            <div matListItemLine class="periodo-detalle">
+              Prórroga vigente:
+              {{ periodo.fecha_prorroga_vigente || periodo.fecha_prorroga ? formatDate(periodo.fecha_prorroga_vigente || periodo.fecha_prorroga) : 'Sin prórroga aplicada' }}
+            </div>
+            <div matListItemLine class="periodo-detalle">
+              Convenio: {{ periodo.convenio_nombre || '—' }}
+            </div>
+            <div matListItemLine class="periodo-detalle">
+              Pauta: {{ periodo.pauta_descripcion || '—' }}
             </div>
             <mat-icon
               class="periodo-seleccionado"
@@ -147,25 +150,19 @@
           <div class="detalle-item">
             <span class="detalle-label">Prórroga vigente</span>
             <span class="detalle-value">
-              {{ selectedPeriodo.fecha_prorroga ? formatDate(selectedPeriodo.fecha_prorroga) : 'Sin prórroga aplicada' }}
-            </span>
-          </div>
-          <div class="detalle-item" *ngIf="selectedPeriodo.convenio_id || selectedPeriodo.pauta_id">
-            <span class="detalle-label">Convenio / Pauta</span>
-            <span class="detalle-value">
-              Convenio: {{ selectedPeriodo.convenio_id ?? '—' }} · Pauta: {{ selectedPeriodo.pauta_id ?? '—' }}
+              {{ selectedPeriodo.fecha_prorroga_vigente || selectedPeriodo.fecha_prorroga ? formatDate(selectedPeriodo.fecha_prorroga_vigente || selectedPeriodo.fecha_prorroga) : 'Sin prórroga aplicada' }}
             </span>
           </div>
           <div class="detalle-item">
-            <span class="detalle-label">Fecha de cierre registrada</span>
+            <span class="detalle-label">Convenio</span>
             <span class="detalle-value">
-              {{ formatDate(selectedPeriodo.fecha_fin) }}
+              {{ selectedPeriodo.convenio_nombre || '—' }}
             </span>
           </div>
-          <div class="detalle-item" *ngIf="selectedPeriodo.fecha_cierre">
-            <span class="detalle-label">Fecha de cierre informada</span>
+          <div class="detalle-item">
+            <span class="detalle-label">Pauta</span>
             <span class="detalle-value">
-              {{ formatDate(selectedPeriodo.fecha_cierre) }}
+              {{ selectedPeriodo.pauta_descripcion || '—' }}
             </span>
           </div>
         </div>
