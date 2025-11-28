@@ -194,6 +194,19 @@ mat-nav-list a[mat-list-item].activo {
   max-width: 280px;
 }
 
+.texto-field {
+  width: 100%;
+}
+
+.char-counter {
+  color: #6c757d;
+}
+
+.char-counter--excede {
+  color: #c62828;
+  font-weight: 600;
+}
+
 .form-actions {
   display: flex;
   flex-wrap: wrap;

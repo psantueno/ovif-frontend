@@ -13,6 +13,7 @@ import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/ma
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSelectModule } from '@angular/material/select';
 import { BehaviorSubject, Subject, combineLatest, map, startWith, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
 
@@ -51,6 +52,7 @@ const ES_AR_DATE_FORMATS = {
     MatDatepickerModule,
     MatNativeDateModule,
     MatDividerModule,
+    MatSelectModule,
     AdminNavbarComponent
   ],
   providers: [
@@ -106,6 +108,8 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
+  readonly tipoOpciones = ['PRORROGA', 'RECTIFICATIVA'] as const;
+  readonly maxCaracteres = 200;
 
   constructor(
     private readonly fb: FormBuilder,
@@ -115,6 +119,9 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     this.dateAdapter.setLocale('es-AR');
     const hoy = this.getToday();
     this.prorrogaForm = this.fb.group({
+      tipo: [this.tipoOpciones[0], [Validators.required]],
+      motivo: ['', [Validators.required, Validators.maxLength(this.maxCaracteres)]],
+      observaciones: ['', [Validators.required, Validators.maxLength(this.maxCaracteres)]],
       fechaFin: [hoy, [Validators.required, this.validarFechaPermitida()]]
     });
   }
@@ -126,6 +133,14 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  get motivoLength(): number {
+    return this.getControlLength('motivo');
+  }
+
+  get observacionesLength(): number {
+    return this.getControlLength('observaciones');
   }
 
   displayMunicipio(value: MunicipioControlValue | null | undefined): string {
@@ -142,7 +157,12 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     this.selectedPeriodo = null;
     this.busquedaRealizada = false;
     const hoy = this.getToday();
-    this.prorrogaForm.patchValue({ fechaFin: hoy });
+    this.prorrogaForm.patchValue({
+      fechaFin: hoy,
+      tipo: this.tipoOpciones[0],
+      motivo: '',
+      observaciones: ''
+    });
     this.prorrogaForm.get('fechaFin')?.updateValueAndValidity();
   }
 
@@ -177,13 +197,19 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const control = this.prorrogaForm.get('fechaFin') as FormControl<Date | null>;
-    if (!control || this.prorrogaForm.invalid) {
-      control?.markAsTouched();
-      const message = this.obtenerMensajeErrorFecha(control);
+    const fechaControl = this.prorrogaForm.get('fechaFin') as FormControl<Date | null>;
+    const tipoControl = this.prorrogaForm.get('tipo') as FormControl<string | null>;
+    const motivoControl = this.prorrogaForm.get('motivo') as FormControl<string | null>;
+    const observacionesControl = this.prorrogaForm.get('observaciones') as FormControl<string | null>;
+    if (!fechaControl || !tipoControl || this.prorrogaForm.invalid) {
+      fechaControl?.markAsTouched();
+      tipoControl?.markAsTouched();
+      motivoControl?.markAsTouched();
+      observacionesControl?.markAsTouched();
+      const message = this.obtenerMensajeErrorFormulario(fechaControl, tipoControl, motivoControl, observacionesControl);
       Swal.fire({
         icon: 'warning',
-        title: 'Fecha no válida',
+        title: 'Datos incompletos o inválidos',
         text: message,
         confirmButtonText: 'Entendido',
         confirmButtonColor: '#3085d6'
@@ -191,7 +217,7 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const value = control.value;
+    const value = fechaControl.value;
     if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
       Swal.fire({
         icon: 'error',
@@ -205,12 +231,34 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
 
     const fechaFin = this.dateToISO(value);
 
+    // 🎯 Objeto que se enviará al backend
+    const requestBody = {
+      municipioId: this.selectedMunicipio.municipio_id,
+      ejercicio: this.selectedPeriodo.ejercicio,
+      mes: this.selectedPeriodo.mes,
+      fechaFin,
+      convenio_id: this.selectedPeriodo.convenio_id ?? null,
+      pauta_id: this.selectedPeriodo.pauta_id ?? null,
+      tipo: tipoControl.value,
+      motivo: motivoControl?.value ?? '',
+      observaciones: observacionesControl?.value ?? ''
+    };
+
+    // 📝 Console.log para visualizar el req.body que se enviará al backend
+    console.log('📤 Request Body enviado al backend:', requestBody);
+    console.table(requestBody); // También en formato tabla para mejor visualización
+
     this.guardandoProrroga = true;
     this.municipioService.actualizarProrrogaMunicipio({
       municipioId: this.selectedMunicipio.municipio_id,
       ejercicio: this.selectedPeriodo.ejercicio,
       mes: this.selectedPeriodo.mes,
-      fechaFin
+      fechaFin,
+      convenioId: this.selectedPeriodo.convenio_id ?? null,
+      pautaId: this.selectedPeriodo.pauta_id ?? null,
+      tipo: tipoControl.value,
+      motivo: motivoControl?.value ?? '',
+      observaciones: observacionesControl?.value ?? ''
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         Swal.fire({
@@ -381,6 +429,38 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
 
     const date = new Date(normalized);
     return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  private getControlLength(controlName: string): number {
+    const value = this.prorrogaForm.get(controlName)?.value;
+    return typeof value === 'string' ? value.length : 0;
+  }
+
+  private obtenerMensajeErrorFormulario(
+    fechaControl?: AbstractControl | null,
+    tipoControl?: AbstractControl | null,
+    motivoControl?: AbstractControl | null,
+    observacionesControl?: AbstractControl | null
+  ): string {
+    if (fechaControl?.invalid) {
+      return this.obtenerMensajeErrorFecha(fechaControl);
+    }
+    if (tipoControl?.hasError('required')) {
+      return 'Seleccioná el tipo de solicitud.';
+    }
+    if (motivoControl?.hasError('required')) {
+      return 'Ingresá el motivo de la solicitud.';
+    }
+    if (motivoControl?.hasError('maxlength')) {
+      return `El motivo no puede superar los ${this.maxCaracteres} caracteres.`;
+    }
+    if (observacionesControl?.hasError('required')) {
+      return 'Ingresá las observaciones.';
+    }
+    if (observacionesControl?.hasError('maxlength')) {
+      return `Las observaciones no pueden superar los ${this.maxCaracteres} caracteres.`;
+    }
+    return 'Revisá los datos ingresados e intentá nuevamente.';
   }
 
   private dateToISO(date: Date): string {

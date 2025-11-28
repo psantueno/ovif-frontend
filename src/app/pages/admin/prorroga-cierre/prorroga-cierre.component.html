@@ -171,6 +171,66 @@
 
         <form [formGroup]="prorrogaForm" class="prorroga-form">
           <mat-form-field appearance="outline" class="fecha-field">
+            <mat-label>Tipo de solicitud</mat-label>
+            <mat-select formControlName="tipo" placeholder="Seleccioná el tipo">
+              <mat-option *ngFor="let tipo of tipoOpciones" [value]="tipo">
+                {{ tipo }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="prorrogaForm.get('tipo')?.hasError('required')">
+              Seleccioná el tipo de solicitud.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="texto-field">
+            <mat-label>Motivo</mat-label>
+            <textarea
+              matInput
+              formControlName="motivo"
+              rows="3"
+              placeholder="Ingresá el motivo de la solicitud"
+            ></textarea>
+            <mat-hint align="start">Máx {{ maxCaracteres }} caracteres</mat-hint>
+            <mat-hint
+              align="end"
+              class="char-counter"
+              [ngClass]="{ 'char-counter--excede': motivoLength > maxCaracteres }"
+            >
+              {{ motivoLength }} / {{ maxCaracteres }}
+            </mat-hint>
+            <mat-error *ngIf="prorrogaForm.get('motivo')?.hasError('required')">
+              Ingresá el motivo de la solicitud.
+            </mat-error>
+            <mat-error *ngIf="prorrogaForm.get('motivo')?.hasError('maxlength')">
+              Máximo {{ maxCaracteres }} caracteres.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="texto-field">
+            <mat-label>Observaciones</mat-label>
+            <textarea
+              matInput
+              formControlName="observaciones"
+              rows="3"
+              placeholder="Agregá observaciones (opcional)"
+            ></textarea>
+            <mat-hint align="start">Máx {{ maxCaracteres }} caracteres</mat-hint>
+            <mat-hint
+              align="end"
+              class="char-counter"
+              [ngClass]="{ 'char-counter--excede': observacionesLength > maxCaracteres }"
+            >
+              {{ observacionesLength }} / {{ maxCaracteres }}
+            </mat-hint>
+            <mat-error *ngIf="prorrogaForm.get('observaciones')?.hasError('required')">
+              Ingresá las observaciones.
+            </mat-error>
+            <mat-error *ngIf="prorrogaForm.get('observaciones')?.hasError('maxlength')">
+              Máximo {{ maxCaracteres }} caracteres.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="fecha-field">
             <mat-label>Nueva fecha de cierre</mat-label>
             <input
               matInput

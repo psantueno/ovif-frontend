@@ -308,13 +308,40 @@ export class MunicipioService {
     );
   }
 
-  actualizarProrrogaMunicipio(params: { municipioId: number; ejercicio: number; mes: number; fechaFin: string | null }): Observable<void> {
-    const { municipioId, ejercicio, mes, fechaFin } = params;
+  actualizarProrrogaMunicipio(params: {
+    municipioId: number;
+    ejercicio: number;
+    mes: number;
+    fechaFin: string | null;
+    convenioId?: number | null;
+    pautaId?: number | null;
+    tipo?: string | null;
+    motivo?: string | null;
+    observaciones?: string | null;
+  }): Observable<void> {
+    const {
+      municipioId,
+      ejercicio,
+      mes,
+      fechaFin,
+      convenioId,
+      pautaId,
+      tipo,
+      motivo,
+      observaciones
+    } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para actualizar la prórroga.'));
     }
 
-    const payload = { fecha_fin: fechaFin };
+    const payload = {
+      fecha_fin: fechaFin,
+      convenio_id: convenioId ?? null,
+      pauta_id: pautaId ?? null,
+      tipo: tipo ?? null,
+      motivo: motivo ?? null,
+      observaciones: observaciones ?? null
+    };
 
     return this.http
       .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/prorroga`, payload)
