@@ -1,9 +1,10 @@
-export type PautaTipo = 'gastos_recursos' | 'recaudaciones_personal' | string;
-export type ModuloPauta = 'gastos' | 'recursos' | 'recaudaciones' | 'personal';
+export type PautaTipo = 'gastos_recursos' | 'recaudaciones_remuneraciones' | 'recaudaciones_personal' | string;
+export type ModuloPauta = 'gastos' | 'recursos' | 'recaudaciones' | 'remuneraciones';
 
 const TIPO_PAUTA_LABELS: Record<string, string> = {
   gastos_recursos: 'Gastos y Recursos',
-  recaudaciones_personal: 'Recaudaciones y Personal'
+  recaudaciones_remuneraciones: 'Recaudaciones y Remuneraciones',
+  recaudaciones_personal: 'Recaudaciones y Remuneraciones'
 };
 
 export function obtenerEtiquetaTipoPauta(tipo: PautaTipo | null | undefined): string | null {
@@ -23,8 +24,8 @@ export function mapTipoPautaToModulos(tipo: PautaTipo | null | undefined): Modul
     return ['gastos', 'recursos'];
   }
 
-  if (tipo === 'recaudaciones_personal') {
-    return ['recaudaciones', 'personal'];
+  if (tipo === 'recaudaciones_remuneraciones' || tipo === 'recaudaciones_personal') {
+    return ['recaudaciones', 'remuneraciones'];
   }
 
   return [];

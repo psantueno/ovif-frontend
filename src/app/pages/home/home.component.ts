@@ -326,7 +326,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   private esModuloControlado(modulo: string): modulo is ModuloPauta {
-    return modulo === 'gastos' || modulo === 'recursos' || modulo === 'personal' || modulo === 'recaudaciones';
+    return modulo === 'gastos' || modulo === 'recursos' || modulo === 'remuneraciones' || modulo === 'recaudaciones';
   }
 
   private mapPeriodoOption(item: any): EjercicioPautaOption {
@@ -391,8 +391,8 @@ export class HomeComponent implements OnInit, OnDestroy {
         return 'Recursos';
       case 'recaudaciones':
         return 'Recaudaciones';
-      case 'personal':
-        return 'Personal';
+      case 'remuneraciones':
+        return 'Remuneraciones';
       default:
         return modulo;
     }

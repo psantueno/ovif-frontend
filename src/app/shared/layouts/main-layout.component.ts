@@ -19,7 +19,7 @@ export class MainLayout implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
 
-  private readonly rutasControladas = ['gastos', 'recursos', 'personal', 'subir-archivos'];
+  private readonly rutasControladas = ['gastos', 'recursos', 'remuneraciones', 'subir-archivos'];
 
   ngOnInit(): void {
     this.municipioService.municipio$
@@ -43,4 +43,3 @@ export class MainLayout implements OnInit, OnDestroy {
     }
   }
 }
-
