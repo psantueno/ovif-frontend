@@ -56,6 +56,13 @@ export const routes: Routes = [
         canDeactivate: [RecursosPendingChangesGuard],
         loadComponent: () => import('./pages/recursos/recursos.component').then((m) => m.RecursosComponent)
       },
+      {
+        path: 'historico-ejercicios-cerrados',
+        loadComponent: () =>
+          import('./pages/historico-ejercicios-cerrados/historico-ejercicios-cerrados.component').then(
+            (m) => m.HistoricoEjerciciosCerradosComponent
+          )
+      },
       { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
       { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
       { path: 'admin/municipios', component: MunicipiosComponent, canActivate: [AdminGuard] },

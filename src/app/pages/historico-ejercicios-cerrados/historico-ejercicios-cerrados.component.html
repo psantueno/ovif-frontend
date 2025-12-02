@@ -1,0 +1,74 @@
+<div class="page-container">
+  <app-back-button class="back" [link]="['/panel-carga-mensual']" text="Volver al menú principal"></app-back-button>
+
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Histórico de cierres</p>
+      <h1>Descarga de informes</h1>
+      <p class="subtitle">
+        Seleccioná ejercicio, mes y módulo para descargar el informe disponible.
+      </p>
+    </div>
+    <div class="municipio-chip" *ngIf="municipioActual">
+      <mat-icon>location_on</mat-icon>
+      <div class="municipio-info">
+        <span>Municipio</span>
+        <strong>{{ municipioNombre }}</strong>
+      </div>
+    </div>
+  </header>
+
+  <section class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <mat-icon>assignment</mat-icon>
+        <div>
+          <p class="eyebrow">Filtros</p>
+          <h2>Ejercicio, mes y módulo</h2>
+        </div>
+      </div>
+      <div class="status" *ngIf="cargandoFiltros">
+        <mat-icon>hourglass_top</mat-icon>
+        <span>Cargando opciones...</span>
+      </div>
+    </div>
+
+    <form class="form-grid" [formGroup]="form" (ngSubmit)="descargarInforme()">
+      <div class="form-field">
+        <label for="ejercicio">Ejercicio</label>
+        <select id="ejercicio" formControlName="ejercicio">
+          <option value="">Seleccioná el año</option>
+          <option *ngFor="let ej of filtros.ejercicios" [value]="ej">{{ ej }}</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="mes">Mes</label>
+        <select id="mes" formControlName="mes">
+          <option value="">Seleccioná el mes</option>
+          <option *ngFor="let mes of filtros.meses" [value]="mes">
+            {{ mesesNombres[mes - 1] || mes }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label for="modulo">Módulo</label>
+        <select id="modulo" formControlName="modulo">
+          <option value="">Seleccioná el módulo</option>
+          <option *ngFor="let modulo of filtros.modulos" [value]="modulo">
+            {{ modulo | titlecase }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" [disabled]="cargandoInforme">
+          <mat-icon *ngIf="!cargandoInforme">download</mat-icon>
+          <mat-icon *ngIf="cargandoInforme">hourglass_top</mat-icon>
+          <span>{{ cargandoInforme ? 'Buscando informe...' : 'Descargar informe' }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>

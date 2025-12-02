@@ -64,6 +64,16 @@ export interface PautaConvenioParametros {
   plazo_vto: number | null;
 }
 
+export interface InformesFiltrosResponse {
+  ejercicios: number[];
+  meses: number[];
+  modulos: string[];
+}
+
+export interface InformeDownloadResponse {
+  downloadUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
   private readonly http = inject(HttpClient);
@@ -106,6 +116,34 @@ export class EjerciciosService {
       }),
       catchError((error) => throwError(() => error))
     );
+  }
+
+  obtenerFiltrosInformes(municipioId: number): Observable<InformesFiltrosResponse> {
+    const params: Record<string, string> = {};
+    if (municipioId) {
+      params['municipio_id'] = String(municipioId);
+    }
+
+    return this.http
+      .get<InformesFiltrosResponse>(`${this.baseUrl}/informes/filtros`, { params })
+      .pipe(
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  obtenerInformeModulo(params: { municipio_id: number; ejercicio: number; mes: number; modulo: string }): Observable<InformeDownloadResponse> {
+    const httpParams: Record<string, string> = {
+      municipio_id: String(params.municipio_id),
+      ejercicio: String(params.ejercicio),
+      mes: String(params.mes),
+      modulo: params.modulo
+    };
+
+    return this.http
+      .get<InformeDownloadResponse>(`${this.baseUrl}/informes`, { params: httpParams })
+      .pipe(
+        catchError((error) => throwError(() => error))
+      );
   }
 
   crearEjercicio(payload: CreateEjercicioPayload): Observable<EjercicioMes> {
