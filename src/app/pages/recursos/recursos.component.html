@@ -1,9 +1,6 @@
 <div class="recursos-page">
   <div class="page-header">
-    <button class="link-back" type="button" (click)="volverAlInicio()">
-      <mat-icon>arrow_back</mat-icon>
-      <span>Menú principal</span>
-    </button>
+    <app-back-button text="Volver" [link]="['/panel-carga-mensual/carga']"></app-back-button>
 
     <div class="context">
       <h1>Carga de recursos</h1>

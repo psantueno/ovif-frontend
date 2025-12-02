@@ -27,7 +27,7 @@ export class SeleccionarMunicipioComponent implements OnInit {
         this.municipios = municipios;
         if (municipios.length === 0) {
            this.municipioService.clear();
-          this.router.navigate(['/home']);
+          this.router.navigate(['/panel-carga-mensual']);
         } else if (municipios.length === 1) {
           this.seleccionar(municipios[0]);
         }
@@ -41,6 +41,6 @@ export class SeleccionarMunicipioComponent implements OnInit {
 
   seleccionar(municipio: any) {
     this.municipioService.setMunicipio(municipio, { silent: true });
-    this.router.navigate(['/home']);
+    this.router.navigate(['/panel-carga-mensual']);
   }
 }

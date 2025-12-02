@@ -1,241 +1,112 @@
-.home-container {
+.panel-menu-container {
   padding: 2rem;
-  background-color: #FCF2DD;
+  background-color: var(--color-neutral);
+  min-height: calc(100vh - 120px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
 }
 
-.home-header {
+.panel-menu-header {
   text-align: center;
   margin-bottom: 2rem;
 
   h1 {
     font-size: 2rem;
-    color: #2B3E4C;
-    margin-bottom: 1.5rem;
-  }
-
-  .municipio-info {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: #2B3E4C;
-    font-weight: 500;
-    margin-top: 0;
-    margin-left: 0;
-    margin-bottom: 2rem;
-    font-size: 20px;
-
-    mat-icon {
-      font-size: 20px;
-      height: 20px;
-      min-width: 20px;
-      line-height: 17.5px;
-    }
-
-    span {
-      font-weight: 500;
-    }
-  }
-
-  .selector-helper {
-    margin: 0;
-    color: #2B3E4C;
-    font-size: 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    background-color: #ffffff;
-    padding: 1rem 1.5rem;
-    border-radius: 10px;
-
-    mat-icon {
-      font-size: 20px;
-      height: 20px;
-      width: 20px;
-      color:#2b3e4c
-    }
-  }
-}
-
-.ejercicio-selector {
-  margin-bottom: 2rem;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-
-  .selector-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 20px;
-  }
-
-  .selector-label {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-weight: bold;
-    color: #2B3E4C;
-
-    mat-icon {
-      font-size: 20px;
-      height: 20px;
-      width: 20px;
-    }
-  }
-
-  .selector-row select {
-    padding: 0.5rem 1rem;
-    border: 1px solid #C2B394;
-    border-radius: 6px;
-    font-size: 1rem;
-  }
-
-  .pauta-summary {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    max-width: 640px;
-    text-align: center;
-
-    .pauta-modulos {
-      margin: 0;
-      font-size: 0.9rem;
-      color: rgba(0, 0, 0, 0.75);
-    }
-
-    .pauta-fecha-chip {
-
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      background: #2b3e4c;
-      color: #fff;
-      padding: 0.5rem 1.5rem;
-      border-radius: 50px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-
-      mat-icon {
-        font-size: 16px;
-        height: 16px;
-        width: 16px;
-      }
-    }
-  }
-
-}
-
-.home-actions {
-  display: flex;
-  gap: 1.5rem;
-  max-width: 920px;
-  margin-bottom: 2rem;
-  margin-top: 2rem;
-  align-items: stretch;
-}
-
-.home-card {
-  background: var(--color-primary);
-  color: #ffffff;
-  padding: 1.25rem 0rem;
-  border-radius: 12px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  display: inline-flex;
-  min-width: 215px;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 1.1rem;
-  text-align: center;
-
-  mat-icon {
-    font-size: 32px;
-    height: 32px;
-    min-width: 32px;
-    color: inherit;
-    transition: color 0.25s ease;
-  }
-
-  &:hover:not(:disabled) {
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
-    transform: translateY(-4px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-  }
-
-  &:focus-visible {
-    outline: 3px solid rgba(var(--color-secondary-rgb), 0.6);
-    outline-offset: 2px;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-    box-shadow: none;
-  }
-}
-
-menu-icon-municipio {
-  font-size: 22px;
-  height: 22px;
-  min-width: 22px;
-  color: var(--color-primary);
-}
-
-
-.cerrar-mes {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: center;
-  cursor: not-allowed;
-
-  .btn-cerrar {
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-weight: 700;
-    padding: 1.75rem 1.75rem;
-    border-radius: 12px;
-    background-color: var(--color-secondary);
+  }
+
+  p {
+    color: var(--color-primary-dark);
+    font-weight: 500;
+  }
+
+  .header-icon {
+    font-size: 40px;
+    min-width: 40px;
+    height: 40px;
+    color: var(--color-secondary);
+  }
+
+  .help-icon {
+    font-size: 14px;
+    min-width: 14px;
+    height: 14px;
+    color: var(--color-primary-dark);
+  }
+}
+
+.panel-menu-actions {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(3, minmax(220px, 1fr));
+  align-items: stretch;
+  width: 100%;
+  max-width: 1200px;
+}
+
+@media (max-width: 1024px) {
+  .panel-menu-actions {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .panel-menu-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel-menu-card {
+  background: var(--color-primary);
+  color: var(--color-accent);
+  border-radius: 12px;
+  padding: 0.9rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 165px;
+  height: 100%;
+
+  &:hover {
+    background: var(--color-secondary);
     color: var(--color-on-secondary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transition: background-color 0.2s ease, color 0.2s ease;
-    font-size: 1rem;
+    transform: translateY(-4px);
+  }
 
-    mat-icon {
-      color: inherit;
-      font-size: 26px;
-      height: 26px;
-      min-width: 26px;
-    }
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    display: block;
+  }
 
-    &:hover:not(:disabled) {
-      background-color: #c0392b;
-      color: #ffffff;
+  .card-content {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex: 1;
+  }
 
-      mat-icon {
-        color: inherit;
-      }
-    }
+  .card-icon {
+    font-size: 42px;
+    min-width: 42px;
+    height: 42px;
+    color: inherit;
+  }
 
-    &:disabled {
-      opacity: 0.6;
-      box-shadow: none;
-    }
+  .card-description {
+    font-size: 0.9rem;
+    line-height: 1.35;
+    flex: 1;
   }
 }

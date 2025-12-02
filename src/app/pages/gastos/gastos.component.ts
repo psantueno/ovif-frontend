@@ -13,6 +13,7 @@ import {
   PeriodoSeleccionadoMunicipio
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
+import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 
 interface PartidaNode {
   codigo: number;
@@ -45,7 +46,7 @@ type MensajeTipo = 'info' | 'error';
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent],
   templateUrl: './gastos.component.html',
   styleUrls: ['./gastos.component.scss'],
 })
@@ -106,7 +107,7 @@ export class GastosComponent implements OnInit, OnDestroy {
         'Elegí un municipio desde la pantalla principal para continuar.',
         'warning'
       );
-      this.router.navigate(['/home']);
+      this.router.navigate(['/panel-carga-mensual/carga']);
       return;
     }
 
@@ -121,7 +122,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'Seleccioná un ejercicio y mes desde el menú principal.',
           'info'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -141,7 +142,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'Los datos recibidos no son válidos. Probá nuevamente.',
           'error'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -190,7 +191,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'El período seleccionado no permite cargar Gastos. Elegí otra opción desde el inicio.',
           'info'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -258,10 +259,6 @@ export class GastosComponent implements OnInit, OnDestroy {
       }
       return total + partida.node.importe;
     }, 0);
-  }
-
-  volverAlInicio(): void {
-    this.router.navigate(['/home']);
   }
 
   cambiarVista(vista: 'manual' | 'masiva'): void {

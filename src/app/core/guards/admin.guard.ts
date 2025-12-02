@@ -25,7 +25,7 @@ export const AdminGuard: CanActivateFn = () => {
         return true;
       }
 
-      return redirectTo(router, ['/home']);
+      return redirectTo(router, ['/panel-carga-mensual']);
     }),
     catchError(() => of(redirectTo(router, ['/login'])))
   );

@@ -39,7 +39,7 @@ export class MainLayout implements OnInit, OnDestroy {
     const seccion = url.split('/').filter(Boolean).pop() ?? '';
 
     if (this.rutasControladas.includes(seccion)) {
-      this.router.navigate(['/home']);
+      this.router.navigate(['/panel-carga-mensual']);
     }
   }
 }

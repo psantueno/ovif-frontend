@@ -1,80 +1,44 @@
-<div class="home-container">
-  <div class="home-header">
-    <h1>MENU PRINCIPAL DE GESTIÓN DE INFORMACIÓN FISCAL</h1>
-    <p class="municipio-info">
-      <mat-icon>location_on</mat-icon>
-      <span>Municipio:</span>
-      <strong>{{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</strong>
+<div class="panel-menu-container">
+  <div class="panel-menu-header">
+    <h1>
+      <mat-icon class="header-icon">dashboard</mat-icon>
+      MENU PRINCIPAL DE GESTIÓN MUNICIPAL
+    </h1>
+    <p>
+      <mat-icon class="help-icon">info</mat-icon>
+      Elegí qué acción querés realizar sobre la información fiscal del municipio.
     </p>
-    <mat-card class="container-helper ">
-      <p class="selector-helper">
-        <mat-icon>info</mat-icon>
-        <span>Los módulos de carga de datos se habilitan al seleccionar el ejercicio, mes, convenio y pauta correspondiente.
-        </span>
-      </p>
+  </div>
+
+  <div class="panel-menu-actions">
+    <mat-card class="panel-menu-card" routerLink="/panel-carga-mensual/carga">
+      <mat-card-title class="card-title">Menú de carga mensual</mat-card-title>
+      <div class="card-content">
+        <mat-icon class="card-icon">calendar_month</mat-icon>
+        <p class="card-description">
+          Carga de gastos, recursos, remuneraciones y recaudaciones del municipio para los ejercicios fiscales habilitados.
+        </p>
+      </div>
+    </mat-card>
+
+    <mat-card class="panel-menu-card" routerLink="/panel-rectificaciones">
+      <mat-card-title class="card-title">Menú de rectificaciones</mat-card-title>
+      <div class="card-content">
+        <mat-icon class="card-icon">edit_note</mat-icon>
+        <p class="card-description">
+          Carga de las rectificaciones de remuneraciones y recaudaciones del mes anterior inmediato.
+        </p>
+      </div>
+    </mat-card>
+
+    <mat-card class="panel-menu-card" routerLink="/grilla-ejercicios-historicos">
+      <mat-card-title class="card-title">Grilla de ejercicios históricos</mat-card-title>
+      <div class="card-content">
+        <mat-icon class="card-icon">history_toggle_off</mat-icon>
+        <p class="card-description">
+          Ver los registros historicos que han sido cargados por el municipio para los distintos ejercicios fiscales y convenios.
+        </p>
+      </div>
     </mat-card>
   </div>
-
-  <!-- Selector de Ejercicio/Mes -->
-  <div class="ejercicio-selector">
-    <div class="selector-row">
-      <label for="ejercicioMes" class="selector-label">
-        <mat-icon>event</mat-icon>
-        <span>Ejercicio y Mes:</span>
-      </label>
-      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
-        <option value="">Seleccione el ejercicio fiscal, convenio y pauta que desea cargar</option>
-        <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
-          {{ em.texto }}
-        </option>
-      </select>
-    </div>
-    <div class="pauta-summary" *ngIf="ejercicioMes || periodoActivo">
-
-      <span class="pauta-fecha-chip" *ngIf="periodoActivo?.fecha_cierre">
-        <mat-icon>event</mat-icon>
-        Fecha de cierre: {{ periodoActivo?.fecha_cierre | date: 'dd/MM/yyyy' }}
-      </span>
-      <p class="pauta-modulos">(*) {{ modulosHabilitadosLabel }}</p>
-    </div>
-  </div>
-
-  <!-- Acciones principales -->
-  <div class="home-actions">
-    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!isModuloHabilitado('gastos')">
-      <mat-icon>payments</mat-icon>
-      <span>Gastos</span>
-    </button>
-
-    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!isModuloHabilitado('recursos')">
-      <mat-icon>savings</mat-icon>
-      <span>Recursos</span>
-    </button>
-
-    <button type="button" class="home-card" (click)="irA('remuneraciones')" [disabled]="!isModuloHabilitado('remuneraciones')">
-      <mat-icon>groups</mat-icon>
-      <span>Remuneraciones</span>
-    </button>
-
-    <button type="button" class="home-card" (click)="irA('recaudaciones')"
-      [disabled]="!isModuloHabilitado('recaudaciones')">
-      <mat-icon>assessment</mat-icon>
-      <span>Recaudaciones</span>
-    </button>
-  </div>
-
-  <!-- ARCHIVOS -> vista implementada, falta conexion con backend. Se la quita de la vista, por ahora sin uso. -->
-
-  <!-- <button type="button" class="home-card" (click)="irA('subir-archivos')" [disabled]="!ejercicioMes">
-      <mat-icon>folder</mat-icon>
-      <span>Archivos</span>
-    </button>
-  </div> -->
-
-  <!-- Acción cerrar mes -->
-  <div class="cerrar-mes">
-    <button mat-raised-button class="btn-cerrar" (click)="cerrarMes()" [disabled]="!ejercicioMes">
-      <mat-icon>event_busy</mat-icon>
-      <span>Cerrar Mes</span>
-    </button>
-  </div>
+</div>

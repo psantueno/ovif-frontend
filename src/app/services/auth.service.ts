@@ -110,7 +110,7 @@ export class AuthService {
                   this.municipioService
                     .setMunicipio(municipios[0], { silent: true })
                     .then(() => {
-                      this.router.navigate(['/home']);
+                      this.router.navigate(['/panel-carga-mensual']);
                     });
                 } else {
                   this.municipioService.clear();

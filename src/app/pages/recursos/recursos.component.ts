@@ -13,6 +13,7 @@ import {
   PeriodoSeleccionadoMunicipio
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
+import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 
 type MensajeTipo = 'info' | 'error';
 type CampoEditable = 'importe' | 'contribuyentes' | 'pagaron';
@@ -61,7 +62,7 @@ interface RecursoCargaPreview {
 @Component({
   selector: 'app-recursos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent],
   templateUrl: './recursos.component.html',
   styleUrls: ['./recursos.component.scss'],
 })
@@ -122,7 +123,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
         'Elegí un municipio desde la pantalla principal para continuar.',
         'warning'
       );
-      this.router.navigate(['/home']);
+      this.router.navigate(['/panel-carga-mensual/carga']);
       return;
     }
 
@@ -137,7 +138,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
           'Seleccioná un ejercicio y mes desde el menú principal.',
           'info'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -152,7 +153,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
           'Los datos recibidos no son válidos. Probá nuevamente.',
           'error'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -201,7 +202,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
           'El período seleccionado no permite cargar Recursos. Elegí otra opción desde el inicio.',
           'info'
         );
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual/carga']);
         return;
       }
 
@@ -285,10 +286,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
   get previsualizacionMasivaConErrores(): boolean {
     return this.previsualizacionMasiva.some((fila) => fila.errores.length > 0);
-  }
-
-  volverAlInicio(): void {
-    this.router.navigate(['/home']);
   }
 
   cambiarVista(vista: 'manual' | 'masiva'): void {

@@ -1,0 +1,81 @@
+<div class="home-container">
+  <app-back-button class="home-back" text="Volver al menú principal" [link]="['/panel-carga-mensual']"></app-back-button>
+  <div class="home-header">
+    <h1>MENU DE CARGA DE INFORMACIÓN FISCAL</h1>
+    <p class="municipio-info">
+      <mat-icon>location_on</mat-icon>
+      <span>Municipio:</span>
+      <strong>{{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</strong>
+    </p>
+    <mat-card class="container-helper ">
+      <p class="selector-helper">
+        <mat-icon>info</mat-icon>
+        <span>Los módulos de carga de datos se habilitan al seleccionar el ejercicio, mes, convenio y pauta correspondiente.
+        </span>
+      </p>
+    </mat-card>
+  </div>
+
+  <!-- Selector de Ejercicio/Mes -->
+  <div class="ejercicio-selector">
+    <div class="selector-row">
+      <label for="ejercicioMes" class="selector-label">
+        <mat-icon>event</mat-icon>
+        <span>Ejercicio y Mes:</span>
+      </label>
+      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
+        <option value="">Seleccione el ejercicio fiscal, convenio y pauta que desea cargar</option>
+        <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
+          {{ em.texto }}
+        </option>
+      </select>
+    </div>
+    <div class="pauta-summary" *ngIf="ejercicioMes || periodoActivo">
+
+      <span class="pauta-fecha-chip" *ngIf="periodoActivo?.fecha_cierre">
+        <mat-icon>event</mat-icon>
+        Fecha de cierre: {{ periodoActivo?.fecha_cierre | date: 'dd/MM/yyyy' }}
+      </span>
+      <p class="pauta-modulos">(*) {{ modulosHabilitadosLabel }}</p>
+    </div>
+  </div>
+
+  <!-- Acciones principales -->
+  <div class="home-actions">
+    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!isModuloHabilitado('gastos')">
+      <mat-icon>payments</mat-icon>
+      <span>Gastos</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!isModuloHabilitado('recursos')">
+      <mat-icon>savings</mat-icon>
+      <span>Recursos</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('remuneraciones')" [disabled]="!isModuloHabilitado('remuneraciones')">
+      <mat-icon>groups</mat-icon>
+      <span>Remuneraciones</span>
+    </button>
+
+    <button type="button" class="home-card" (click)="irA('recaudaciones')"
+      [disabled]="!isModuloHabilitado('recaudaciones')">
+      <mat-icon>assessment</mat-icon>
+      <span>Recaudaciones</span>
+    </button>
+  </div>
+
+  <!-- ARCHIVOS -> vista implementada, falta conexion con backend. Se la quita de la vista, por ahora sin uso. -->
+
+  <!-- <button type="button" class="home-card" (click)="irA('subir-archivos')" [disabled]="!ejercicioMes">
+      <mat-icon>folder</mat-icon>
+      <span>Archivos</span>
+    </button>
+  </div> -->
+
+  <!-- Acción cerrar mes -->
+  <div class="cerrar-mes">
+    <button mat-raised-button class="btn-cerrar" (click)="cerrarMes()" [disabled]="!ejercicioMes">
+      <mat-icon>event_busy</mat-icon>
+      <span>Cerrar Mes</span>
+    </button>
+  </div>

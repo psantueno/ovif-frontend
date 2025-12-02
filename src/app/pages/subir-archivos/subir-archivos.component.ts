@@ -73,7 +73,7 @@ export class SubirArchivosComponent implements OnInit {
 
     if (!this.municipioActual?.municipio_id) {
       this.mostrarAlerta('Municipio no seleccionado', 'Debes elegir un municipio antes de subir archivos.', 'warning');
-      this.router.navigate(['/home']);
+      this.router.navigate(['/panel-carga-mensual']);
       return;
     }
 
@@ -82,7 +82,7 @@ export class SubirArchivosComponent implements OnInit {
 
       if (!ejercicioMes) {
         this.mostrarAlerta('Ejercicio inválido', 'Seleccioná un ejercicio y mes desde la pantalla principal.', 'info');
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
@@ -92,7 +92,7 @@ export class SubirArchivosComponent implements OnInit {
 
       if (!ejercicio || !mes) {
         this.mostrarAlerta('Datos inválidos', 'Los datos recibidos no son válidos. Probá nuevamente.', 'error');
-        this.router.navigate(['/home']);
+        this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
@@ -249,7 +249,7 @@ export class SubirArchivosComponent implements OnInit {
   }
 
   volverAlInicio(): void {
-    this.router.navigate(['/home']);
+    this.router.navigate(['/panel-carga-mensual']);
   }
 
   private esExtensionPermitida(nombreArchivo: string): boolean {
