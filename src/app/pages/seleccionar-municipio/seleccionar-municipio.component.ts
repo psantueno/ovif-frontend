@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../services/auth.service';
 import { MunicipioService } from '../../services/municipio.service';
+import { getLandingPathByRoles, getUserRoleNames } from '../../core/utils/roles.util';
 
 @Component({
   selector: 'app-seleccionar-municipio',
@@ -41,6 +42,7 @@ export class SeleccionarMunicipioComponent implements OnInit {
 
   seleccionar(municipio: any) {
     this.municipioService.setMunicipio(municipio, { silent: true });
-    this.router.navigate(['/panel-carga-mensual']);
+    const landingPath = getLandingPathByRoles(getUserRoleNames(this.auth.getUser()));
+    this.router.navigate([landingPath]);
   }
 }

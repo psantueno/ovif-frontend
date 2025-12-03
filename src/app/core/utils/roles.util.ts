@@ -28,3 +28,11 @@ export const getUserRoleNames = (user: any): string[] => {
 
   return Array.from(new Set([...roleNames, ...inlineRoles]));
 };
+
+export const getLandingPathByRoles = (roleNames: string[]): string => {
+  if (roleNames.includes('operador')) {
+    return '/home';
+  }
+
+  return '/panel-carga-mensual';
+};

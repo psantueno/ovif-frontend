@@ -5,7 +5,7 @@ import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay
 import { API_URL } from '../app.config';
 import Swal from 'sweetalert2'; // 👈 asegurate de tenerlo importado
 import { MunicipioService } from './municipio.service';
-import { getUserRoleNames } from '../core/utils/roles.util';
+import { getLandingPathByRoles, getUserRoleNames } from '../core/utils/roles.util';
 
 @Injectable({ providedIn: 'root' })
 
@@ -79,6 +79,7 @@ export class AuthService {
             const roleNames = getUserRoleNames(res.user);
             const isAdmin = roleNames.includes('administrador');
             const isOperador = roleNames.includes('operador');
+            const landingPath = getLandingPathByRoles(roleNames);
 
             if (isAdmin) {
               this.router.navigate(['/admin']);
@@ -110,7 +111,7 @@ export class AuthService {
                   this.municipioService
                     .setMunicipio(municipios[0], { silent: true })
                     .then(() => {
-                      this.router.navigate(['/panel-carga-mensual']);
+                      this.router.navigate([landingPath]);
                     });
                 } else {
                   this.municipioService.clear();

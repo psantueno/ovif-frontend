@@ -35,12 +35,10 @@ export const routes: Routes = [
     canActivateChild: [MunicipioGuard],
     children: [
       { path: '', component: SeleccionarMunicipioComponent },
+      { path: 'home', component: HomeComponent },
       {
         path: 'panel-carga-mensual',
-        children: [
-          { path: '', component: HomeComponent },
-          { path: 'carga', component: PanelCargaMensualComponent }
-        ]
+        component: PanelCargaMensualComponent
       },
       {
         path: 'subir-archivos',

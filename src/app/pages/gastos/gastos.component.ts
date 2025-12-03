@@ -107,7 +107,7 @@ export class GastosComponent implements OnInit, OnDestroy {
         'Elegí un municipio desde la pantalla principal para continuar.',
         'warning'
       );
-      this.router.navigate(['/panel-carga-mensual/carga']);
+      this.router.navigate(['/panel-carga-mensual']);
       return;
     }
 
@@ -122,7 +122,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'Seleccioná un ejercicio y mes desde el menú principal.',
           'info'
         );
-        this.router.navigate(['/panel-carga-mensual/carga']);
+        this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
@@ -142,7 +142,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'Los datos recibidos no son válidos. Probá nuevamente.',
           'error'
         );
-        this.router.navigate(['/panel-carga-mensual/carga']);
+        this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
@@ -191,7 +191,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'El período seleccionado no permite cargar Gastos. Elegí otra opción desde el inicio.',
           'info'
         );
-        this.router.navigate(['/panel-carga-mensual/carga']);
+        this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
