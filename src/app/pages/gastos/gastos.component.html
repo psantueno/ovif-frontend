@@ -197,17 +197,19 @@
   >
     <header class="gastos-card__header">
       <div>
-        <h2>Importar gastos desde un arhcivo</h2>
+        <h2>Importar gastos desde un archivo</h2>
         <p>Subí un archivo CSV con los importes devengados para este período.</p>
       </div>
     </header>
 
-    <div class="carga-masiva__layout">s
+    <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
         <h3>¿Cómo preparar el archivo?</h3>
         <ul>
           <li>Descargá la plantilla base y completala con los datos de tu municipio.</li>
           <li>Mantené las columnas <code>codigo_partida</code>, <code>descripcion</code> e <code>importe_devengado</code>.</li>
+          <li>Revisá las partidas con descripción <code>NO CARGAR</code>, las mismas serán ignoradas si se completan</li>
+          <li>Las partidas sin <code>importe_devengado</code> serán ignoradas.</li>
           <li>Guardá el archivo en formato CSV con codificación UTF-8.</li>
         </ul>
         <a class="plantilla-link" [href]="plantillaGastosCsvUrl" download>
@@ -234,7 +236,7 @@
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ previsualizacionMasiva.length }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas() }} filas detectadas</small>
             </div>
             <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
               Reemplazar archivo
@@ -263,49 +265,72 @@
           <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ previsualizacionMasiva.length }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="previsualizacionMasivaConErrores">Hay filas con errores</span>
+          <span>{{ obtenerTotalFilasMasivas() }} filas</span>
+          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
         </div>
       </header>
-
-      <div class="tabla-wrapper">
-        <table class="gastos-tabla gastos-tabla--preview">
+      <table class="gastos-tabla">
           <thead>
             <tr>
-              <th>Fila</th>
-              <th>Código</th>
-              <th>Descripción</th>
-              <th>Importe</th>
-              <th>Observaciones</th>
+              <th>Codigo</th>
+              <th>Partida</th>
+              <th>Importe Devengado</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let fila of previsualizacionMasiva">
-              <td>{{ fila.fila }}</td>
-              <td>{{ fila.codigo }}</td>
-              <td>{{ fila.descripcion }}</td>
-              <td>{{ fila.importe ?? fila.importeTexto }}</td>
-              <td>
-                <ng-container *ngIf="fila.errores.length; else filaSinErrores">
-                  <ul>
-                    <li *ngFor="let error of fila.errores">{{ error }}</li>
-                  </ul>
-                </ng-container>
-                <ng-template #filaSinErrores>
-                  <span class="preview-ok">Listo para enviar</span>
-                </ng-template>
-              </td>
-            </tr>
+            <ng-container *ngFor="let partida of previsualizacionMasiva">
+              <tr
+                [class.grupo]="!partida.node.carga"
+                [class.tiene-error]="partida.node.tieneError"
+              >
+                <td>
+                  {{ partida.node.codigo }}
+                </td>
+                <td
+                  [attr.colspan]="partida.node.carga ? null : 2"
+                  [style.padding-left.px]="partida.nivel * 20 + 4"
+                >
+                  <span
+                    [class.partida-titulo]="!partida.node.carga"
+                    [class.partida-item]="partida.node.carga"
+                  >
+                    {{ partida.node.descripcion }}
+                  </span>
+                </td>
+                <td *ngIf="partida.node.carga" class="importe">
+                  {{ (partida.node.importe ?? 0) }}
+                </td>
+                <td>
+                  <ng-container *ngIf="partida.node.tieneError && partida.node.carga">
+                    <ul class="preview-list">
+                      <li class="preview-error">{{ obtenerErrorPartida(partida.node.codigo) }}</li>
+                    </ul>
+                  </ng-container>
+                  <ng-container *ngIf="!partida.node.tieneError && partida.node.carga">
+                    <span class="preview-ok">Listo para enviar</span>
+                  </ng-container>
+                </td>
+              </tr>
+            </ng-container>
           </tbody>
+          <tfoot *ngIf="!erroresPrevisualizacion.length">
+            <tr>
+              <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
+              <td class="total-valor">
+                <strong>{{ obtenerTotalImportesMasivos() | number: '1.0-2' }}</strong>
+              </td>
+              <td class="total-valor"></td>
+            </tr>
+          </tfoot>
         </table>
-      </div>
     </section>
 
     <div class="carga-masiva__acciones acciones acciones--masiva">
       <button
         type="button"
-        (click)="simularEnvioMasivo()"
-        [disabled]="!previsualizacionMasiva.length || previsualizacionMasivaConErrores || cargandoArchivoMasivo"
+        (click)="insertarGastosMasivos()"
+        [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
         <span>Subir lote</span>
@@ -319,11 +344,17 @@
       </button>
     </div>
 
-    <p class="carga-masiva__helper" *ngIf="previsualizacionMasivaConErrores">
+    <p class="carga-masiva__helper" *ngIf="erroresPrevisualizacion.length" role="note">
       Corregí los errores señalados en el archivo antes de continuar con la carga masiva.
     </p>
+    <!-- <div class="guardando-overlay" *ngIf="guardando" aria-live="assertive">
+      <div class="guardando-overlay__content">
+        <span class="guardando-overlay__spinner" aria-hidden="true"></span>
+        <span class="guardando-overlay__label">Guardando cambios...</span>
+      </div>
+    </div> -->
   </section>
-
+  <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
   <div class="modal-backdrop" *ngIf="modalVisible">
     <div class="modal">
       <div class="modal__header">

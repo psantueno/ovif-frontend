@@ -14,6 +14,8 @@ import {
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
+import { parseCSV } from '../../core/utils/csvReader.util';
+import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
 
 interface PartidaNode {
   codigo: number;
@@ -32,24 +34,16 @@ interface PartidaDisplay {
   nivel: number;
 }
 
-interface GastoCargaPreview {
-  fila: number;
-  codigo: string;
-  descripcion: string;
-  importeTexto: string;
-  importe: number | null;
-  errores: string[];
-}
-
 type MensajeTipo = 'info' | 'error';
 
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent],
   templateUrl: './gastos.component.html',
   styleUrls: ['./gastos.component.scss'],
 })
+
 export class GastosComponent implements OnInit, OnDestroy {
   private readonly municipioService = inject(MunicipioService);
   private readonly route = inject(ActivatedRoute);
@@ -85,7 +79,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   vistaActual: 'manual' | 'masiva' = 'manual';
   readonly plantillaGastosCsvUrl = 'assets/plantillas/plantilla-carga-gastos.csv';
   archivoMasivoSeleccionado: File | null = null;
-  previsualizacionMasiva: GastoCargaPreview[] = [];
+  previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
   cargandoArchivoMasivo = false;
 
@@ -269,9 +263,9 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.vistaActual = vista;
   }
 
-  get previsualizacionMasivaConErrores(): boolean {
+  /*get previsualizacionMasivaConErrores(): boolean {
     return this.previsualizacionMasiva.some((fila) => fila.errores.length > 0);
-  }
+  }*/
 
   onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
     const target = event.target as HTMLInputElement | null;
@@ -299,14 +293,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     const lector = new FileReader();
     lector.onload = () => {
       this.cargandoArchivoMasivo = false;
-      const contenido = typeof lector.result === 'string' ? lector.result : '';
-
-      if (!contenido) {
-        this.erroresCargaMasiva.push('No pudimos leer el archivo seleccionado.');
-        return;
-      }
-
-      this.procesarContenidoCsv(contenido);
+      this.obtenerFilasCSV(archivo);
     };
 
     lector.onerror = () => {
@@ -317,6 +304,119 @@ export class GastosComponent implements OnInit, OnDestroy {
     lector.readAsText(archivo, 'utf-8');
   }
 
+  erroresPrevisualizacion: any[] = [];
+
+  async obtenerFilasCSV(archivo: File): Promise<any> {
+    try {
+      const { rows, errores } = await parseCSV(archivo);
+
+      const encabezados = Object.keys(rows[0] || {});
+      const indiceCodigo = encabezados.indexOf('codigo_partida');
+      const indiceDescripcion = encabezados.indexOf('descripcion');
+      const indiceImporte = encabezados.indexOf('importe_devengado');
+
+      const partidasPrevisualizacion: PartidaDisplay[] = (() => {
+        // 1. Mapa para acceso rápido por código
+        const rowsMap = new Map<number, {codigo_partida: number; descripcion: string; importe_devengado: number}>(
+          rows.map(row => [row.codigo_partida, row])
+        );
+
+        // 2. Copia de partidasPlanas con modificación condicional
+        return this.partidasPlanas.map(({ node, nivel }) => {
+          const row = rowsMap.get(node.codigo);
+
+          const nuevoNode: PartidaNode = {
+            ...node,
+            importe: row ? row.importe_devengado : null,
+            importeOriginal: row ? row.importe_devengado : null,
+            importeTexto: row ? String(row.importe_devengado) : '',
+            importeOriginalTexto: row
+              ? String(row.importe_devengado)
+              : '',
+            tieneError: false
+          };
+
+          return {
+            nivel,
+            node: nuevoNode
+          };
+        });
+      })()
+
+      const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
+
+      if(partidasFiltradas.length === 0){
+        this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+        return;
+      }
+
+      this.previsualizacionMasiva = partidasFiltradas;
+
+      this.asignarErroresPrevisualizacion(errores);
+      this.erroresPrevisualizacion = errores;
+    }
+    catch (error) {
+      this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
+      console.error('Error al procesar CSV:', error);
+      return;
+    }
+  }
+
+  async insertarGastosMasivos(): Promise<void> {
+    const municipioId = this.municipioActual?.municipio_id ?? null;
+    if(!municipioId){
+      this.mostrarError('No pudimos identificar el municipio seleccionado.');
+      return;
+    }
+    if(this.erroresPrevisualizacion.length > 0){
+      this.mostrarError('El archivo contiene errores. No se pueden insertar los datos.');
+      return;
+    }
+
+    const periodo = this.periodoSeleccionado;
+
+    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
+    if(!ejercicio){
+      this.mostrarError('No pudimos identificar el ejercicio seleccionado.');
+      return;
+    }
+
+    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
+    if(!mes){
+      this.mostrarError('No pudimos identificar el mes seleccionado.');
+      return;
+    }
+
+    const loadablePartidas = this.previsualizacionMasiva.filter((fila) => fila.node.carga);
+
+    const gastosPayload: PartidaGastoUpsertPayload[] = loadablePartidas.map((fila) => ({
+      partidas_gastos_codigo: fila.node.codigo,
+      gastos_importe_devengado: fila.node.importe,
+    }));
+
+    this.guardando = true;
+
+    this.municipioService
+      .guardarPartidasGastos({ municipioId, ejercicio, mes, partidas: gastosPayload })
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.guardando = false;
+        })
+      )
+      .subscribe({
+        next: () => {
+          this.actualizarBaseCambios();
+          this.mostrarToastExito('Los importes fueron guardados correctamente.');
+          this.actualizarImportesPartidas();
+        },
+        error: (error) => {
+          console.error('Error al guardar las partidas de gastos:', error);
+          this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+        },
+      });
+  }
+
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
       input.value = '';
@@ -324,18 +424,6 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = null;
     this.resetEstadoCargaMasiva();
-  }
-
-  simularEnvioMasivo(): void {
-    if (!this.previsualizacionMasiva.length || this.previsualizacionMasivaConErrores || this.cargandoArchivoMasivo) {
-      return;
-    }
-
-    this.mostrarAlerta(
-      'Carga masiva pendiente de integración',
-      'Cuando el servicio de backend esté disponible enviaremos estos datos a OVIF. Mientras tanto, asegurate de que el archivo sea correcto.',
-      'info'
-    );
   }
 
   onSubmitGuardar(): void {
@@ -641,6 +729,10 @@ export class GastosComponent implements OnInit, OnDestroy {
       if (partida.node.tieneError) {
         valido = false;
       }
+      if(partida.node.importe === null || isNaN(partida.node.importe) || partida.node.importe <= 0){
+        valido = false;
+        partida.node.tieneError = true;
+      }
     });
     return valido;
   }
@@ -758,155 +850,10 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private resetEstadoCargaMasiva(): void {
-    this.previsualizacionMasiva = [];
-    this.erroresCargaMasiva = [];
     this.cargandoArchivoMasivo = false;
-  }
-
-  private procesarContenidoCsv(contenido: string): void {
-    const texto = contenido.replace(/^[\ufeff]+/, '');
-    const lineas = texto
-      .split(/\r?\n/)
-      .map((linea) => linea.trim())
-      .filter((linea) => linea.length > 0);
-
-    if (!lineas.length) {
-      this.erroresCargaMasiva.push('El archivo está vacío.');
-      return;
-    }
-
-    const separador = this.detectarSeparador(lineas[0]);
-    const encabezados = this.descomponerFila(lineas[0], separador).map((columna) => columna.trim().toLowerCase());
-    const indiceCodigo = encabezados.indexOf('codigo_partida');
-    const indiceDescripcion = encabezados.indexOf('descripcion');
-    const indiceImporte = encabezados.indexOf('importe_devengado');
-
-    if (indiceCodigo === -1 || indiceDescripcion === -1 || indiceImporte === -1) {
-      this.erroresCargaMasiva.push('La cabecera del archivo no coincide con la plantilla esperada.');
-      return;
-    }
-
-    const preview: GastoCargaPreview[] = [];
-
-    for (let i = 1; i < lineas.length; i++) {
-      const columnas = this.descomponerFila(lineas[i], separador);
-      if (columnas.every((valor) => valor.trim() === '')) {
-        continue;
-      }
-
-      const codigo = columnas[indiceCodigo]?.trim() ?? '';
-      const descripcion = columnas[indiceDescripcion]?.trim() ?? '';
-      const importeTexto = columnas[indiceImporte]?.trim() ?? '';
-      const errores: string[] = [];
-
-      if (!codigo) {
-        errores.push('Código de partida faltante.');
-      }
-
-      if (!descripcion) {
-        errores.push('Descripción faltante.');
-      }
-
-      let importe: number | null = null;
-
-      if (importeTexto) {
-        importe = this.convertirAImporte(importeTexto);
-        if (importe === null) {
-          errores.push('Importe inválido.');
-        }
-      } else {
-        errores.push('Importe faltante.');
-      }
-
-      preview.push({
-        fila: i + 1,
-        codigo,
-        descripcion,
-        importeTexto,
-        importe,
-        errores,
-      });
-    }
-
-    if (!preview.length) {
-      this.erroresCargaMasiva.push('No se detectaron filas con datos en el archivo.');
-      return;
-    }
-
-    this.previsualizacionMasiva = preview;
-  }
-
-  private detectarSeparador(linea: string): string {
-    const candidatos: Array<{ separador: string; conteo: number }> = [
-      { separador: ';', conteo: (linea.match(/;/g) ?? []).length },
-      { separador: ',', conteo: (linea.match(/,/g) ?? []).length },
-      { separador: '\t', conteo: (linea.match(/\t/g) ?? []).length },
-    ];
-
-    const mejor = candidatos.reduce((previo, actual) => (actual.conteo > previo.conteo ? actual : previo));
-    return mejor.conteo > 0 ? mejor.separador : ',';
-  }
-
-  private descomponerFila(linea: string, separador: string): string[] {
-    const resultado: string[] = [];
-    let actual = '';
-    let dentroDeComillas = false;
-    const caracterSeparador = separador === '\t' ? '\t' : separador;
-
-    for (let i = 0; i < linea.length; i++) {
-      const caracter = linea[i];
-
-      if (caracter === '"') {
-        const siguiente = linea[i + 1];
-        if (dentroDeComillas && siguiente === '"') {
-          actual += '"';
-          i++;
-        } else {
-          dentroDeComillas = !dentroDeComillas;
-        }
-        continue;
-      }
-
-      if (caracter === caracterSeparador && !dentroDeComillas) {
-        resultado.push(actual);
-        actual = '';
-        continue;
-      }
-
-      if (!dentroDeComillas && (caracter === '\r' || caracter === '\n')) {
-        continue;
-      }
-
-      actual += caracter;
-    }
-
-    resultado.push(actual);
-    return resultado;
-  }
-
-  private convertirAImporte(valor: string): number | null {
-    const texto = valor.trim();
-    if (!texto) {
-      return null;
-    }
-
-    const sinEspacios = texto.replace(/\s+/g, '');
-    const ultimaComa = sinEspacios.lastIndexOf(',');
-    const ultimoPunto = sinEspacios.lastIndexOf('.');
-    let normalizado = sinEspacios;
-
-    if (ultimaComa > -1 && ultimoPunto > -1) {
-      if (ultimaComa > ultimoPunto) {
-        normalizado = normalizado.replace(/\./g, '').replace(/,/g, '.');
-      } else {
-        normalizado = normalizado.replace(/,/g, '');
-      }
-    } else if (ultimaComa > -1) {
-      normalizado = normalizado.replace(/,/g, '.');
-    }
-
-    const numero = Number(normalizado);
-    return Number.isFinite(numero) ? numero : null;
+    this.erroresPrevisualizacion = [];
+    this.erroresCargaMasiva = [];
+    this.previsualizacionMasiva = [];
   }
 
   private esModuloPermitido(): boolean {
@@ -1011,5 +958,81 @@ export class GastosComponent implements OnInit, OnDestroy {
       }
     });
     return acumulado;
+  }
+
+  private filtrarPartidasPlanas(
+    partidas: PartidaDisplay[]
+  ): PartidaDisplay[] {
+    const codigosAConservar = new Set<number>();
+
+    for (let i = 0; i < partidas.length; i++) {
+      const actual = partidas[i];
+
+      if (actual.node.importe !== null && actual.node.carga) {
+        // Conservar el nodo actual
+        codigosAConservar.add(actual.node.codigo);
+
+        // Subir hacia los padres
+        let nivelActual = actual.nivel;
+
+        for (let j = i - 1; j >= 0; j--) {
+          const posiblePadre = partidas[j];
+
+          if (posiblePadre.nivel < nivelActual) {
+            codigosAConservar.add(posiblePadre.node.codigo);
+            nivelActual = posiblePadre.nivel;
+          }
+
+          if (nivelActual === 0) break;
+        }
+      }
+    }
+    // Filtrado final
+    return partidas.filter(p =>
+      codigosAConservar.has(p.node.codigo)
+    );
+  }
+
+  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
+    errores.forEach(({ row, error }) => {
+      const fila = this.previsualizacionMasiva.find(f => f.node.codigo === row);
+
+      if (fila) fila.node.tieneError = true;
+    });
+  }
+
+  private actualizarImportesPartidas(){
+    this.previsualizacionMasiva.forEach(fila => {
+      const partidaPlana = this.partidasPlanas.find(p => p.node.codigo === fila.node.codigo);
+      if(partidaPlana){
+        partidaPlana.node.importe = fila.node.importe;
+        partidaPlana.node.importeTexto = fila.node.importeTexto;
+        partidaPlana.node.tieneError = fila.node.tieneError;
+      }
+    });
+  }
+
+  public obtenerTotalFilasMasivas(): number {
+    return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
+  }
+
+  public obtenerTotalImportesMasivos(): number {
+    return this.previsualizacionMasiva.reduce((total, partida) => {
+      if (!partida.node.carga) {
+        return total;
+      }
+      if (partida.node.tieneError || partida.node.importe === null) {
+        return total;
+      }
+      return total + partida.node.importe;
+    }, 0);
+  }
+
+  public obtenerErrorPartida(codigo: number): string | null {
+    const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
+
+    if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row === codigo)?.error;
+
+    return null;
   }
 }

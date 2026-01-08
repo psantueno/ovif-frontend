@@ -254,7 +254,9 @@
         <ul>
           <li>Descargá la plantilla base y completala con los datos de tu municipio.</li>
           <li>Mantené las columnas <code>codigo_partida</code>, <code>descripcion</code>, <code>importe_percibido</code>, <code>total_contribuyentes</code> y <code>contribuyentes_pagaron</code>.</li>
-          <li>Si una partida sólo requiere importe, dejá vacías las columnas de contribuyentes.</li>
+          <li>Revisá las partidas con descripción <code>NO CARGAR</code>, las mismas serán ignoradas si se completan</li>
+          <li>Las partidas sin <code>importe_percibido</code>, <code>contribuyentes_pagaron</code> y <code>total_contribuyentes</code> serán ignoradas.</li>
+          <li>Las partidas que solo requieren importe están marcadas como <code>NO TC/CP</code>. Dejar vacías las columnas de contribuyentes para estas partidas.</li>
           <li>Guardá el archivo en formato CSV con codificación UTF-8.</li>
         </ul>
         <a class="plantilla-link" [href]="plantillaRecursosCsvUrl" download>
@@ -281,7 +283,7 @@
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ previsualizacionMasiva.length }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas() }} filas detectadas</small>
             </div>
             <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
               Reemplazar archivo
@@ -293,7 +295,6 @@
           <span class="upload-status__spinner" aria-hidden="true"></span>
           <span>Procesando archivo...</span>
         </div>
-
         <div class="upload-errores" *ngIf="erroresCargaMasiva.length && !cargandoArchivoMasivo">
           <h4>Revisá estas observaciones</h4>
           <ul>
@@ -310,44 +311,104 @@
           <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ previsualizacionMasiva.length }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="previsualizacionMasivaConErrores">Hay filas con errores</span>
+          <span>{{ obtenerTotalFilasMasivas() }} filas</span>
+          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacionMasiva.length">Hay filas con errores</span>
         </div>
       </header>
 
       <div class="tabla-wrapper">
-        <table class="recursos-tabla recursos-tabla--preview">
+        <table class="recursos-tabla">
           <thead>
             <tr>
-              <th>Fila</th>
-              <th>Código</th>
-              <th>Descripción</th>
-              <th>Importe percibido</th>
-              <th>Total contribuyentes</th>
-              <th>Pagaron</th>
-              <th>Observaciones</th>
+              <th>Codigo</th>
+              <th>Descripcion</th>
+              <th>Importe Percibido</th>
+              <th>Total de Contribuyentes</th>
+              <th>Contribuyentes que Pagaron</th>
+              <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let fila of previsualizacionMasiva">
-              <td>{{ fila.fila }}</td>
-              <td>{{ fila.codigo }}</td>
-              <td>{{ fila.descripcion }}</td>
-              <td>{{ fila.importe ?? fila.importeTexto }}</td>
-              <td>{{ fila.contribuyentes ?? fila.contribuyentesTexto }}</td>
-              <td>{{ fila.pagaron ?? fila.pagaronTexto }}</td>
-              <td>
-                <ng-container *ngIf="fila.errores.length; else filaSinErrores">
-                  <ul>
-                    <li *ngFor="let error of fila.errores">{{ error }}</li>
-                  </ul>
-                </ng-container>
-                <ng-template #filaSinErrores>
-                  <span class="preview-ok">Listo para enviar</span>
-                </ng-template>
+            <tr *ngIf="cargandoPartidas">
+              <td colspan="6" class="tabla-info">
+                <div class="tabla-loader" role="status" aria-live="polite">
+                  <span class="tabla-loader__spinner" aria-hidden="true"></span>
+                  <span class="tabla-loader__label">Cargando partidas...</span>
+                </div>
               </td>
             </tr>
+            <tr *ngIf="!cargandoPartidas && errorAlCargarPartidas">
+              <td colspan="4" class="tabla-info tabla-info--error">No pudimos obtener las partidas. Intentá nuevamente.</td>
+            </tr>
+            <tr
+              *ngIf="!cargandoPartidas && !errorAlCargarPartidas && partidasPlanas.length === 0"
+            >
+              <td colspan="4" class="tabla-info">No hay partidas de recursos disponibles.</td>
+            </tr>
+            <ng-container *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
+              <ng-container *ngFor="let partida of previsualizacionMasiva">
+                <tr
+                  [class.grupo]="!partida.node.carga"
+                  [class.tiene-error]="partida.node.errorImporte || partida.node.errorContribuyentes || partida.node.errorPagaron"
+                >
+                  <td>
+                    {{ partida.node.codigo }}
+                  </td>
+                  <td
+                    [attr.colspan]="partida.node.carga ? null : 4"
+                    [style.padding-left.px]="partida.nivel * 20 + 4"
+                  >
+                    <span
+                      [class.partida-titulo]="!partida.node.carga"
+                      [class.partida-item]="partida.node.carga"
+                    >
+                      {{ partida.node.descripcion }}
+                    </span>
+                  </td>
+                  <td *ngIf="partida.node.carga" class="importe">
+                    {{ partida.node.importePercibido }}
+                  </td>
+                  <td *ngIf="partida.node.carga" class="cantidad">
+                    <ng-container *ngIf="!partida.node.soloImporte; else sinDatoContribuyentes">
+                      {{ partida.node.cantidadContribuyentes }}
+                    </ng-container>
+                    <ng-template #sinDatoContribuyentes>
+                      <span class="valor-inhabilitado">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td *ngIf="partida.node.carga" class="cantidad">
+                    <ng-container *ngIf="!partida.node.soloImporte; else sinDatoPagaron">
+                      {{ partida.node.cantidadPagaron }}
+                    </ng-container>
+                    <ng-template #sinDatoPagaron>
+                      <span class="valor-inhabilitado">N/A</span>
+                    </ng-template>
+                  </td>
+                  <td>
+                    <ng-container *ngIf="partida.node.errorImporte">
+                      <ul class="preview-list">
+                        <li class="preview-error">{{ obtenerErrorPartida(partida.node.codigo) }}</li>
+                      </ul>
+                    </ng-container>
+                    <ng-container *ngIf="!partida.node.errorImporte && partida.node.carga">
+                      <span class="preview-ok">Listo para enviar</span>
+                    </ng-container>
+                  </td>
+                </tr>
+              </ng-container>
+            </ng-container>
           </tbody>
+          <tfoot *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
+            <tr>
+              <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
+              <td class="total-valor">
+                <strong>{{ obtenerTotalImportesMasivos() | number: '1.0-2' }}</strong>
+              </td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder"></td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </section>
@@ -355,8 +416,8 @@
     <div class="carga-masiva__acciones acciones acciones--masiva">
       <button
         type="button"
-        (click)="simularEnvioMasivo()"
-        [disabled]="!previsualizacionMasiva.length || previsualizacionMasivaConErrores || cargandoArchivoMasivo"
+        (click)="insertarRecursosMasivos()"
+        [disabled]="erroresCargaMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacionMasiva.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
         <span>Subir lote</span>
@@ -370,10 +431,12 @@
       </button>
     </div>
 
-    <p class="carga-masiva__helper" *ngIf="previsualizacionMasivaConErrores">
+    <p class="carga-masiva__helper" *ngIf="erroresPrevisualizacionMasiva.length" role="note">
       Corregí los errores señalados en el archivo antes de continuar con la carga masiva.
     </p>
   </section>
+
+  <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
 
   <div class="modal-backdrop" *ngIf="modalVisible">
     <div class="modal">
