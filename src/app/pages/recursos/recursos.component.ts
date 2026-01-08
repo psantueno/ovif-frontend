@@ -88,7 +88,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   modalVisible = false;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaRecursosCsvUrl = 'assets/plantillas/plantilla-carga-recursos.csv';
+  readonly plantillaRecursosCsvUrl = 'assets/plantillas/plantilla_recursos.csv';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
