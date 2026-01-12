@@ -243,25 +243,24 @@
   >
     <header class="recursos-card__header">
       <div>
-        <h2>Importar recursos desde un arhcivo</h2>
+        <h2>Importar recursos desde un archivo</h2>
         <p>Subí un archivo CSV con los importes percibidos y la información de contribuyentes para este período.</p>
       </div>
     </header>
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
-        <h3>¿Cómo preparar el archivo?</h3>
-        <ul>
-          <li>Descargá la plantilla base y completala con los datos de tu municipio.</li>
-          <li>Mantené las columnas <code>codigo_partida</code>, <code>descripcion</code>, <code>importe_percibido</code>, <code>total_contribuyentes</code> y <code>contribuyentes_pagaron</code>.</li>
-          <li>Revisá las partidas con descripción <code>NO CARGAR</code>, las mismas serán ignoradas si se completan</li>
-          <li>Las partidas sin <code>importe_percibido</code>, <code>contribuyentes_pagaron</code> y <code>total_contribuyentes</code> serán ignoradas.</li>
-          <li>Las partidas que solo requieren importe están marcadas como <code>NO TC/CP</code>. Dejar vacías las columnas de contribuyentes para estas partidas.</li>
-          <li>Guardá el archivo en formato CSV con codificación UTF-8.</li>
-        </ul>
-        <a class="plantilla-link" [href]="plantillaRecursosCsvUrl" download>
+        <h3>Plantilla</h3>
+        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <a class="plantilla-link" [href]="plantillaRecursosExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
-          <span>Descargar plantilla CSV</span>
+          <span>Descargar plantilla Excel</span>
+        </a>
+        <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
+        <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
+        <a class="plantilla-link" [href]="plantillaRecursosManualUrl" download>
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Descargar manual</span>
         </a>
       </section>
 
@@ -398,14 +397,14 @@
               </ng-container>
             </ng-container>
           </tbody>
-          <tfoot *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
+          <tfoot *ngIf="!cargandoPartidas && !erroresPrevisualizacionMasiva.length">
             <tr>
               <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
               <td class="total-valor">
                 <strong>{{ obtenerTotalImportesMasivos() | number: '1.0-2' }}</strong>
               </td>
-              <td class="total-placeholder">—</td>
-              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">{{ obtenerTotalContribuyentesMasivos() }}</td>
+              <td class="total-placeholder">{{ obtenerTotalPagaronMasivos() }}</td>
               <td class="total-placeholder"></td>
             </tr>
           </tfoot>
@@ -420,7 +419,7 @@
         [disabled]="erroresCargaMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacionMasiva.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
-        <span>Subir lote</span>
+        <span>Subir importe</span>
       </button>
       <button
         type="button"

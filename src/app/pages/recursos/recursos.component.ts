@@ -88,7 +88,8 @@ export class RecursosComponent implements OnInit, OnDestroy {
   modalVisible = false;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaRecursosCsvUrl = 'assets/plantillas/plantilla_recursos.csv';
+  readonly plantillaRecursosExcelUrl = 'assets/plantillas/plantilla_recursos.xlsx';
+  readonly plantillaRecursosManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
@@ -393,9 +394,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
           });
         })()
 
-        this.previsualizacionMasiva = partidasPrevisualizacion;
-
         const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
+        if(partidasFiltradas.length === 0){
+          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+          return;
+        }
+
         this.previsualizacionMasiva = partidasFiltradas;
 
         const erroresFiltrados = this.limpiarErroresPrevisualizacion(errores);
@@ -1209,6 +1213,30 @@ export class RecursosComponent implements OnInit, OnDestroy {
         return total;
       }
       return total + partida.node.importePercibido;
+    }, 0);
+  }
+
+  public obtenerTotalContribuyentesMasivos(): number {
+    return this.previsualizacionMasiva.reduce((total, partida) => {
+      if (!partida.node.carga || partida.node.soloImporte) {
+        return total;
+      }
+      if (partida.node.errorContribuyentes || partida.node.cantidadContribuyentes === null) {
+        return total;
+      }
+      return total + partida.node.cantidadContribuyentes;
+    }, 0);
+  }
+
+  public obtenerTotalPagaronMasivos(): number {
+    return this.previsualizacionMasiva.reduce((total, partida) => {
+      if (!partida.node.carga || partida.node.soloImporte) {
+        return total;
+      }
+      if (partida.node.errorPagaron || partida.node.cantidadPagaron === null) {
+        return total;
+      }
+      return total + partida.node.cantidadPagaron;
     }, 0);
   }
 

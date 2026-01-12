@@ -204,17 +204,17 @@
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
-        <h3>¿Cómo preparar el archivo?</h3>
-        <ul>
-          <li>Descargá la plantilla base y completala con los datos de tu municipio.</li>
-          <li>Mantené las columnas <code>codigo_partida</code>, <code>descripcion</code> e <code>importe_devengado</code>.</li>
-          <li>Revisá las partidas con descripción <code>NO CARGAR</code>, las mismas serán ignoradas si se completan</li>
-          <li>Las partidas sin <code>importe_devengado</code> serán ignoradas.</li>
-          <li>Guardá el archivo en formato CSV con codificación UTF-8.</li>
-        </ul>
-        <a class="plantilla-link" [href]="plantillaGastosCsvUrl" download>
+        <h3>Plantilla</h3>
+        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <a class="plantilla-link" [href]="plantillaGastosExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
-          <span>Descargar plantilla CSV</span>
+          <span>Descargar plantilla Excel</span>
+        </a>
+        <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
+        <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
+        <a class="plantilla-link" [href]="plantillaGastosManualUrl" download>
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Descargar manual</span>
         </a>
       </section>
 
@@ -333,7 +333,7 @@
         [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
-        <span>Subir lote</span>
+        <span>Subir importes</span>
       </button>
       <button
         type="button"

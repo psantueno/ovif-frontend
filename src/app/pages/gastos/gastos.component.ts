@@ -77,7 +77,8 @@ export class GastosComponent implements OnInit, OnDestroy {
   modalVisible = false;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaGastosCsvUrl = 'assets/plantillas/plantilla_gastos.csv';
+  readonly plantillaGastosExcelUrl = 'assets/plantillas/plantilla_gastos.xlsx';
+  readonly plantillaGastosManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
