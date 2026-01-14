@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { API_URL } from '../app.config';
 import { Observable, throwError, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -195,6 +195,21 @@ export class EjerciciosService {
       }),
       catchError((error) => throwError(() => error))
     );
+  }
+
+  descargarInformePDF(
+    downloadUrl: string,
+    municipioId: number
+  ): Observable<HttpResponse<Blob>> {
+
+    if (!municipioId) {
+      return throwError(() => new Error('Municipio no seleccionado'));
+    }
+
+    return this.http.get(`${downloadUrl}?municipio_id=${municipioId}`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
   }
 
   private normalizeEjercicio(data: any): EjercicioMes {

@@ -164,12 +164,39 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
   }
 
   private dispararDescarga(url: string): void {
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    this.ejerciciosService.descargarInformePDF(url, this.municipioActual.municipio_id).subscribe({
+      next: (response) => {
+        // 1️⃣ Obtener el nombre del archivo desde headers
+        const contentDisposition = response.headers.get('Content-Disposition');
+
+        let fileName = 'informe.pdf'; // fallback
+
+        if (contentDisposition) {
+          // Soporta: filename="archivo.pdf"
+          const match = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (match && match[1]) {
+            fileName = match[1];
+          }
+        }
+
+        // 2️⃣ Obtener el Blob real
+        const blob = response.body!;
+        const objectUrl = URL.createObjectURL(blob);
+
+        // 3️⃣ Descargar
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        downloadLink.download = fileName;
+
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        URL.revokeObjectURL(objectUrl);
+      },
+      error: () => {
+        this.mostrarAlerta('Error', 'No pudimos descargar el informe. Intentá nuevamente.', 'error');
+      }
+    });
   }
 }
