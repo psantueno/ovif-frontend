@@ -1,9 +1,9 @@
-<div class="gastos-page">
+<div class="recaudaciones-page">
   <div class="page-header">
     <app-back-button text="Volver" [link]="['/panel-carga-mensual']"></app-back-button>
 
     <div class="context">
-      <h1>Carga de gastos</h1>
+      <h1>Carga de recaudaciones</h1>
       <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
       <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
     </div>
@@ -25,7 +25,7 @@
   <section
     class="gastos-tabs"
     role="tablist"
-    aria-label="Modos de carga de gastos"
+    aria-label="Modos de carga de recaudaciones"
   >
     <button
       type="button"
@@ -56,79 +56,80 @@
   </section>
 
   <section
-    class="gastos-card"
+    class="recaudaciones-card"
     *ngIf="vistaActual === 'manual'"
     id="panel-manual"
     role="tabpanel"
     aria-labelledby="tab-manual"
   >
-    <header class="gastos-card__header">
+    <header class="recaudaciones-card__header">
       <div>
-        <h2>Importes devengados</h2>
-        <p>Ingresá los valores correspondientes a cada partida para el período seleccionado.</p>
+        <h2>Importes de recaudación</h2>
+        <p>Ingresá los valores correspondientes a cada concepto para el período seleccionado.</p>
       </div>
-      <div class="gastos-card__total">
+      <div class="recaudaciones-card__total">
         <span>Total acumulado</span>
         <strong>{{ totalImportes | number: '1.0-2' }}</strong>
       </div>
     </header>
 
-    <form class="gastos-form" (ngSubmit)="onSubmitGuardar()" novalidate>
+    <form class="recaudaciones-form" (ngSubmit)="onSubmitGuardar()" novalidate>
       <div class="tabla-wrapper">
-        <table class="gastos-tabla">
+        <table class="recaudaciones-tabla">
           <thead>
             <tr>
-              <th>Partida</th>
-              <th [style.textAlign]="'center'">Importe Devengado</th>
+              <th>Codigo</th>
+              <th>Concepto</th>
+              <th [style.textAlign]="'center'">Importe</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngIf="cargandoPartidas">
+            <tr *ngIf="cargandoConceptos">
               <td colspan="2" class="tabla-info">
                 <div class="tabla-loader" role="status" aria-live="polite">
                   <span class="tabla-loader__spinner" aria-hidden="true"></span>
-                  <span class="tabla-loader__label">Cargando partidas...</span>
+                  <span class="tabla-loader__label">Cargando conceptos...</span>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="!cargandoPartidas && errorAlCargarPartidas">
-              <td colspan="2" class="tabla-info tabla-info--error">No pudimos obtener las partidas. Intentá nuevamente.</td>
+            <tr *ngIf="!cargandoConceptos && errorAlCargarConceptos">
+              <td colspan="2" class="tabla-info tabla-info--error">No pudimos obtener los conceptos. Intentá nuevamente.</td>
             </tr>
             <tr
-              *ngIf="!cargandoPartidas && !errorAlCargarPartidas && partidasPlanas.length === 0"
+              *ngIf="!cargandoConceptos && !errorAlCargarConceptos && conceptosRecaudacion.length === 0"
             >
-              <td colspan="2" class="tabla-info">No hay partidas de gasto disponibles.</td>
+              <td colspan="2" class="tabla-info">No hay conceptos de recaudaciones disponibles.</td>
             </tr>
-            <ng-container *ngIf="!cargandoPartidas && !errorAlCargarPartidas">
-              <ng-container *ngFor="let partida of partidasPlanas">
+            <ng-container *ngIf="!cargandoConceptos && !errorAlCargarConceptos">
+              <ng-container *ngFor="let concepto of conceptosRecaudacion">
                 <tr
-                  [class.grupo]="!partida.node.carga"
-                  [class.tiene-error]="partida.node.tieneError"
+                  [class.tiene-error]="concepto.tieneError"
                 >
+                  <td>
+                    {{ concepto.cod_concepto }}
+                  </td>
                   <td
-                    [attr.colspan]="partida.node.carga ? null : 2"
-                    [style.padding-left.px]="partida.nivel * 20 + 4"
                   >
                     <span
-                      [class.partida-titulo]="!partida.node.carga"
-                      [class.partida-item]="partida.node.carga"
+                      [class.partida-titulo]="false"
+                      [class.partida-item]="true"
                     >
-                      {{ partida.node.descripcion }}
+                      {{ concepto.descripcion }}
                     </span>
                   </td>
-                  <td *ngIf="partida.node.carga" class="importe">
+                  <td class="importe">
                     <input
                       type="text"
                       class="importe-input"
-                      [class.input-error]="partida.node.tieneError"
-                      [name]="'importe_' + partida.node.codigo"
-                      [attr.id]="'importe_' + partida.node.codigo"
+                      [class.input-error]="concepto.tieneError"
+                      [name]="'importe_' + concepto.cod_concepto"
+                      [attr.id]="'importe_' + concepto.cod_concepto"
                       [readOnly]="mesCerrado"
                       inputmode="decimal"
                       (keydown)="permitirSoloNumeros($event)"
-                      (paste)="sanearPegado($event, partida.node)"
-                      [(ngModel)]="partida.node.importeTexto"
-                      (ngModelChange)="updateImporte(partida.node, $event)"
+                      (paste)="sanearPegado($event, concepto.cod_concepto)"
+                      [(ngModel)]="concepto.importeTexto"
+                      (ngModelChange)="updateImporte(concepto.cod_concepto, $event)"
                       [ngModelOptions]="{ standalone: true }"
                     />
                   </td>
@@ -138,7 +139,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td class="total-label">TOTAL</td>
+              <td class="total-label" colspan="2">TOTAL</td>
               <td class="total-valor">
                 <strong>{{ totalImportes | number: '1.0-2' }}</strong>
               </td>
@@ -148,7 +149,7 @@
       </div>
 
       <div class="acciones">
-        <button type="submit" [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando">
+        <button type="submit" [disabled]="mesCerrado || cargandoConceptos || errorAlCargarConceptos || guardando">
           <mat-icon aria-hidden="true">save</mat-icon>
           <ng-container *ngIf="!guardando; else guardandoTexto">
             <span>Guardar cambios</span>
@@ -160,7 +161,7 @@
         <button
           type="button"
           (click)="generarInforme()"
-          [disabled]="mesCerrado || cargandoPartidas || errorAlCargarPartidas || guardando || descargandoInforme"
+          [disabled]="mesCerrado || cargandoConceptos || errorAlCargarConceptos || guardando || descargandoInforme"
         >
           <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
           <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
@@ -189,16 +190,16 @@
   </section>
 
   <section
-    class="gastos-card gastos-card--masiva"
+    class="recaudaciones-card recaudaciones-card--masiva"
     *ngIf="vistaActual === 'masiva'"
     id="panel-masiva"
     role="tabpanel"
     aria-labelledby="tab-masiva"
   >
-    <header class="gastos-card__header">
+    <header class="recaudaciones-card__header">
       <div>
-        <h2>Importar gastos desde un archivo</h2>
-        <p>Subí un archivo CSV con los importes devengados para este período.</p>
+        <h2>Importar recaudaciones desde un archivo</h2>
+        <p>Subí un archivo CSV con los importes recaudados para este período.</p>
       </div>
     </header>
 
@@ -206,13 +207,13 @@
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
         <h3>Plantilla</h3>
         <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
-        <a class="plantilla-link" [href]="plantillaGastosExcelUrl" download>
+        <a class="plantilla-link" [href]="plantillaRecaudacionesExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar plantilla Excel</span>
         </a>
         <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
         <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
-        <a class="plantilla-link" [href]="plantillaGastosManualUrl" download>
+        <a class="plantilla-link" [href]="plantillaRecaudacionesManualUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar manual</span>
         </a>
@@ -236,7 +237,7 @@
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas() }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
             </div>
             <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
               Reemplazar archivo
@@ -265,49 +266,46 @@
           <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ obtenerTotalFilasMasivas() }} filas</span>
+          <span>{{ obtenerTotalFilasMasivas }} filas</span>
           <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
         </div>
       </header>
-      <table class="gastos-tabla">
+      <table class="recaudaciones-tabla">
           <thead>
             <tr>
               <th>Codigo</th>
-              <th>Partida</th>
-              <th>Importe Devengado</th>
+              <th>Concepto</th>
+              <th>Importe Recaudación</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let partida of previsualizacionMasiva">
+            <ng-container *ngFor="let concepto of previsualizacionMasiva">
               <tr
-                [class.grupo]="!partida.node.carga"
-                [class.tiene-error]="partida.node.tieneError"
+                [class.grupo]="false"
+                [class.tiene-error]="concepto.tieneError"
               >
                 <td>
-                  {{ partida.node.codigo }}
-                </td>
-                <td
-                  [attr.colspan]="partida.node.carga ? null : 2"
-                  [style.padding-left.px]="partida.nivel * 20 + 4"
-                >
-                  <span
-                    [class.partida-titulo]="!partida.node.carga"
-                    [class.partida-item]="partida.node.carga"
-                  >
-                    {{ partida.node.descripcion }}
-                  </span>
-                </td>
-                <td *ngIf="partida.node.carga" class="importe">
-                  {{ (partida.node.importe ?? 0) }}
+                  {{ concepto.cod_concepto }}
                 </td>
                 <td>
-                  <ng-container *ngIf="partida.node.tieneError && partida.node.carga">
+                  <span
+                    [class.concepto-titulo]="false"
+                    [class.concepto-item]="true"
+                  >
+                    {{ concepto.descripcion }}
+                  </span>
+                </td>
+                <td class="importe">
+                  {{ (concepto.importe_recaudacion ?? 0) }}
+                </td>
+                <td>
+                  <ng-container *ngIf="concepto.tieneError">
                     <ul class="preview-list">
-                      <li class="preview-error">{{ obtenerErrorPartida(partida.node.codigo) }}</li>
+                      <li class="preview-error">{{ obtenerErrorConcepto(concepto.cod_concepto) }}</li>
                     </ul>
                   </ng-container>
-                  <ng-container *ngIf="!partida.node.tieneError && partida.node.carga">
+                  <ng-container *ngIf="!concepto.tieneError">
                     <span class="preview-ok">Listo para enviar</span>
                   </ng-container>
                 </td>
@@ -318,7 +316,7 @@
             <tr>
               <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
               <td class="total-valor">
-                <strong>{{ obtenerTotalImportesMasivos() | number: '1.0-2' }}</strong>
+                <strong>{{ obtenerTotalImportesMasivos | number: '1.0-2' }}</strong>
               </td>
               <td class="total-valor"></td>
             </tr>
@@ -329,7 +327,7 @@
     <div class="carga-masiva__acciones acciones acciones--masiva">
       <button
         type="button"
-        (click)="insertarGastosMasivos()"
+        (click)="insertarRecaudacionesMasivas()"
         [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>

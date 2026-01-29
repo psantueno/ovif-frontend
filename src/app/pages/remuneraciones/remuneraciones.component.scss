@@ -1,4 +1,4 @@
-.gastos-page {
+.remuneraciones-page {
   min-height: 100vh;
   padding: 2rem 2.5rem;
   background: var(--color-neutral);
@@ -7,6 +7,13 @@
   align-items: center;
   gap: 1.5rem;
 
+  >.page-header,
+  >.status-card,
+  >.gastos-tabs,
+  >.recursos-card {
+    width: 100%;
+    max-width: 1100px;
+  }
 }
 
 .page-header {
@@ -78,7 +85,7 @@
   }
 }
 
-.gastos-card {
+.remuneraciones-card {
   position: relative;
   background: var(--color-surface);
   border-radius: 20px;
@@ -87,11 +94,10 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
 }
 
-
-
-.gastos-card__header {
+.remuneraciones-card__header {
   display: flex;
   justify-content: space-between;
   gap: 1.5rem;
@@ -110,7 +116,7 @@
   }
 }
 
-.gastos-card__total {
+.remuneraciones-card__total {
   background: rgba(var(--color-primary-rgb), 0.08);
   border-radius: 14px;
   padding: 0.9rem 1.1rem;
@@ -133,119 +139,61 @@
   }
 }
 
-.gastos-form {
+.preview-summary {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.06) 0%, rgba(var(--color-secondary-rgb), 0.03) 100%);
+  border: 1px solid rgba(var(--color-primary-rgb), 0.15);
+  gap: 1rem;
+}
+
+.preview-summary-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid rgba(var(--color-primary-rgb), 0.2);
+}
+
+.preview-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border-left: 4px solid var(--color-secondary);
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(var(--color-secondary-rgb), 0.12);
+    transform: translateX(4px);
+  }
+}
+
+.preview-summary-item-bold {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-primary);
+  margin: 0;
+}
+
+.preview-summary-item p:last-child {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.recaudaciones-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-}
-
-
-.tabla-wrapper {
-  overflow-x: auto;
-}
-
-.gastos-tabla {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.95rem;
-  background: var(--color-surface);
-}
-
-
-.gastos-tabla th {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  padding: 0.85rem;
-  text-align: left;
-  font-weight: 700;
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.15);
-}
-
-.gastos-tabla td {
-  border-bottom: 1px dashed rgba(var(--color-primary-rgb), 0.2);
-  padding: 0.7rem 0.85rem;
-  transition: background-color 0.2s ease;
-}
-
-.gastos-tabla tr.grupo td {
-  background: rgba(var(--color-primary-rgb), 0.06);
-  font-weight: 600;
-}
-
-.gastos-tabla tr:hover td {
-  background: rgba(var(--color-primary-rgb), 0.08);
-}
-
-.gastos-tabla tr.tiene-error td {
-  background: rgba(220, 53, 69, 0.1);
-}
-
-.tabla-info {
-  text-align: center;
-  padding: 1.2rem;
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.6);
-  background: rgba(var(--color-primary-rgb), 0.05);
-}
-
-.tabla-info--error {
-  color: #b02a37;
-  background: rgba(220, 53, 69, 0.12);
-}
-
-.tabla-loader {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-}
-
-.tabla-loader__spinner {
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  border: 3px solid rgba(var(--color-primary-rgb), 0.2);
-  border-top-color: var(--color-primary);
-  animation: tabla-loader-spin 0.75s linear infinite;
-}
-
-.tabla-loader__label {
-  color: rgba(0, 0, 0, 0.7);
-}
-
-.guardando-overlay {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: rgba(255, 255, 255, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 20;
-  pointer-events: all;
-  backdrop-filter: blur(2px);
-  cursor: progress;
-}
-
-.guardando-overlay__content {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 600;
-  color: var(--color-primary);
-}
-
-.guardando-overlay__spinner {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 50%;
-  border: 3px solid rgba(var(--color-primary-rgb), 0.25);
-  border-top-color: var(--color-primary);
-  animation: tabla-loader-spin 0.75s linear infinite;
-}
-
-.guardando-overlay__label {
-  color: var(--color-primary);
 }
 
 .partida-item {
@@ -300,6 +248,13 @@
   background: var(--color-accent);
   text-align: center;
   color: var(--color-on-accent);
+}
+
+.total-placeholder {
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  text-align: center;
+  font-weight: 600;
 }
 
 .acciones {
@@ -378,98 +333,6 @@
   font-size: 1rem;
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.5rem;
-  z-index: 1000;
-}
-
-.modal {
-  width: min(720px, 100%);
-  background: var(--color-surface);
-  border-radius: 16px;
-  padding: 1.75rem;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.modal__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.5rem;
-
-  h3 {
-    margin: 0;
-    color: var(--color-primary);
-  }
-}
-
-.modal__close {
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--color-primary);
-}
-
-.modal__subtitulo {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.6);
-  font-weight: 600;
-}
-
-.modal__tabla {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.modal__tabla th,
-.modal__tabla td {
-  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.15);
-  padding: 0.6rem 0.75rem;
-}
-
-.modal__tabla th {
-  background: var(--color-accent);
-  color: var(--color-on-accent);
-  text-align: left;
-}
-
-.modal__tabla tr.grupo td {
-  background: rgba(var(--color-primary-rgb), 0.05);
-}
-
-.modal__acciones {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.modal__acciones button {
-  border: none;
-  border-radius: 999px;
-  padding: 0.6rem 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-
-  &:hover {
-    box-shadow: 0 10px 18px rgba(var(--color-primary-rgb), 0.2);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
-  }
-}
-
 .preview-list {
   margin: 0;
   padding: 0;
@@ -509,12 +372,65 @@
   }
 }
 
+.preview-errors {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.06) 0%, rgba(255, 193, 7, 0.03) 100%);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  gap: 1rem;
+}
+
+.preview-errors-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #b02a37;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid rgba(220, 53, 69, 0.25);
+}
+
+.preview-errors-item {
+  padding: 1rem;
+  background: var(--color-surface);
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+    transform: translateX(4px);
+  }
+}
+
+.preview-errors-item-bold {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #b02a37;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.preview-errors-item p:last-child {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 @media (max-width: 768px) {
-  .gastos-page {
+  .recaudaciones-page {
     padding: 1.5rem;
   }
 
-  .gastos-card__total {
+  .remuneraciones-card__total {
     width: 100%;
     text-align: center;
   }

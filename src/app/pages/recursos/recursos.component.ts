@@ -85,7 +85,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mesCerrado = false;
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
-  modalVisible = false;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
   readonly plantillaRecursosExcelUrl = 'assets/plantillas/plantilla_recursos.xlsx';
@@ -458,10 +457,15 @@ export class RecursosComponent implements OnInit, OnDestroy {
           })
         )
         .subscribe({
-          next: () => {
-            this.actualizarBaseCambios();
-            this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarImportePartidas();
+          next: (response) => {
+            if(response.resumen.errores?.length){
+              const erroresConcatenados = response.resumen.errores.join('\n');
+              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+            }else{
+              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+              this.actualizarBaseCambios();
+              this.actualizarImportePartidas();
+            }
           },
           error: (error) => {
             console.error('Error al guardar las partidas de gastos:', error);
@@ -478,18 +482,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.archivoMasivoSeleccionado = null;
     this.resetEstadoCargaMasiva();
   }
-
-  /*simularEnvioMasivo(): void {
-    if (!this.previsualizacionMasiva.length || this.previsualizacionMasivaConErrores || this.cargandoArchivoMasivo) {
-      return;
-    }
-
-    this.mostrarAlerta(
-      'Carga masiva pendiente de integración',
-      'Cuando el servicio de backend esté disponible enviaremos estos datos a OVIF. Mientras tanto, asegurate de que el archivo sea correcto.',
-      'info'
-    );
-  }*/
 
   onSubmitGuardar(): void {
     if (this.mesCerrado) {
@@ -552,10 +544,15 @@ export class RecursosComponent implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: () => {
-          this.actualizarBaseCambios();
-          this.mostrarToastExito('Los registros fueron guardados correctamente.');
-        },
+        next: (response) => {
+            if(response.resumen.errores?.length){
+              const erroresConcatenados = response.resumen.errores.join('\n');
+              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+            }else{
+              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+              this.actualizarBaseCambios();
+            }
+          },
         error: (error) => {
           console.error('Error al guardar las partidas de recursos:', error);
           this.mostrarError('No pudimos guardar los datos. Intentá nuevamente más tarde.');
@@ -634,10 +631,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
           this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
         },
       });
-  }
-
-  cerrarModal(): void {
-    this.modalVisible = false;
   }
 
   permitirSoloNumeros(event: KeyboardEvent): void {
@@ -880,14 +873,22 @@ export class RecursosComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (!node.soloImporte && node.importePercibido !== null && node.importePercibido !== 0) {
+      if(node.importePercibido !== null && node.importePercibidoOriginal !== null && node.importePercibido !== node.importePercibidoOriginal && node.importePercibido <=0) {
+        node.errorImporte = true;
+        valido = false;
+        return;
+      }
+
+      if(!node.soloImporte && node.importePercibido !== 0 && node.importePercibido !== null){
         if (node.cantidadContribuyentes === null || node.cantidadContribuyentes <= 0) {
           node.errorContribuyentes = true;
           valido = false;
+          return;
         }
         if (node.cantidadPagaron === null || node.cantidadPagaron <= 0) {
           node.errorPagaron = true;
           valido = false;
+          return;
         }
       }
     });
@@ -954,6 +955,19 @@ export class RecursosComponent implements OnInit, OnDestroy {
       position: 'top-end',
       showConfirmButton: false,
       timer: 2500,
+      timerProgressBar: true,
+    }).then(() => undefined);
+  }
+
+  private mostrarToastAviso(title:string, mensaje: string): Promise<void>{
+    return Swal.fire({
+      toast: true,
+      icon: 'info',
+      title: title,
+      text: mensaje,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 10000,
       timerProgressBar: true,
     }).then(() => undefined);
   }
