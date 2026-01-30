@@ -1,0 +1,275 @@
+<div class="remuneraciones-page">
+  <div class="page-header">
+    <app-back-button text="Volver" [link]="['/panel-carga-mensual']"></app-back-button>
+
+    <div class="context">
+      <h1>Carga de remunaciones</h1>
+      <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
+      <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
+    </div>
+  </div>
+
+  <section class="status-card" *ngIf="mesCerrado || mensaje">
+    <div *ngIf="mesCerrado" class="alert alert--warning">
+      Este mes est&aacute; cerrado. Las modificaciones no se guardar&aacute;n.
+    </div>
+    <div
+      *ngIf="mensaje"
+      class="alert"
+      [ngClass]="mensaje.tipo === 'info' ? 'alert--success' : 'alert--error'"
+    >
+      {{ mensaje.texto }}
+    </div>
+  </section>
+
+  <section
+    class="remuneraciones-card remuneraciones-card--masiva"
+    *ngIf="vistaActual === 'masiva'"
+    id="panel-masiva"
+    role="tabpanel"
+    aria-labelledby="tab-masiva"
+  >
+    <header class="remuneraciones-card__header">
+      <div>
+        <h2>Importar remuneraciones desde un archivo</h2>
+        <p>Subí un archivo CSV con los importes para este período.</p>
+      </div>
+    </header>
+
+    <div class="carga-masiva__layout">
+      <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
+        <h3>Plantilla</h3>
+        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <a class="plantilla-link" [href]="plantillaRecaudacionesExcelUrl" download>
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Descargar plantilla Excel</span>
+        </a>
+        <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
+        <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
+        <a class="plantilla-link" [href]="plantillaRecaudacionesManualUrl" download>
+          <mat-icon aria-hidden="true">download</mat-icon>
+          <span>Descargar manual</span>
+        </a>
+      </section>
+
+      <div class="carga-masiva__upload" aria-live="polite">
+        <label class="upload-dropzone" [class.upload-dropzone--file]="archivoMasivoSeleccionado">
+          <input
+            #archivoCsv
+            class="upload-dropzone__input"
+            type="file"
+            accept=".csv"
+            (change)="onArchivoSeleccionado($event, archivoCsv)"
+          />
+          <div class="upload-dropzone__content" *ngIf="!archivoMasivoSeleccionado">
+            <mat-icon aria-hidden="true">cloud_upload</mat-icon>
+            <p>Arrastrá tu archivo CSV o <span>buscalo en tu equipo</span>.</p>
+            <small>Tamaño recomendado máximo: 5&nbsp;MB.</small>
+          </div>
+          <div class="upload-dropzone__content upload-dropzone__content--file" *ngIf="archivoMasivoSeleccionado">
+            <mat-icon aria-hidden="true">description</mat-icon>
+            <div>
+              <strong>{{ archivoMasivoSeleccionado.name }}</strong>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
+            </div>
+            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
+              Reemplazar archivo
+            </button>
+          </div>
+        </label>
+
+        <div class="upload-status" *ngIf="cargandoArchivoMasivo">
+          <span class="upload-status__spinner" aria-hidden="true"></span>
+          <span>Procesando archivo...</span>
+        </div>
+
+        <div class="upload-errores" *ngIf="erroresCargaMasiva.length && !cargandoArchivoMasivo">
+          <h4>Revisá estas observaciones</h4>
+          <ul>
+            <li *ngFor="let error of erroresCargaMasiva">{{ error }}</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <section class="carga-masiva__preview" *ngIf="previsualizacionMasiva.length">
+      <header class="carga-masiva__preview-header">
+        <div>
+          <h3>Previsualización</h3>
+          <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
+        </div>
+        <div class="carga-masiva__preview-meta">
+          <span>{{ obtenerTotalFilasMasivas }} filas</span>
+          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
+        </div>
+      </header>
+      <!-- <div class="carga-masiva__tabla-wrapper">
+        <table class="recaudaciones-tabla">
+          <thead>
+            <tr>
+              <th>Regimen</th>
+              <th>Cuil</th>
+              <th>Apellido y nombre</th>
+              <th>Situacion de revista</th>
+              <th>Fecha de alta</th>
+              <th>Remuneracion neta</th>
+              <th>Tipo de liquidacion</th>
+              <th>Bonificacion</th>
+              <th>Cantidad de hs extra 50%</th>
+              <th>Importe de hs extra 50%</th>
+              <th>Cantidad de hs extra 100%</th>
+              <th>Importe de hs extra 100%</th>
+              <th>ART</th>
+              <th>Seguro de vida</th>
+              <th>Otros conceptos</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container *ngFor="let remuneracion of previsualizacionMasiva">
+              <tr
+                [class.grupo]="false"
+                [class.tiene-error]="remuneracion.tieneError"
+              >
+                <td>
+                  {{ remuneracion.regimen }}
+                </td>
+                <td>
+                  <span
+                    [class.concepto-titulo]="false"
+                    [class.concepto-item]="true"
+                  >
+                    {{ remuneracion.cuil }}
+                  </span>
+                </td>
+                <td>
+                  {{ remuneracion.apellido_nombre }}
+                </td>
+                <td>
+                  {{ remuneracion.situacion_revista }}
+                </td>
+                <td>
+                  {{ remuneracion.fecha_alta }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.remuneracion_neta }}
+                </td>
+                <td>
+                  {{ remuneracion.tipo_liquidacion }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.bonificacion }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.cant_hs_extra_50 }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.importe_hs_extra_50 }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.cant_hs_extra_100 }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.importe_hs_extra_100 }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.art }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.seguro_vida }}
+                </td>
+                <td class="importe">
+                  {{ remuneracion.otros_conceptos }}
+                </td>
+                <td>
+                  <ng-container *ngIf="remuneracion.tieneError">
+                    <ul class="preview-list">
+                      <li class="preview-error">{{ obtenerErrorRemuneracion(remuneracion.cuil) }}</li>
+                    </ul>
+                  </ng-container>
+                  <ng-container *ngIf="!remuneracion.tieneError">
+                    <span class="preview-ok">Listo para enviar</span>
+                  </ng-container>
+                </td>
+              </tr>
+            </ng-container>
+          </tbody>
+          <tfoot *ngIf="!erroresPrevisualizacion.length">
+            <tr>
+              <td class="total-label" [style.textAlign]="'left'">TOTAL</td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">—</td>
+              <td class="total-placeholder">—</td>
+              <td class="total-valor"> {{ obtenerTotalImporte('remuneracion_neta') }} </td>
+              <td class="total-placeholder">—</td>
+              <td class="total-valor"> {{ obtenerTotalImporte('bonificacion') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('cant_hs_extra_50') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('importe_hs_extra_50') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('cant_hs_extra_100') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('importe_hs_extra_100') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('art') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('seguro_vida') }} </td>
+              <td class="total-valor"> {{ obtenerTotalImporte('otros_conceptos') }} </td>
+              <td class="total-placeholder">—</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div> -->
+      <div class="preview-summary">
+        <h3 class="preview-summary-title">Resumen de la carga masiva</h3>
+        <ng-container *ngFor="let regimen of regimenes">
+          <div class="preview-summary-item">
+            <p class="preview-summary-item-bold">{{ regimen }}:</p>
+            <p>{{ obtenerCantidadFilasPorRegimen(regimen) }}</p>
+          </div>
+        </ng-container>
+      </div>
+      <div class="preview-errors" *ngIf="erroresPrevisualizacion.length">
+        <h3 class="preview-errors-title">Errores en la carga masiva</h3>
+        <ng-container *ngFor="let error of erroresPrevisualizacion">
+          <div class="preview-errors-item">
+            <p class="preview-errors-item-bold">CUIL {{ error.row }}:</p>
+            <p>{{ error.error }}</p>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+    <div class="carga-masiva__acciones acciones acciones--masiva">
+      <button
+        type="button"
+        (click)="insertarRecaudacionesMasivas()"
+        [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
+      >
+        <mat-icon aria-hidden="true">cloud_done</mat-icon>
+        <span>Subir importes</span>
+      </button>
+      <button
+        type="button"
+        (click)="limpiarArchivoMasiva(archivoCsv)"
+        [disabled]="!archivoMasivoSeleccionado"
+      >
+        Limpiar selección
+      </button>
+      <button
+        type="button"
+        (click)="generarInforme()"
+        [disabled]="mesCerrado || guardando || descargandoInforme"
+      >
+        <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
+        <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
+          <span>Generar informe</span>
+        </ng-container>
+        <ng-template #generandoInformeTexto>
+          <span>Generando informe...</span>
+        </ng-template>
+      </button>
+    </div>
+
+    <p class="carga-masiva__helper" *ngIf="erroresPrevisualizacion.length" role="note">
+      Corregí los errores señalados en el archivo antes de continuar con la carga masiva.
+    </p>
+  </section>
+  <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
+</div>

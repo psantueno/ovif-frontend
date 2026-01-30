@@ -55,6 +55,14 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/recursos/recursos.component').then((m) => m.RecursosComponent)
       },
       {
+        path: 'recaudaciones',
+        loadComponent: () => import('./pages/recaudaciones/recaudaciones.component').then((m) => m.RecaudacionesComponent)
+      },
+      {
+        path: 'remuneraciones',
+        loadComponent: () => import('./pages/remuneraciones/remuneraciones.component').then((m) => m.RemuneracionesComponent)
+      },
+      {
         path: 'historico-ejercicios-cerrados',
         loadComponent: () =>
           import('./pages/historico-ejercicios-cerrados/historico-ejercicios-cerrados.component').then(

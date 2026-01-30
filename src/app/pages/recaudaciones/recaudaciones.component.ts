@@ -4,47 +4,29 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, take } from 'rxjs/operators';
+import { parseCSV } from '../../core/utils/csvReader.util';
 import Swal from 'sweetalert2';
 
 import {
   MunicipioService,
-  PartidaGastoResponse,
-  PartidaGastoUpsertPayload,
-  PeriodoSeleccionadoMunicipio
+  PeriodoSeleccionadoMunicipio,
+  ConceptoRecaudacion,
+  ConceptoRecaudacionUpsertPayload,
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
-import { parseCSV } from '../../core/utils/csvReader.util';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
-
-interface PartidaNode {
-  codigo: number;
-  descripcion: string;
-  carga: boolean;
-  importe: number | null;
-  importeOriginal: number | null;
-  importeTexto: string;
-  importeOriginalTexto: string;
-  tieneError: boolean;
-  hijos?: PartidaNode[];
-}
-
-interface PartidaDisplay {
-  node: PartidaNode;
-  nivel: number;
-}
 
 type MensajeTipo = 'info' | 'error';
 
 @Component({
-  selector: 'app-gastos',
+  selector: 'app-recaudaciones',
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent],
-  templateUrl: './gastos.component.html',
-  styleUrls: ['./gastos.component.scss'],
+  templateUrl: './recaudaciones.component.html',
+  styleUrls: ['./recaudaciones.component.scss'],
 })
-
-export class GastosComponent implements OnInit, OnDestroy {
+export class RecaudacionesComponent implements OnInit, OnDestroy {
   private readonly municipioService = inject(MunicipioService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -76,20 +58,20 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaGastosExcelUrl = 'assets/plantillas/plantilla_gastos.xlsx';
-  readonly plantillaGastosManualUrl = 'assets/plantillas/manual.pdf';
+  readonly plantillaRecaudacionesExcelUrl = 'assets/plantillas/plantilla_recaudaciones.xlsx';
+  readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
-  previsualizacionMasiva: PartidaDisplay[] = [];
+  previsualizacionMasiva: ConceptoRecaudacion[] = [];
   erroresCargaMasiva: string[] = [];
   cargandoArchivoMasivo = false;
 
-  cargandoPartidas = false;
-  errorAlCargarPartidas = false;
+  cargandoConceptos = false;
+  errorAlCargarConceptos = false;
   guardando = false;
   descargandoInforme = false;
 
-  partidas: PartidaNode[] = [];
-  partidasPlanas: PartidaDisplay[] = [];
+  conceptosRecaudacion: ConceptoRecaudacion[] = [];
+
   private cambiosPendientes = false;
 
   ngOnInit(): void {
@@ -182,14 +164,14 @@ export class GastosComponent implements OnInit, OnDestroy {
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
           'Pauta no habilitada',
-          'El período seleccionado no permite cargar Gastos. Elegí otra opción desde el inicio.',
+          'El período seleccionado no permite cargar Recaudaciones. Elegí otra opción desde el inicio.',
           'info'
         );
         this.router.navigate(['/panel-carga-mensual']);
         return;
       }
 
-      this.cargarPartidas();
+      this.cargarConceptos();
     });
   }
 
@@ -212,24 +194,19 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private actualizarEstadoCambios(): void {
-    this.cambiosPendientes = this.partidasPlanas.some((partida) => {
-      const nodo = partida.node;
-      if (!nodo.carga) {
+    this.cambiosPendientes = this.conceptosRecaudacion.some((concepto) => {
+      const importeOriginal = Number(concepto.importeOriginal) != 0 ? Number(concepto.importeOriginal) : null;
+      const importeActual = Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null;
+      if (importeOriginal === null && importeActual === null) {
         return false;
       }
-      if (nodo.tieneError) {
+
+      if(concepto.tieneError) {
         return true;
       }
-      return nodo.importeOriginal !== nodo.importe;
-    });
-  }
 
-  private actualizarBaseCambios(): void {
-    this.partidasPlanas.forEach((partida) => {
-      partida.node.importeOriginal = partida.node.importe;
-      partida.node.importeOriginalTexto = partida.node.importeTexto;
+      return importeOriginal !== importeActual;
     });
-    this.cambiosPendientes = false;
   }
 
   get mesActualLabel(): string {
@@ -244,14 +221,11 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   get totalImportes(): number {
-    return this.partidasPlanas.reduce((total, partida) => {
-      if (!partida.node.carga) {
+    return this.conceptosRecaudacion.reduce((total, concepto) => {
+      if (concepto.tieneError || concepto.importe_recaudacion === null) {
         return total;
       }
-      if (partida.node.tieneError || partida.node.importe === null) {
-        return total;
-      }
-      return total + partida.node.importe;
+      return total + (concepto.importe_recaudacion ?? 0);
     }, 0);
   }
 
@@ -304,45 +278,34 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   async obtenerFilasCSV(archivo: File): Promise<any> {
     try {
-      const { rows, errores } = await parseCSV(archivo);
-
-      const partidasPrevisualizacion: PartidaDisplay[] = (() => {
+      const { rows, errores } = await parseCSV(archivo, 'recaudaciones');
+      const partidasPrevisualizacion: ConceptoRecaudacion[] = (() => {
         // 1. Mapa para acceso rápido por código
-        const rowsMap = new Map<number, {codigo_partida: number; descripcion: string; importe_devengado: number}>(
-          rows.map(row => [row.codigo_partida, row])
+        const rowsMap = new Map<number, {cod_concepto: number; concepto: string; importe_recaudacion: number}>(
+          rows.map(row => [row.cod_concepto, row])
         );
 
         // 2. Copia de partidasPlanas con modificación condicional
-        return this.partidasPlanas.map(({ node, nivel }) => {
-          const row = rowsMap.get(node.codigo);
+        return this.conceptosRecaudacion.map((concepto) => {
+          const row = rowsMap.get(concepto.cod_concepto);
 
-          const nuevoNode: PartidaNode = {
-            ...node,
-            importe: row ? row.importe_devengado : null,
-            importeOriginal: row ? row.importe_devengado : null,
-            importeTexto: row ? String(row.importe_devengado) : '',
-            importeOriginalTexto: row
-              ? String(row.importe_devengado)
-              : '',
+          const nuevoConcepto: ConceptoRecaudacion = {
+            ...concepto,
+            importe_recaudacion: row ? row.importe_recaudacion : null,
+            importeOriginal: row ? row.importe_recaudacion : null,
+            importeTexto: row ? String(row.importe_recaudacion) : '',
             tieneError: false
           };
 
-          return {
-            nivel,
-            node: nuevoNode
-          };
+          return nuevoConcepto;
         });
       })()
-
-      const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
-
-      if(partidasFiltradas.length === 0){
+      const conceptosFiltrados: ConceptoRecaudacion[] = partidasPrevisualizacion.filter(concepto => {return concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== undefined});
+      if(conceptosFiltrados.length === 0){
         this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
         return;
       }
-
-      this.previsualizacionMasiva = partidasFiltradas;
-
+      this.previsualizacionMasiva = conceptosFiltrados;
       this.asignarErroresPrevisualizacion(errores);
       this.erroresPrevisualizacion = errores;
     }
@@ -353,7 +316,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     }
   }
 
-  async insertarGastosMasivos(): Promise<void> {
+  async insertarRecaudacionesMasivas(): Promise<void> {
     const municipioId = this.municipioActual?.municipio_id ?? null;
     if(!municipioId){
       this.mostrarError('No pudimos identificar el municipio seleccionado.');
@@ -378,17 +341,15 @@ export class GastosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const loadablePartidas = this.previsualizacionMasiva.filter((fila) => fila.node.carga);
-
-    const gastosPayload: PartidaGastoUpsertPayload[] = loadablePartidas.map((fila) => ({
-      partidas_gastos_codigo: fila.node.codigo,
-      gastos_importe_devengado: fila.node.importe,
+    const conceptosPayload: ConceptoRecaudacionUpsertPayload[] = this.previsualizacionMasiva.map((fila) => ({
+      cod_concepto: fila.cod_concepto,
+      importe_recaudacion: fila.importe_recaudacion ?? null,
     }));
 
     this.guardando = true;
 
     this.municipioService
-      .guardarPartidasGastos({ municipioId, ejercicio, mes, partidas: gastosPayload })
+      .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: conceptosPayload })
       .pipe(
         take(1),
         finalize(() => {
@@ -402,8 +363,7 @@ export class GastosComponent implements OnInit, OnDestroy {
             this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
           }else{
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarBaseCambios();
-            this.actualizarImportesPartidas();
+            this.actualizarConceptos();
           }
         },
         error: (error) => {
@@ -422,11 +382,32 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.resetEstadoCargaMasiva();
   }
 
+  get obtenerTotalFilasMasivas(): number {
+    return this.previsualizacionMasiva.length;
+  }
+
+  public obtenerErrorConcepto(codigo: number): string | null {
+    const fila = this.previsualizacionMasiva.find(f => f.cod_concepto === codigo);
+
+    if (fila && fila.tieneError) return this.erroresPrevisualizacion.find(e => e.row === codigo)?.error;
+
+    return null;
+  }
+
+  get obtenerTotalImportesMasivos(): number {
+    return this.previsualizacionMasiva.reduce((total, concepto) => {
+      if (concepto.tieneError || concepto.importe_recaudacion === null) {
+        return total;
+      }
+      return total + (concepto.importe_recaudacion ?? 0);
+    }, 0);
+  }
+
   onSubmitGuardar(): void {
     if (this.mesCerrado) {
       return;
     }
-    if (this.cargandoPartidas) {
+    if (this.cargandoConceptos) {
       this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
       return;
     }
@@ -434,12 +415,16 @@ export class GastosComponent implements OnInit, OnDestroy {
       this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
       return;
     }
-    if (this.errorAlCargarPartidas) {
+    if (this.errorAlCargarConceptos) {
       this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
       return;
     }
-    if (!this.partidasPlanas.length) {
+    if (!this.conceptosRecaudacion.length) {
       this.mostrarMensaje('info', 'No hay partidas disponibles para guardar.');
+      return;
+    }
+    if(!this.tieneCambiosPendientes()) {
+      this.mostrarMensaje('info', 'No hay cambios para guardar.');
       return;
     }
     if (!this.validarImportes()) {
@@ -457,23 +442,20 @@ export class GastosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const partidasPayload: PartidaGastoUpsertPayload[] = this.partidasPlanas
-      .map((partida) => partida.node)
-      .filter((node) => node.carga && node.importe !== null && node.importe !== 0)
-      .map((node) => ({
-        partidas_gastos_codigo: node.codigo,
-        gastos_importe_devengado: node.importe,
-      }));
+    const payload: ConceptoRecaudacionUpsertPayload[] = this.conceptosRecaudacion.filter(concepto => concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== 0).map((concepto) => ({
+      cod_concepto: concepto.cod_concepto,
+      importe_recaudacion: concepto.importe_recaudacion ?? null,
+    }));
 
-    if (!partidasPayload.length) {
-      this.mostrarMensaje('info', 'No hay partidas editables para guardar en este período.');
+    if(payload.length === 0) {
+      this.mostrarMensaje('info', 'No hay recaudaciones para guardar.');
       return;
     }
 
     this.guardando = true;
 
     this.municipioService
-      .guardarPartidasGastos({ municipioId, ejercicio, mes, partidas: partidasPayload })
+      .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: payload })
       .pipe(
         take(1),
         finalize(() => {
@@ -487,11 +469,10 @@ export class GastosComponent implements OnInit, OnDestroy {
             this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
           }else{
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarBaseCambios();
           }
         },
         error: (error) => {
-          console.error('Error al guardar las partidas de gastos:', error);
+          console.error('Error al guardar los conceptos de recaudación:', error);
           this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
         },
       });
@@ -501,7 +482,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     if (this.mesCerrado) {
       return;
     }
-    if (this.cargandoPartidas) {
+    if (this.cargandoConceptos) {
       this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
       return;
     }
@@ -509,12 +490,16 @@ export class GastosComponent implements OnInit, OnDestroy {
       this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
       return;
     }
-    if (this.errorAlCargarPartidas) {
+    if (this.errorAlCargarConceptos) {
       this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
       return;
     }
-    if (!this.partidasPlanas.length) {
+    if (!this.conceptosRecaudacion.length) {
       this.mostrarMensaje('info', 'No hay partidas disponibles para generar el informe.');
+      return;
+    }
+    if (!this.validarImportes()) {
+      this.mostrarError('Ingrese solo valores válidos');
       return;
     }
     if (this.tieneCambiosPendientes()) {
@@ -538,7 +523,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.descargandoInforme = true;
 
     this.municipioService
-      .descargarInformeGastos({ municipioId, ejercicio, mes })
+      .descargarInformeRecaudaciones({ municipioId, ejercicio, mes })
       .pipe(
         take(1),
         finalize(() => {
@@ -560,7 +545,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           this.mostrarToastExito('Informe descargado correctamente.');
         },
         error: (error) => {
-          console.error('Error al generar el informe de gastos:', error);
+          console.error('Error al generar el informe de recaudaciones:', error);
           this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
         },
       });
@@ -581,7 +566,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     }
   }
 
-  sanearPegado(event: ClipboardEvent, partida: PartidaNode): void {
+  sanearPegado(event: ClipboardEvent, codigoConcepto: number): void {
     const data = event.clipboardData?.getData('text') ?? '';
     if (!data) {
       return;
@@ -598,15 +583,22 @@ export class GastosComponent implements OnInit, OnDestroy {
     const selectionStart = input.selectionStart ?? value.length;
     const selectionEnd = input.selectionEnd ?? value.length;
     const nuevoValor = value.slice(0, selectionStart) + sanitized + value.slice(selectionEnd);
-    partida.importeTexto = nuevoValor;
-    this.updateImporte(partida, nuevoValor);
+
+    this.updateImporte(codigoConcepto, nuevoValor);
   }
 
-  updateImporte(partida: PartidaNode, rawValue: string): void {
+  updateImporte(codigoConcepto: number, rawValue: string): void {
     const sanitized = rawValue.replace(',', '.').trim();
+
+    const partida = this.conceptosRecaudacion.find(c => c.cod_concepto === codigoConcepto);
+
+    if(!partida) {
+      return;
+    }
+
     if (sanitized === '') {
       partida.importeTexto = '';
-      partida.importe = null;
+      partida.importe_recaudacion = null;
       partida.tieneError = false;
       this.actualizarEstadoCambios();
       return;
@@ -615,7 +607,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     const numericValue = Number(sanitized);
 
     if (Number.isFinite(numericValue)) {
-      partida.importe = numericValue;
+      partida.importe_recaudacion = numericValue;
       partida.importeTexto = sanitized;
       partida.tieneError = false;
     } else {
@@ -626,9 +618,9 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.actualizarEstadoCambios();
   }
 
-  private cargarPartidas(): void {
-    this.cargandoPartidas = true;
-    this.errorAlCargarPartidas = false;
+  private cargarConceptos(): void {
+    this.cargandoConceptos = true;
+    this.errorAlCargarConceptos = false;
 
     const municipioId = this.municipioActual?.municipio_id ?? null;
     let periodo = this.periodoSeleccionado;
@@ -642,92 +634,62 @@ export class GastosComponent implements OnInit, OnDestroy {
     const mes = periodo?.mes ?? null;
 
     if (!municipioId || !ejercicio || !mes) {
-      this.partidas = [];
-      this.partidasPlanas = [];
-      this.cargandoPartidas = false;
-      this.errorAlCargarPartidas = true;
+      this.cargandoConceptos = false;
+      this.errorAlCargarConceptos = true;
       this.cambiosPendientes = false;
-      this.mostrarError('No pudimos obtener las partidas de gastos. Verificá el municipio o período seleccionado.');
+      this.conceptosRecaudacion = [];
+      this.mostrarError('No pudimos obtener las partidas de recaudaciones. Verificá el municipio o período seleccionado.');
       return;
     }
 
-    this.municipioService
-      .obtenerPartidasGastos({ municipioId, ejercicio, mes })
+      this.municipioService
+      .obtenerConceptosRecaudacion({ municipioId, ejercicio, mes })
       .pipe(take(1))
       .subscribe({
         next: (response) => {
-          this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
-          this.partidasPlanas = this.flattenPartidas(this.partidas);
-          this.actualizarBaseCambios();
-          this.cargandoPartidas = false;
+          if(response && Array.isArray(response)) {
+            this.conceptosRecaudacion = response.map((concepto) => ({
+              ...concepto,
+              importe_recaudacion: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+              importeOriginal: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+              importeTexto: concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== undefined
+                ? String(concepto.importe_recaudacion)
+                : '',
+              tieneError: false,
+            }));
+          }else{
+            this.conceptosRecaudacion = [];
+          }
+          this.cargandoConceptos = false;
 
           this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
           this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
         },
         error: () => {
-          this.partidas = [];
-          this.partidasPlanas = [];
-          this.cargandoPartidas = false;
-          this.errorAlCargarPartidas = true;
+          this.conceptosRecaudacion = [];
+          this.cargandoConceptos = false;
+          this.errorAlCargarConceptos = true;
           this.cambiosPendientes = false;
-          this.mostrarError('No pudimos obtener las partidas de gastos. Intentá nuevamente más tarde.');
+          this.mostrarError('No pudimos obtener las partidas de recaudaciones. Intentá nuevamente más tarde.');
         },
       });
   }
 
-  private transformarPartida(partida: PartidaGastoResponse): PartidaNode {
-    const importe = this.parseImporte(partida.importe_devengado ?? partida.gastos_importe_devengado);
-    const hijos = Array.isArray(partida.children)
-      ? partida.children.map((child) => this.transformarPartida(child))
-      : [];
-    const importeTexto = importe !== null ? String(importe) : '';
-
-    const node: PartidaNode = {
-      codigo: Number(partida.partidas_gastos_codigo),
-      descripcion: partida.partidas_gastos_descripcion ?? 'Partida sin nombre',
-      carga: Boolean(partida.partidas_gastos_carga ?? partida.puede_cargar),
-      importe,
-      importeOriginal: importe,
-      importeTexto,
-      importeOriginalTexto: importeTexto,
-      tieneError: false,
-    };
-
-    if (hijos.length) {
-      node.hijos = hijos;
-    }
-
-    return node;
-  }
-
-  private parseImporte(valor: unknown): number | null {
-    if (valor === null || valor === undefined || valor === '') {
-      return null;
-    }
-    if (typeof valor === 'number') {
-      return Number.isFinite(valor) ? valor : null;
-    }
-
-    const normalizado = String(valor).replace(',', '.');
-    const numero = Number(normalizado);
-    return Number.isFinite(numero) ? numero : null;
+  simularEnvioMasivo(): void {
+    console.log('Simulando envío masivo:', this.previsualizacionMasiva);
   }
 
   private validarImportes(): boolean {
     let valido = true;
-    this.partidasPlanas.forEach((partida) => {
-      console.log("Validando importe: ",partida);
-      if (!partida.node.carga) {
-        return;
-      }
-      if (partida.node.tieneError) {
+    this.conceptosRecaudacion.forEach((concepto) => {
+      if (concepto.tieneError) {
         valido = false;
       }
-      if(partida.node.importe !== null && !isNaN(partida.node.importe) && partida.node.importeOriginal !== null && !isNaN(partida.node.importeOriginal) && partida.node.importe !== partida.node.importeOriginal && partida.node.importe <= 0){
+      if(concepto?.importe_recaudacion !== null && concepto?.importe_recaudacion !== undefined && concepto?.importe_recaudacion <= 0) {
         valido = false;
-        partida.node.tieneError = true;
+        concepto.tieneError = true;
       }
-    });
+    });;
     return valido;
   }
 
@@ -843,7 +805,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   private construirNombreArchivoInforme(ejercicio: number, mes: number): string {
     const slugMunicipio = this.normalizarTextoParaArchivo(this.municipioNombre || 'municipio');
     const mesStr = mes.toString().padStart(2, '0');
-    return `informe_gastos_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`;
+    return `informe_recaudaciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`;
   }
 
   private normalizarTextoParaArchivo(texto: string): string {
@@ -856,10 +818,17 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private resetEstadoCargaMasiva(): void {
-    this.cargandoArchivoMasivo = false;
-    this.erroresPrevisualizacion = [];
-    this.erroresCargaMasiva = [];
     this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+    this.cargandoArchivoMasivo = false;
+  }
+
+  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
+    errores.forEach(({ row, error }) => {
+      const fila = this.previsualizacionMasiva.find(f => f.cod_concepto === row);
+
+      if (fila) fila.tieneError = true;
+    });
   }
 
   private esModuloPermitido(): boolean {
@@ -877,7 +846,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    return modulos.includes('gastos');
+    return modulos.includes('recaudaciones');
   }
 
   private sincronizarPeriodoSeleccionado(
@@ -952,93 +921,17 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.municipioService.setPeriodoSeleccionado(municipioId, payload);
   }
 
-  private flattenPartidas(
-    partidas: PartidaNode[],
-    nivel = 0,
-    acumulado: PartidaDisplay[] = []
-  ): PartidaDisplay[] {
-    partidas.forEach((partida) => {
-      acumulado.push({ node: partida, nivel });
-      if (partida.hijos?.length) {
-        this.flattenPartidas(partida.hijos, nivel + 1, acumulado);
+  private actualizarConceptos() {
+    this.conceptosRecaudacion.forEach((concepto) => {
+      const filaActual = this.previsualizacionMasiva.find(fila => fila.cod_concepto === concepto.cod_concepto);
+      if(filaActual){
+        concepto.importe_recaudacion = filaActual.importe_recaudacion;
+        concepto.importeOriginal = filaActual.importe_recaudacion ?? null;
+        concepto.importeTexto = filaActual.importe_recaudacion !== null && filaActual.importe_recaudacion !== undefined
+          ? String(filaActual.importe_recaudacion)
+          : '';
+        concepto.tieneError = false;
       }
     });
-    return acumulado;
-  }
-
-  private filtrarPartidasPlanas(
-    partidas: PartidaDisplay[]
-  ): PartidaDisplay[] {
-    const codigosAConservar = new Set<number>();
-
-    for (let i = 0; i < partidas.length; i++) {
-      const actual = partidas[i];
-
-      if (actual.node.importe !== null && actual.node.carga) {
-        // Conservar el nodo actual
-        codigosAConservar.add(actual.node.codigo);
-
-        // Subir hacia los padres
-        let nivelActual = actual.nivel;
-
-        for (let j = i - 1; j >= 0; j--) {
-          const posiblePadre = partidas[j];
-
-          if (posiblePadre.nivel < nivelActual) {
-            codigosAConservar.add(posiblePadre.node.codigo);
-            nivelActual = posiblePadre.nivel;
-          }
-
-          if (nivelActual === 0) break;
-        }
-      }
-    }
-    // Filtrado final
-    return partidas.filter(p =>
-      codigosAConservar.has(p.node.codigo)
-    );
-  }
-
-  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
-    errores.forEach(({ row, error }) => {
-      const fila = this.previsualizacionMasiva.find(f => f.node.codigo === row);
-
-      if (fila) fila.node.tieneError = true;
-    });
-  }
-
-  private actualizarImportesPartidas(){
-    this.previsualizacionMasiva.forEach(fila => {
-      const partidaPlana = this.partidasPlanas.find(p => p.node.codigo === fila.node.codigo);
-      if(partidaPlana){
-        partidaPlana.node.importe = fila.node.importe;
-        partidaPlana.node.importeTexto = fila.node.importeTexto;
-        partidaPlana.node.tieneError = fila.node.tieneError;
-      }
-    });
-  }
-
-  public obtenerTotalFilasMasivas(): number {
-    return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
-  }
-
-  public obtenerTotalImportesMasivos(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga) {
-        return total;
-      }
-      if (partida.node.tieneError || partida.node.importe === null) {
-        return total;
-      }
-      return total + partida.node.importe;
-    }, 0);
-  }
-
-  public obtenerErrorPartida(codigo: number): string | null {
-    const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
-
-    if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row === codigo)?.error;
-
-    return null;
   }
 }

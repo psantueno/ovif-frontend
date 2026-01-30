@@ -46,6 +46,58 @@ export interface PartidaRecursoUpsertPayload {
   recursos_cantidad_pagaron: number | null;
 }
 
+export interface ConceptoRecaudacion {
+  cod_concepto: number;
+  descripcion: string;
+  partida_recurso_codigo: number;
+  importe_recaudacion: number | null;
+  importeOriginal?: number | null;
+  importeTexto?: string | null;
+  tieneError?: boolean;
+}
+
+export interface ConceptoRecaudacionUpsertPayload {
+  cod_concepto: number;
+  importe_recaudacion: number | null;
+}
+
+export interface Remuneracion {
+  regimen: string;
+  cuil: number;
+  apellido_nombre: string;
+  situacion_revista: string;
+  fecha_alta: string;
+  remuneracion_neta: number;
+  tipo_liquidacion: string;
+  bonificacion?: number;
+  cant_hs_extra_50?: number;
+  cant_hs_extra_100?: number;
+  importe_hs_extra_50?: number;
+  importe_hs_extra_100?: number;
+  art?: number;
+  seguro_vida?: number;
+  otros_conceptos?: number;
+  tieneError?: boolean;
+}
+
+export interface RemuneracionUpsertPayload {
+  regimen: string;
+  cuil: number;
+  apellido_nombre: string;
+  situacion_revista: string;
+  fecha_alta: string;
+  remuneracion_neta: number;
+  tipo_liquidacion: string;
+  bonificacion?: number;
+  cant_hs_extra_50?: number;
+  cant_hs_extra_100?: number;
+  importe_hs_extra_50?: number;
+  importe_hs_extra_100?: number;
+  art?: number;
+  seguro_vida?: number;
+  otros_conceptos?: number;
+}
+
 export interface MunicipioSelectOption {
   municipio_id: number;
   municipio_nombre: string;
@@ -83,6 +135,16 @@ export interface PeriodoSeleccionadoMunicipio {
   fecha_inicio?: string | null;
   fecha_fin?: string | null;
   fecha_cierre?: string | null;
+}
+
+export interface UpsertResponse {
+  message: string
+  resumen: {
+    actualizados: number,
+    creados: number,
+    sinCambios: number
+    errores?: string[]
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -380,14 +442,14 @@ export class MunicipioService {
     });
   }
 
-  guardarPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaGastoUpsertPayload[] }): Observable<void> {
+  guardarPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaGastoUpsertPayload[] }): Observable<UpsertResponse> {
     const { municipioId, ejercicio, mes, partidas } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para guardar los gastos.'));
     }
 
     return this.http
-      .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos`, { partidas })
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos`, { partidas })
       .pipe(catchError((error) => throwError(() => error)));
   }
 
@@ -422,14 +484,14 @@ export class MunicipioService {
     });
   }
 
-  guardarPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaRecursoUpsertPayload[] }): Observable<void> {
+  guardarPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaRecursoUpsertPayload[] }): Observable<UpsertResponse> {
     const { municipioId, ejercicio, mes, partidas } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para guardar los recursos.'));
     }
 
     return this.http
-      .put<void>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos`, { partidas })
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos`, { partidas })
       .pipe(catchError((error) => throwError(() => error)));
   }
 
@@ -540,6 +602,70 @@ export class MunicipioService {
     const tipoSegment = periodo.tipo_pauta ?? 'na';
 
     return `${periodo.ejercicio}_${periodo.mes}_${pautaSegment}_${tipoSegment}`;
+  }
+
+  obtenerConceptosRecaudacion(params: { municipioId: number; ejercicio: number; mes: number }): Observable<ConceptoRecaudacion[]> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return of([]);
+    }
+    return this.http
+      .get<ConceptoRecaudacion[]>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones/conceptos`)
+      .pipe(
+        map((response) => {
+          if (!response) {
+            return [];
+          }
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  guardarConceptosRecaudacion(params: { municipioId: number; ejercicio: number; mes: number; conceptos: ConceptoRecaudacionUpsertPayload[] }): Observable<UpsertResponse> {
+    const { municipioId, ejercicio, mes, conceptos } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar los gastos.'));
+    }
+
+    return this.http
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones`, { conceptos })
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
+  descargarInformeRecaudaciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  descargarInformeRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  guardarRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
+    const { municipioId, ejercicio, mes, remuneraciones } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar los gastos.'));
+    }
+
+    return this.http
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones`, { remuneraciones })
+      .pipe(catchError((error) => throwError(() => error)));
   }
 
   private leerPeriodosSeleccionados(): Record<string, PeriodoSeleccionadoMunicipio> {

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { MunicipioService } from '../../services/municipio.service';
 import { AuthService } from '../../services/auth.service';
@@ -26,7 +27,8 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
 
   constructor(
     private municipioService: MunicipioService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -97,6 +99,7 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
 
     this.municipioActual = seleccionado;
     this.municipioService.setMunicipio(seleccionado);
+    this.router.navigate(['/home']);
   }
 
   onLogout() {
