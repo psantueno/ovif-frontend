@@ -1,0 +1,128 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">
+    {{ data?.pauta_id ? 'edit_location_alt' : 'add_location_alt' }}
+  </mat-icon>
+  {{ data?.pauta_id ? 'Editar pauta' : 'Nueva pauta' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="alert-info" *ngIf="!pautaModificable">
+    <mat-icon class="alert-icon">
+      warning
+    </mat-icon>
+    <div class="alert-content">
+      <p class="alert-title">Registro no editable</p>
+      <p class="alert-message">
+        Este registro no puede ser modificado porque se encuentra asociado a otros datos o ya fue procesado.
+      </p>
+    </div>
+  </div>
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Descripcion</mat-label>
+    <input matInput formControlName="descripcion" placeholder="Gastos y Recursos"/>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('required') && form.get('descripcion')?.touched">
+      La descripcion es obligatoria
+    </mat-error>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('minlength') && form.get('descripcion')?.touched">
+      Debe tener al menos 3 caracteres
+    </mat-error>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('maxlength') && form.get('nombre')?.touched">
+      Debe tener menos de 255 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field>
+    <mat-label>Convenio</mat-label>
+    <mat-select formControlName="convenio_id">
+      <mat-option *ngFor="let convenio of convenios" [value]="convenio.convenio_id">{{ convenio.nombre }}</mat-option>
+    </mat-select>
+    <mat-error *ngIf="form.get('convenio_id')?.hasError('required') && form.get('convenio_id')?.touched">
+        El convenio es obligatorio
+      </mat-error>
+  </mat-form-field>
+
+  <div class="campos-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>Dia de venc.</mat-label>
+      <input matInput type="number" formControlName="dia_vto" min="1" max="31">
+      <mat-hint>Día del mes</mat-hint>
+      <mat-error *ngIf="form.get('dia_vto')?.hasError('required') && form.get('dia_vto')?.touched">
+        El dia de vencimiento es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('dia_vto')?.hasError('min') && form.get('dia_vto')?.touched">
+        El dia de vencimiento debe ser mayor o igual a 1
+      </mat-error>
+      <mat-error *ngIf="form.get('dia_vto')?.hasError('min') && form.get('dia_vto')?.touched">
+        El dia de vencimiento debe ser menor o igual a 31
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Plazo de venc.</mat-label>
+      <mat-hint>
+        Cantidad en meses
+      </mat-hint>
+      <input matInput type="number" formControlName="plazo_vto">
+      <mat-error *ngIf="form.get('plazo_vto')?.hasError('required') && form.get('plazo_vto')?.touched">
+        El plazo de vencimiento es obligatorio
+      </mat-error>
+      <mat-error *ngIf="form.get('plazo_vto')?.hasError('min') && form.get('plazo_vto')?.touched">
+        El plazo de vencimiento debe ser mayor o igual a 0
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="campos-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>Cant. dias rect.</mat-label>
+      <mat-hint>Cantidad en días</mat-hint>
+      <input matInput type="number" formControlName="cant_dias_rectifica">
+      <mat-error *ngIf="form.get('cant_dias_rectifica')?.hasError('min') && form.get('cant_dias_rectifica')?.touched">
+        La cant. de dias para rect. debe ser mayor o igual a 1
+      </mat-error>
+      <mat-error *ngIf="form.get('cant_dias_rectifica')?.hasError('min') && form.get('dia_vto')?.touched">
+        La cant. de dias para rect. debe ser menor o igual a 31
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Plazo mes rect.</mat-label>
+      <mat-hint>Cantidad en meses</mat-hint>
+      <input matInput type="number" formControlName="plazo_mes_rectifica">
+      <mat-error *ngIf="form.get('plazo_mes_rectifica')?.hasError('min') && form.get('plazo_mes_rectifica')?.touched">
+        El plazo de mes para rect. debe ser mayor o igual a 0
+      </mat-error>
+    </mat-form-field>
+  </div>
+
+  <mat-form-field>
+    <mat-label>Tipo de pauta</mat-label>
+    <mat-select formControlName="tipo_pauta">
+      <mat-option [value]="'gastos_recursos'">Gastos y Recursos</mat-option>
+      <mat-option [value]="'recaudaciones_remuneraciones'">Recaudaciones y Remuneraciones</mat-option>
+    </mat-select>
+    <mat-error *ngIf="form.get('tipo_pauta')?.hasError('required') && form.get('tipo_pauta')?.touched">
+        El tipo de pauta es obligatorio
+      </mat-error>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando || !pautaModificable"
+  >
+    <mat-icon *ngIf="!enviando">save</mat-icon>
+    <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
+    {{ data?.pauta_id ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="enviando"></app-loading-overlay>

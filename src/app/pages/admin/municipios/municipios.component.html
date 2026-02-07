@@ -17,7 +17,7 @@
 
   <mat-card class="selector-card buscador-card">
     <div class="selector-content">
-      <form class="buscador-form" (ngSubmit)="buscarMunicipios()">
+      <div class="buscador-form" (ngSubmit)="buscarMunicipios()">
         <mat-form-field appearance="outline" class="selector-field">
           <mat-label>Buscar municipio</mat-label>
           <input matInput [matAutocomplete]="municipioAuto" [formControl]="buscadorControl"
@@ -37,11 +37,11 @@
           </mat-autocomplete>
         </mat-form-field>
 
-        <button mat-raised-button color="primary" class="btn-buscar" type="submit">
+        <button mat-raised-button color="primary" class="btn-buscar" (click)="buscarMunicipios()">
           <mat-icon>search</mat-icon>
           Buscar
         </button>
-      </form>
+      </div>
 
       <p class="selector-helper">
         <mat-icon>info</mat-icon>
@@ -100,15 +100,6 @@
             </td>
           </ng-container>
 
-
-          <!-- No lo vamos a mostrar (se va a eliminar esta columna en breve) -->
-          <!-- <ng-container matColumnDef="municipio_usuario">
-            <th mat-header-cell *matHeaderCellDef>Usuario</th>
-            <td mat-cell *matCellDef="let municipio">
-              {{ municipio.municipio_usuario || '—' }}
-            </td>
-          </ng-container> -->
-
           <ng-container matColumnDef="municipio_spar">
             <th mat-header-cell *matHeaderCellDef>SPAR</th>
             <td mat-cell *matCellDef="let municipio">
@@ -138,7 +129,7 @@
             <td mat-cell *matCellDef="let municipio">
               {{
               municipio.municipio_poblacion !== null && municipio.municipio_poblacion !== undefined
-              ? (municipio.municipio_poblacion | number: '1.0-0')
+              ? (municipio.municipio_poblacion)
               : '—'
               }}
             </td>
@@ -177,4 +168,6 @@
   <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">
     <mat-icon>add</mat-icon>
   </button>
+
+  <app-loading-overlay [display]="enviando"></app-loading-overlay>
 </div>

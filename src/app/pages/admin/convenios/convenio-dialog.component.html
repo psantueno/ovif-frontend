@@ -1,0 +1,104 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">
+    {{ data?.convenio_id ? 'edit_location_alt' : 'add_location_alt' }}
+  </mat-icon>
+  {{ data?.convenio_id ? 'Editar convenio' : 'Nuevo convenio' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="alert-info" *ngIf="!convenioModificable">
+    <mat-icon class="alert-icon">
+      warning
+    </mat-icon>
+    <div class="alert-content">
+      <p class="alert-title">Registro no editable</p>
+      <p class="alert-message">
+        Este registro no puede ser modificado porque se encuentra asociado a otros datos o ya fue procesado.
+      </p>
+    </div>
+  </div>
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Nombre del convenio</mat-label>
+    <input matInput formControlName="nombre"/>
+    <mat-error *ngIf="form.get('nombre')?.hasError('required') && form.get('nombre')?.touched">
+      El nombre es obligatorio
+    </mat-error>
+    <mat-error *ngIf="form.get('nombre')?.hasError('minlength') && form.get('nombre')?.touched">
+      Debe tener al menos 3 caracteres
+    </mat-error>
+    <mat-error *ngIf="form.get('nombre')?.hasError('maxlength') && form.get('nombre')?.touched">
+      Debe tener menos de 150 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Descripcion</mat-label>
+    <textarea matInput formControlName="descripcion" rows="5"></textarea>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('required') && form.get('descripcion')?.touched">
+      La descripcion es obligatoria
+    </mat-error>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('minlength') && form.get('descripcion')?.touched">
+      Debe tener al menos 3 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <div class="campos-grid">
+    <mat-form-field appearance="fill">
+      <mat-label>Fecha de inicio</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerInicio"
+        formControlName="fecha_inicio"
+        [max]="obtenerFechaMaxima(form.get('fecha_fin')?.value)"
+        readonly="true"
+      >
+      <mat-datepicker-toggle matIconSuffix [for]="pickerInicio"></mat-datepicker-toggle>
+      <mat-datepicker #pickerInicio></mat-datepicker>
+      <mat-error *ngIf="form.get('fecha_inicio')?.hasError('required') && form.get('fecha_inicio')?.touched">
+        La fecha de inicio es obligatoria
+      </mat-error>
+      <mat-error *ngIf="form.hasError('rangoFechasInvalido')">
+        La fecha de inicio debe ser anterior a la fecha de fin
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Fecha de fin</mat-label>
+      <input
+        matInput
+        [matDatepicker]="pickerFin"
+        formControlName="fecha_fin"
+        [min]="obtenerFechaMinima(form.get('fecha_inicio')?.value)"
+        readonly="true"
+      >
+      <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+      <mat-datepicker #pickerFin></mat-datepicker>
+      <mat-error *ngIf="form.get('fecha_fin')?.hasError('required') && form.get('fecha_fin')?.touched">
+        La fecha de fin es obligatoria
+      </mat-error>
+      <mat-error *ngIf="form.hasError('rangoFechasInvalido')">
+        La fecha de fin debe ser posterior a la fecha de inicio
+      </mat-error>
+    </mat-form-field>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando || !convenioModificable"
+  >
+    <mat-icon *ngIf="!enviando">save</mat-icon>
+    <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
+    {{ data?.convenio_id ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="enviando"></app-loading-overlay>

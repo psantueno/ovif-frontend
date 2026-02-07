@@ -6,6 +6,17 @@
 </h2>
 
 <mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="alert-info" *ngIf="!municipioModificable">
+    <mat-icon class="alert-icon">
+      warning
+    </mat-icon>
+    <div class="alert-content">
+      <p class="alert-title">Registro no editable</p>
+      <p class="alert-message">
+        Este registro no puede ser modificado porque se encuentra asociado a otros datos o ya fue procesado.
+      </p>
+    </div>
+  </div>
   <mat-form-field class="full-width" appearance="fill">
     <mat-label>Nombre del municipio</mat-label>
     <input matInput formControlName="municipio_nombre" />
@@ -14,42 +25,6 @@
     </mat-error>
     <mat-error *ngIf="form.get('municipio_nombre')?.hasError('minlength') && form.get('municipio_nombre')?.touched">
       Debe tener al menos 3 caracteres
-    </mat-error>
-  </mat-form-field>
-
-  <div class="campos-grid">
-    <mat-form-field appearance="fill">
-      <mat-label>Usuario asignado</mat-label>
-      <input matInput formControlName="municipio_usuario" />
-      <mat-error *ngIf="form.get('municipio_usuario')?.hasError('required') && form.get('municipio_usuario')?.touched">
-        El usuario es obligatorio
-      </mat-error>
-      <mat-error *ngIf="form.get('municipio_usuario')?.hasError('minlength') && form.get('municipio_usuario')?.touched">
-        Debe tener al menos 3 caracteres
-      </mat-error>
-    </mat-form-field>
-
-    <mat-form-field appearance="fill">
-      <mat-label>Población estimada</mat-label>
-      <input matInput type="number" formControlName="municipio_poblacion" min="0" />
-      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('required') && form.get('municipio_poblacion')?.touched">
-        La población es obligatoria
-      </mat-error>
-      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('min') && form.get('municipio_poblacion')?.touched">
-        Debe ser un número mayor o igual a cero
-      </mat-error>
-    </mat-form-field>
-  </div>
-
-  <mat-form-field class="full-width" appearance="fill">
-    <mat-label>Contraseña</mat-label>
-    <input matInput type="password" formControlName="municipio_password" />
-    <mat-hint *ngIf="data?.municipio_id">Dejala vacía para mantener la contraseña actual.</mat-hint>
-    <mat-error *ngIf="form.get('municipio_password')?.hasError('required') && form.get('municipio_password')?.touched">
-      La contraseña es obligatoria
-    </mat-error>
-    <mat-error *ngIf="form.get('municipio_password')?.hasError('minlength') && form.get('municipio_password')?.touched">
-      Debe tener al menos 6 caracteres
     </mat-error>
   </mat-form-field>
 
@@ -75,6 +50,17 @@
         Debe ser un entero
       </mat-error>
     </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Población estimada</mat-label>
+      <input matInput type="number" formControlName="municipio_poblacion" min="0" />
+      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('required') && form.get('municipio_poblacion')?.touched">
+        La población es obligatoria
+      </mat-error>
+      <mat-error *ngIf="form.get('municipio_poblacion')?.hasError('min') && form.get('municipio_poblacion')?.touched">
+        Debe ser un número mayor o igual a cero
+      </mat-error>
+    </mat-form-field>
   </div>
 
   <div class="toggle-wrapper">
@@ -92,10 +78,12 @@
     class="btn-guardar"
     type="button"
     (click)="guardar()"
-    [disabled]="enviando"
+    [disabled]="enviando || !municipioModificable"
   >
     <mat-icon *ngIf="!enviando">save</mat-icon>
     <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
     {{ data?.municipio_id ? 'Actualizar' : 'Guardar' }}
   </button>
 </mat-dialog-actions>
+
+<app-loading-overlay [display]="enviando"></app-loading-overlay>
