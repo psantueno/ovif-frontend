@@ -1,0 +1,191 @@
+<div class="pautas-admin-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="helper-card">
+    <div class="helper-content">
+      <h3>
+        <mat-icon class="helper-icon" color="primary">info</mat-icon>
+        Administración de pautas
+      </h3>
+      <ol>
+        <li>Consultá la lista completa paginada o filtrá por nombre.</li>
+        <li>Utilizá el buscador con autocompletado para ubicar una pauta específica.</li>
+        <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
+      </ol>
+    </div>
+  </mat-card>
+
+  <mat-card class="selector-card buscador-card">
+    <div class="selector-content">
+      <div class="buscador-form">
+        <mat-form-field appearance="outline" class="selector-field">
+          <input matInput [matAutocomplete]="pautaAuto" [formControl]="buscadorControl"
+            placeholder="Escribí para filtrar por nombre" />
+          <button mat-icon-button matSuffix type="button" aria-label="Limpiar búsqueda" *ngIf="buscadorControl.value"
+            (click)="limpiarBuscador()">
+            <mat-icon>clear</mat-icon>
+          </button>
+          <mat-autocomplete #pautaAuto="matAutocomplete" (optionSelected)="onPautaSelected($event)"
+            [displayWith]="displayPauta.bind(this)">
+            <mat-option *ngFor="let pauta of filteredPautas$ | async" [value]="pauta">
+              {{ pauta.descripcion }}
+            </mat-option>
+            <mat-option *ngIf="!(filteredPautas$ | async)?.length">
+              No se encontraron coincidencias.
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" class="btn-buscar" type="button" (click)="buscarPautas()">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+      </div>
+
+      <p class="selector-helper">
+        <mat-icon>info</mat-icon>
+        <span>
+          El listado se carga automáticamente al ingresar.
+          Si el campo de filtro queda vacío se mostrarán todos las pautas disponibles.
+        </span>
+      </p>
+
+      <div class="selector-loading" *ngIf="cargandoCatalogo">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Actualizando catálogo…</span>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card class="tabla-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">rule</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Pautas configurados</mat-card-title>
+        <mat-card-subtitle>
+          {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrados
+        </mat-card-subtitle>
+      </div>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+      <div class="estado" *ngIf="cargandoLista">
+        <mat-spinner diameter="36"></mat-spinner>
+        <span>Cargando pautas...</span>
+      </div>
+
+      <div class="estado" *ngIf="!cargandoLista && dataSource.data.length === 0">
+        <mat-icon>search_off</mat-icon>
+        <span>No se encontraron pautas.</span>
+      </div>
+
+      <div class="tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
+        <table mat-table [dataSource]="dataSource" class="pautas-table">
+          <ng-container matColumnDef="pauta_id">
+            <th mat-header-cell *matHeaderCellDef>ID</th>
+            <td mat-cell *matCellDef="let pauta">
+              <span class="id-value">{{ pauta.pauta_id || '—' }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="descripcion">
+            <th mat-header-cell *matHeaderCellDef>Pauta</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.descripcion }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="convenio_nombre">
+            <th mat-header-cell *matHeaderCellDef>Convenio</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.convenio_nombre }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="dia_vto">
+            <th mat-header-cell *matHeaderCellDef>Día de vto.</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.dia_vto }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="plazo_vto">
+            <th mat-header-cell *matHeaderCellDef>Plazo de vto.</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.plazo_vto }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="cant_dias_rectifica">
+            <th mat-header-cell *matHeaderCellDef>Cant. dias rec.</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.cant_dias_rectifica }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="plazo_mes_rectifica">
+            <th mat-header-cell *matHeaderCellDef>Plazo mes rec.</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.plazo_mes_rectifica }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="tipo_pauta">
+            <th mat-header-cell *matHeaderCellDef>Tipo pauta</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="nombre-cell">
+                <span class="nombre">{{ pauta.tipo_pauta}}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="acciones-header">Acciones</th>
+            <td mat-cell *matCellDef="let pauta">
+              <div class="acciones">
+                <button mat-icon-button color="primary" matTooltip="Editar pauta"
+                  (click)="abrirDialogEditar(pauta)" aria-label="Editar pauta">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" matTooltip="Eliminar pauta"
+                  (click)="eliminarPauta(pauta)" [disabled]="estaEliminando(pauta.pauta_id)"
+                  aria-label="Eliminar pauta">
+                  <mat-icon *ngIf="!estaEliminando(pauta.pauta_id)">delete</mat-icon>
+                  <mat-icon class="girando" *ngIf="estaEliminando(pauta.pauta_id)">hourglass_top</mat-icon>
+                </button>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions align="end" *ngIf="!cargandoLista && totalRegistros > 0">
+      <mat-paginator [length]="totalRegistros" [pageIndex]="pageIndex" [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions" (page)="cambiarPagina($event)"></mat-paginator>
+    </mat-card-actions>
+  </mat-card>
+
+  <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">
+    <mat-icon>add</mat-icon>
+  </button>
+
+  <app-loading-overlay [display]="enviando"></app-loading-overlay>
+</div>

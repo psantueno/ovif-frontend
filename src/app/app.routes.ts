@@ -21,6 +21,8 @@ import { MainLayout } from './shared/layouts/main-layout.component';
 import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
 import { SinAccesoComponent } from './pages/sin-acceso/sin-acceso.component';
+import { ConveniosComponent } from './pages/admin/convenios/convenios.component';
+import { PautasComponent } from './pages/admin/pautas/pautas.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -76,6 +78,8 @@ export const routes: Routes = [
       { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent, canActivate: [AdminGuard] },
       { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent, canActivate: [AdminGuard] },
       { path: 'admin/roles', component: RolesComponent, canActivate: [AdminGuard] },
+      { path: 'admin/convenios', component: ConveniosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] }
     ]
   },
   { path: '**', redirectTo: '' }

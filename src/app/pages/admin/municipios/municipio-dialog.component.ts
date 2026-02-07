@@ -1,6 +1,6 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +11,8 @@ import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import { Municipio, MunicipioPayload, MunicipiosAdminService } from '../../../services/municipios-admin.service';
+
+import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-municipio-dialog',
@@ -23,7 +25,8 @@ import { Municipio, MunicipioPayload, MunicipiosAdminService } from '../../../se
     MatInputModule,
     MatSlideToggleModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    LoadingOverlayComponent
   ],
   templateUrl: './municipio-dialog.component.html',
   styleUrls: ['./municipio-dialog.component.scss']
@@ -41,22 +44,20 @@ export class MunicipioDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      municipio_nombre: [this.data?.municipio_nombre || '', [Validators.required, Validators.minLength(3)]],
-      municipio_usuario: [this.data?.municipio_usuario || '', [Validators.required, Validators.minLength(3)]],
-      municipio_password: [''],
-      municipio_spar: [
-        this.toIntegerOrNull(this.data?.municipio_spar),
+      municipio_nombre: new FormControl({ value: this.data?.municipio_nombre || '', disabled: !this.municipioModificable}, [Validators.required, Validators.minLength(3)]),
+      municipio_spar: new FormControl(
+        { value: this.toIntegerOrNull(this.data?.municipio_spar), disabled: !this.municipioModificable },
         [Validators.required, Validators.pattern(/^-?(0|[1-9]\d*)$/)]
-      ],
-      municipio_ubge: [
-        this.toIntegerOrNull(this.data?.municipio_ubge),
+      ),
+      municipio_ubge: new FormControl(
+        { value: this.toIntegerOrNull(this.data?.municipio_ubge), disabled: !this.municipioModificable },
         [Validators.required, Validators.pattern(/^-?(0|[1-9]\d*)$/)]
-      ],
-      municipio_subir_archivos: [this.data?.municipio_subir_archivos ?? false],
-      municipio_poblacion: [
-        this.data?.municipio_poblacion ?? null,
+      ),
+      municipio_subir_archivos: new FormControl({ value: this.data?.municipio_subir_archivos ?? false, disabled: !this.municipioModificable }),
+      municipio_poblacion: new FormControl(
+        { value: this.data?.municipio_poblacion ?? null, disabled: !this.municipioModificable },
         [Validators.required, Validators.min(0)]
-      ]
+      )
     });
 
     if (!this.data?.municipio_id) {
@@ -113,13 +114,21 @@ export class MunicipioDialogComponent implements OnInit {
             icon: 'error',
             title: message,
             showConfirmButton: false,
-            timer: 2500,
+            timer: 5000,
             timerProgressBar: true,
             background: '#fee2e2',
             color: '#7f1d1d'
           });
         }
       });
+  }
+
+  get municipioModificable(){
+    if(this.data?.modificable !== undefined && this.data?.modificable !== null){
+      return this.data?.modificable
+    }
+
+    return true;
   }
 
   private construirPayload(formValue: any): MunicipioPayload {
@@ -133,19 +142,11 @@ export class MunicipioDialogComponent implements OnInit {
 
     const payload: MunicipioPayload = {
       municipio_nombre: normalizarString(formValue.municipio_nombre) ?? '',
-      municipio_usuario: normalizarString(formValue.municipio_usuario) ?? '',
       municipio_spar: this.toInteger(formValue.municipio_spar),
       municipio_ubge: this.toInteger(formValue.municipio_ubge),
       municipio_subir_archivos: !!formValue.municipio_subir_archivos,
       municipio_poblacion: this.toNumber(formValue.municipio_poblacion)
     };
-
-    const password = normalizarString(formValue.municipio_password);
-    if (password) {
-      payload.municipio_password = password;
-    } else if (!this.data?.municipio_id) {
-      payload.municipio_password = '';
-    }
 
     return payload;
   }
@@ -176,7 +177,7 @@ export class MunicipioDialogComponent implements OnInit {
 
   private resolveErrorMessage(error: any, fallback: string): string {
     if (error?.error) {
-      const err = error.error;
+      const err = error.error.error;
       if (typeof err === 'string' && err.trim().length > 0) {
         return err;
       }

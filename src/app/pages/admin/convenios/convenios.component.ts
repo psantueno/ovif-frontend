@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, DestroyRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,16 +20,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
-import { MunicipiosAdminService, Municipio } from '../../../services/municipios-admin.service';
-import { MunicipioService, MunicipioSelectOption } from '../../../services/municipio.service';
-import { MunicipioDialogComponent } from './municipio-dialog.component';
+import { ConveniosAdminService, Convenio } from '../../../services/convenios-admin.service';
+import { ConvenioService, ConvenioSelectOption } from '../../../services/convenio.service';
+import { ConvenioDialogComponent } from './convenio-dialog.component';
 
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 
-type MunicipioControlValue = MunicipioSelectOption | string;
+type ConvenioControlValue = ConvenioSelectOption | string;
 
 @Component({
-  selector: 'app-admin-municipios',
+  selector: 'app-admin-convenios',
   standalone: true,
   imports: [
     CommonModule,
@@ -50,28 +50,28 @@ type MunicipioControlValue = MunicipioSelectOption | string;
     AdminNavbarComponent,
     LoadingOverlayComponent
   ],
-  templateUrl: './municipios.component.html',
-  styleUrls: ['./municipios.component.scss']
+  templateUrl: './convenios.component.html',
+  styleUrls: ['./convenios.component.scss']
 })
-export class MunicipiosComponent implements OnInit {
+
+export class ConveniosComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly breadcrumbs: AdminBreadcrumb[] = [
     { label: 'Admin', link: '/admin' },
-    { label: 'Municipios' }
+    { label: 'Convenios' }
   ];
 
   readonly displayedColumns = [
-    'municipio_id',
-    'municipio_nombre',
-    'municipio_spar',
-    'municipio_ubge',
-    'municipio_subir_archivos',
-    'municipio_poblacion',
+    'convenio_id',
+    'nombre',
+    'descripcion',
+    'fecha_inicio',
+    'fecha_fin',
     'acciones'
   ];
 
-  readonly dataSource = new MatTableDataSource<Municipio>([]);
+  readonly dataSource = new MatTableDataSource<Convenio>([]);
   totalRegistros = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -82,24 +82,24 @@ export class MunicipiosComponent implements OnInit {
   searchTerm: string | null = null;
   private readonly eliminando = new Set<number>();
 
-  readonly buscadorControl = new FormControl<MunicipioControlValue>('');
-  private readonly municipiosSubject = new BehaviorSubject<MunicipioSelectOption[]>([]);
-  readonly filteredMunicipios$ = combineLatest([
+  readonly buscadorControl = new FormControl<ConvenioControlValue>('');
+  private readonly conveniosSubject = new BehaviorSubject<ConvenioSelectOption[]>([]);
+  readonly filteredConvenios$ = combineLatest([
     this.buscadorControl.valueChanges.pipe(startWith('')),
-    this.municipiosSubject.asObservable()
+    this.conveniosSubject.asObservable()
   ]).pipe(
-    map(([value, municipios]) => {
+    map(([value, convenios]) => {
       const filterValue =
         typeof value === 'string'
           ? value.trim().toLowerCase()
-          : value?.municipio_nombre?.toLowerCase().trim() ?? '';
+          : value?.nombre?.toLowerCase().trim() ?? '';
 
       if (!filterValue) {
-        return municipios;
+        return convenios;
       }
 
-      return municipios.filter((municipio) =>
-        municipio.municipio_nombre.toLowerCase().includes(filterValue)
+      return convenios.filter((convenio) =>
+        convenio.nombre.toLowerCase().includes(filterValue)
       );
     })
   );
@@ -109,36 +109,36 @@ export class MunicipiosComponent implements OnInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
   constructor(
-    private readonly municipiosService: MunicipiosAdminService,
-    private readonly municipioService: MunicipioService,
+    private readonly conveniosAdminService: ConveniosAdminService,
+    private readonly convenioService: ConvenioService,
     private readonly dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
-    this.cargarMunicipios();
+    this.cargarConvenios();
   }
 
-  displayMunicipio(value: MunicipioControlValue | null): string {
+  displayConvenio(value: ConvenioControlValue | null): string {
     if (!value) {
       return '';
     }
-    return typeof value === 'string' ? value : value.municipio_nombre;
+    return typeof value === 'string' ? value : value.nombre;
   }
 
-  buscarMunicipios(): void {
+  buscarConvenios(): void {
     this.searchTerm = this.extraerTermino(this.buscadorControl.value);
     this.pageIndex = 0;
-    this.cargarMunicipios();
+    this.cargarConvenios();
   }
 
-  onMunicipioSelected(event: MatAutocompleteSelectedEvent): void {
-    const municipio = event.option.value as MunicipioSelectOption | undefined;
-    if (!municipio) {
+  onConvenioSelected(event: MatAutocompleteSelectedEvent): void {
+    const convenio = event.option.value as ConvenioSelectOption | undefined;
+    if (!convenio) {
       return;
     }
-    this.buscadorControl.setValue(municipio);
-    this.buscarMunicipios();
+    this.buscadorControl.setValue(convenio);
+    this.buscarConvenios();
   }
 
   limpiarBuscador(): void {
@@ -148,52 +148,50 @@ export class MunicipiosComponent implements OnInit {
     this.buscadorControl.setValue('');
     this.searchTerm = null;
     this.pageIndex = 0;
-    this.cargarMunicipios();
+    this.cargarConvenios();
   }
 
   cambiarPagina(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.cargarMunicipios();
+    this.cargarConvenios();
   }
 
   abrirDialogCrear(): void {
-    const dialogRef = this.dialog.open(MunicipioDialogComponent, {
+    const dialogRef = this.dialog.open(ConvenioDialogComponent, {
       width: '520px',
       data: null
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
-        this.cargarCatalogo();
-        this.cargarMunicipios();
+        this.cargarConvenios();
       }
     });
   }
 
-  abrirDialogEditar(municipio: Municipio): void {
-    const dialogRef = this.dialog.open(MunicipioDialogComponent, {
+  abrirDialogEditar(convenio: Convenio): void {
+    const dialogRef = this.dialog.open(ConvenioDialogComponent, {
       width: '520px',
-      data: municipio
+      data: convenio
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
-        this.cargarCatalogo()
-        this.cargarMunicipios();
+        this.cargarConvenios();
       }
     });
   }
 
-  eliminarMunicipio(municipio: Municipio): void {
-    if (!municipio?.municipio_id) {
+  eliminarConvenio(convenio: Convenio): void {
+    if (!convenio?.convenio_id) {
       return;
     }
 
-    if(!municipio?.modificable) {
+    if(!convenio?.modificable) {
       Swal.fire({
         title: 'Operación restringida',
-        text: `No puedes eliminar el municipio "${municipio.municipio_nombre}". Este municipio está asociado a otros datos.`,
+        text: `No puedes eliminar el convenio "${convenio.nombre}". Este convenio está asociado a otros datos.`,
         icon: 'warning',
         confirmButtonText: 'Cancelar',
         confirmButtonColor: '#6c757d'
@@ -202,8 +200,8 @@ export class MunicipiosComponent implements OnInit {
     }
 
     Swal.fire({
-      title: 'Eliminar municipio',
-      text: `¿Confirmás eliminar "${municipio.municipio_nombre}"? Esta acción no se puede deshacer.`,
+      title: 'Eliminar convenio',
+      text: `¿Confirmás eliminar "${convenio.nombre}"? Esta acción no se puede deshacer.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -216,9 +214,9 @@ export class MunicipiosComponent implements OnInit {
       }
 
       this.enviando = true;
-      this.eliminando.add(municipio.municipio_id);
-      this.municipiosService
-        .eliminarMunicipio(municipio.municipio_id)
+      this.eliminando.add(convenio.convenio_id);
+      this.conveniosAdminService
+        .eliminarConvenio(convenio.convenio_id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
@@ -226,20 +224,19 @@ export class MunicipiosComponent implements OnInit {
               toast: true,
               position: 'top-end',
               icon: 'success',
-              title: 'Municipio eliminado correctamente',
+              title: 'Convenio eliminado correctamente',
               showConfirmButton: false,
               timer: 2500,
               timerProgressBar: true,
               background: '#f0fdf4',
               color: '#14532d'
             });
-            this.cargarMunicipios();
-            this.cargarCatalogo();
-            this.eliminando.delete(municipio.municipio_id);
+            this.cargarConvenios();
+            this.eliminando.delete(convenio.convenio_id);
             this.enviando = false;
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el municipio.');
+            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el convenio.');
             Swal.fire({
               toast: true,
               position: 'top-end',
@@ -251,8 +248,8 @@ export class MunicipiosComponent implements OnInit {
               background: '#fee2e2',
               color: '#7f1d1d'
             });
-            this.eliminando.delete(municipio.municipio_id);
-            this.enviando = false
+            this.eliminando.delete(convenio.convenio_id);
+            this.enviando = false;
           }
         });
     });
@@ -264,15 +261,15 @@ export class MunicipiosComponent implements OnInit {
 
   private cargarCatalogo(): void {
     this.cargandoCatalogo = true;
-    this.municipioService
-      .getCatalogoMunicipios()
+    this.convenioService
+      .getCatalogoConvenios()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (municipios) => {
-          this.municipiosSubject.next(municipios ?? []);
+        next: (convenios) => {
+          this.conveniosSubject.next(convenios ?? []);
         },
         error: (error) => {
-          console.error('Error obteniendo catálogo de municipios', error);
+          console.error('Error obteniendo catálogo de convenio', error);
         },
         complete: () => {
           this.cargandoCatalogo = false;
@@ -280,7 +277,7 @@ export class MunicipiosComponent implements OnInit {
       });
   }
 
-  private cargarMunicipios(): void {
+  private cargarConvenios(): void {
     this.cargandoLista = true;
     const params = {
       pagina: this.pageIndex + 1,
@@ -288,8 +285,8 @@ export class MunicipiosComponent implements OnInit {
       search: this.searchTerm
     };
 
-    this.municipiosService
-      .listarMunicipios(params)
+    this.conveniosAdminService
+      .listarConvenios(params)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
@@ -297,7 +294,7 @@ export class MunicipiosComponent implements OnInit {
           if (datos.length === 0 && (response?.total ?? 0) > 0 && this.pageIndex > 0) {
             this.pageIndex = Math.max(this.pageIndex - 1, 0);
             this.cargandoLista = false;
-            this.cargarMunicipios();
+            this.cargarConvenios();
             return;
           }
           this.dataSource.data = datos;
@@ -313,7 +310,7 @@ export class MunicipiosComponent implements OnInit {
           }
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudieron obtener los municipios.');
+          const message = this.resolveErrorMessage(error, 'No se pudieron obtener los convenios.');
           Swal.fire({
             icon: 'error',
             title: 'Error al cargar',
@@ -328,11 +325,11 @@ export class MunicipiosComponent implements OnInit {
       });
   }
 
-  private extraerTermino(value: MunicipioControlValue | null | undefined): string | null {
+  private extraerTermino(value: ConvenioControlValue | null | undefined): string | null {
     if (!value) {
       return null;
     }
-    const termino = typeof value === 'string' ? value : value.municipio_nombre;
+    const termino = typeof value === 'string' ? value : value.nombre;
     const clean = termino.trim();
     return clean.length > 0 ? clean : null;
   }
@@ -340,7 +337,6 @@ export class MunicipiosComponent implements OnInit {
   private resolveErrorMessage(error: any, fallback: string): string {
     if (error?.error) {
       const err = error.error.error;
-      console.log("Err ", err);
       if (typeof err === 'string' && err.trim().length > 0) {
         return err;
       }
