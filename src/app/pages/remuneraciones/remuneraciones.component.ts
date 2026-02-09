@@ -240,9 +240,6 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       this.asignarErroresPrevisualizacion(errores);
 
       this.erroresPrevisualizacion = errores;
-
-      console.log("Filas CSV: ", rows);
-      console.log("Errores CSV: ", errores);
     }
     catch (error) {
       this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
@@ -635,6 +632,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   private armarPayload(remuneracion: Remuneracion): RemuneracionUpsertPayload{
     const payload: RemuneracionUpsertPayload = {
       cuil: remuneracion.cuil,
+      legajo: remuneracion.legajo,
       regimen: remuneracion.regimen,
       apellido_nombre: remuneracion.apellido_nombre,
       situacion_revista: remuneracion.situacion_revista,

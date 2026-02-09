@@ -64,6 +64,7 @@ export interface ConceptoRecaudacionUpsertPayload {
 export interface Remuneracion {
   regimen: string;
   cuil: number;
+  legajo: number;
   apellido_nombre: string;
   situacion_revista: string;
   fecha_alta: string;
@@ -83,6 +84,7 @@ export interface Remuneracion {
 export interface RemuneracionUpsertPayload {
   regimen: string;
   cuil: number;
+  legajo: number;
   apellido_nombre: string;
   situacion_revista: string;
   fecha_alta: string;
