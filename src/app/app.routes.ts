@@ -8,6 +8,7 @@ import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard
 import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { PanelCargaRectificacionesComponent } from './pages/rectificaciones/panel-carga-rectificaciones.component';
 
 // Admin
 import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
@@ -70,6 +71,10 @@ export const routes: Routes = [
           import('./pages/historico-ejercicios-cerrados/historico-ejercicios-cerrados.component').then(
             (m) => m.HistoricoEjerciciosCerradosComponent
           )
+      },
+      {
+        path: 'panel-carga-rectificaciones',
+        component: PanelCargaRectificacionesComponent
       },
       { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
       { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },

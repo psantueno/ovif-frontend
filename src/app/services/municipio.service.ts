@@ -187,6 +187,19 @@ export class MunicipioService {
     );
   }
 
+  getEjerciciosRectificablesDisponibles(municipioId: number): Observable<any[]> {
+    if (!municipioId) {
+      return of([]);
+    }
+
+    return this.http.get<any>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/rectificaciones/disponibles`).pipe(
+      map((res) => Array.isArray(res?.ejercicios) ? res.ejercicios : []),
+      catchError((err) => {
+        console.error('Error obteniendo ejercicios rectificables disponibles:', err);
+        return of([]);
+      })
+    );
+  }
 
   setMunicipio(municipio: any, options?: { silent?: boolean }): Promise<void> {
     const aplicarSeleccion = () => {
@@ -667,6 +680,70 @@ export class MunicipioService {
 
     return this.http
       .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones`, { remuneraciones })
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
+  obtenerConceptosRecaudacionRectificada(params: { municipioId: number; ejercicio: number; mes: number }): Observable<ConceptoRecaudacion[]> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return of([]);
+    }
+    return this.http
+      .get<ConceptoRecaudacion[]>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas/conceptos`)
+      .pipe(
+        map((response) => {
+          if (!response) {
+            return [];
+          }
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  guardarConceptosRecaudacionRectificada(params: { municipioId: number; ejercicio: number; mes: number; conceptos: ConceptoRecaudacionUpsertPayload[] }): Observable<UpsertResponse> {
+    const { municipioId, ejercicio, mes, conceptos } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar los gastos.'));
+    }
+
+    return this.http
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas`, { conceptos })
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
+  descargarInformeRecaudacionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  descargarInformeRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
+    }
+
+    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones-rectificadas/informe`, {
+      responseType: 'blob',
+      observe: 'response',
+    });
+  }
+
+  guardarRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
+    const { municipioId, ejercicio, mes, remuneraciones } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar los gastos.'));
+    }
+
+    return this.http
+      .put<UpsertResponse>(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones-rectificadas`, { remuneraciones })
       .pipe(catchError((error) => throwError(() => error)));
   }
 

@@ -142,42 +142,6 @@ export class GastosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
-      const periodoGuardado = this.municipioService.getPeriodoSeleccionado(this.municipioActual.municipio_id);
-      const coincidePeriodoGuardado =
-        periodoGuardado?.ejercicio === ejercicio && periodoGuardado?.mes === mes;
-      const tipoPauta = parsedValor?.tipo_pauta ?? (coincidePeriodoGuardado ? periodoGuardado?.tipo_pauta ?? null : null);
-      const pautaId = parsedValor?.pauta_id ?? (coincidePeriodoGuardado ? periodoGuardado?.pauta_id ?? null : null);
-      const base: PeriodoSeleccionadoMunicipio = coincidePeriodoGuardado && periodoGuardado
-        ? { ...periodoGuardado }
-        : {
-            ejercicio,
-            mes
-          };
-      const valor =
-        this.municipioService.buildPeriodoValor({
-          ...base,
-          ejercicio,
-          mes,
-          pauta_id: pautaId ?? undefined,
-          tipo_pauta: tipoPauta ?? undefined
-        }) ?? ejercicioMes;
-      const modulos =
-        (base.modulos && base.modulos.length ? base.modulos : null) ??
-        (tipoPauta ? this.ejerciciosService.mapTipoPautaToModulos(tipoPauta) : null);
-      const tipoPautaLabel =
-        base.tipo_pauta_label ??
-        (tipoPauta ? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) : null);
-
-      this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes, {
-        ...base,
-        pauta_id: pautaId ?? null,
-        tipo_pauta: tipoPauta ?? null,
-        tipo_pauta_label: tipoPautaLabel ?? null,
-        valor,
-        modulos
-      });
-
-      this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -226,8 +190,8 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   private actualizarBaseCambios(): void {
     this.partidasPlanas.forEach((partida) => {
-      partida.node.importeOriginal = partida.node.importe;
-      partida.node.importeOriginalTexto = partida.node.importeTexto;
+      partida.node.importeOriginal = Number(partida.node.importe) !== 0 ? Number(partida.node.importe) : null;
+      partida.node.importeOriginalTexto = partida.node.importeTexto !== null && partida.node.importeTexto !== undefined ? String(partida.node.importeTexto) : '';
     });
     this.cambiosPendientes = false;
   }
@@ -402,7 +366,6 @@ export class GastosComponent implements OnInit, OnDestroy {
             this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
           }else{
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarBaseCambios();
             this.actualizarImportesPartidas();
           }
         },
@@ -459,10 +422,10 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     const partidasPayload: PartidaGastoUpsertPayload[] = this.partidasPlanas
       .map((partida) => partida.node)
-      .filter((node) => node.carga && node.importe !== null && node.importe !== 0)
+      .filter((node) => node.carga && Number(node.importe) !== null && Number(node.importe) !== 0)
       .map((node) => ({
         partidas_gastos_codigo: node.codigo,
-        gastos_importe_devengado: node.importe,
+        gastos_importe_devengado: Number(node.importe),
       }));
 
     if (!partidasPayload.length) {
@@ -635,7 +598,6 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
       periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
-      this.persistirPeriodoSeleccionado(periodo);
     }
 
     const ejercicio = periodo?.ejercicio ?? null;
@@ -656,13 +618,14 @@ export class GastosComponent implements OnInit, OnDestroy {
       .pipe(take(1))
       .subscribe({
         next: (response) => {
+          console.log('Partidas de gastos recibidas:', response);
           this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
+          console.log('Partidas transformadas:', this.partidas);
           this.partidasPlanas = this.flattenPartidas(this.partidas);
           this.actualizarBaseCambios();
           this.cargandoPartidas = false;
 
           this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
-          this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
         },
         error: () => {
           this.partidas = [];
@@ -680,7 +643,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     const hijos = Array.isArray(partida.children)
       ? partida.children.map((child) => this.transformarPartida(child))
       : [];
-    const importeTexto = importe !== null ? String(importe) : '';
+    const importeTexto = importe !== null ? String(importe.toFixed(2)) : '';
 
     const node: PartidaNode = {
       codigo: Number(partida.partidas_gastos_codigo),
@@ -705,7 +668,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       return null;
     }
     if (typeof valor === 'number') {
-      return Number.isFinite(valor) ? valor : null;
+      return Number.isFinite(valor) ? Number(valor) : null;
     }
 
     const normalizado = String(valor).replace(',', '.');
@@ -920,38 +883,6 @@ export class GastosComponent implements OnInit, OnDestroy {
     return combinado;
   }
 
-  private persistirPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
-    const municipioId = this.municipioActual?.municipio_id;
-    if (!municipioId) {
-      return;
-    }
-
-    if (!periodo) {
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const valor =
-      periodo.valor ??
-      this.municipioService.buildPeriodoValor({
-        ejercicio: periodo.ejercicio,
-        mes: periodo.mes,
-        pauta_id: periodo.pauta_id ?? undefined,
-        tipo_pauta: periodo.tipo_pauta ?? undefined
-      });
-    let modulos = periodo.modulos ?? null;
-    if ((!modulos || modulos.length === 0) && periodo.tipo_pauta) {
-      modulos = this.ejerciciosService.mapTipoPautaToModulos(periodo.tipo_pauta);
-    }
-    const payload: PeriodoSeleccionadoMunicipio = {
-      ...periodo,
-      valor: valor ?? periodo.valor,
-      modulos: modulos && modulos.length ? modulos : null
-    };
-
-    this.municipioService.setPeriodoSeleccionado(municipioId, payload);
-  }
-
   private flattenPartidas(
     partidas: PartidaNode[],
     nivel = 0,
@@ -1011,11 +942,12 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.previsualizacionMasiva.forEach(fila => {
       const partidaPlana = this.partidasPlanas.find(p => p.node.codigo === fila.node.codigo);
       if(partidaPlana){
-        partidaPlana.node.importe = fila.node.importe;
-        partidaPlana.node.importeTexto = fila.node.importeTexto;
+        partidaPlana.node.importe = Number(fila.node.importe) ?? partidaPlana.node.importe;
+        partidaPlana.node.importeTexto = fila.node.importe !== null && fila.node.importe !== undefined ? String(fila.node.importe) : partidaPlana.node.importeTexto;
         partidaPlana.node.tieneError = fila.node.tieneError;
       }
     });
+    this.cambiosPendientes = false;
   }
 
   public obtenerTotalFilasMasivas(): number {
@@ -1030,7 +962,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       if (partida.node.tieneError || partida.node.importe === null) {
         return total;
       }
-      return total + partida.node.importe;
+      return total + Number(partida.node.importe);
     }, 0);
   }
 

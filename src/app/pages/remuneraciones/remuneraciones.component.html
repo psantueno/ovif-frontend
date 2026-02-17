@@ -1,9 +1,9 @@
 <div class="remuneraciones-page">
   <div class="page-header">
-    <app-back-button text="Volver" [link]="['/panel-carga-mensual']"></app-back-button>
+    <app-back-button text="Volver" [link]="[esRectificacion ? '/panel-carga-rectificaciones' : '/panel-carga-mensual']"></app-back-button>
 
     <div class="context">
-      <h1>Carga de remunaciones</h1>
+      <h1>{{ esRectificacion ? 'Carga de rectificacion de remuneraciones' : 'Carga de remuneraciones' }}</h1>
       <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
       <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
     </div>
@@ -103,119 +103,6 @@
           <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
         </div>
       </header>
-      <!-- <div class="carga-masiva__tabla-wrapper">
-        <table class="recaudaciones-tabla">
-          <thead>
-            <tr>
-              <th>Regimen</th>
-              <th>Cuil</th>
-              <th>Apellido y nombre</th>
-              <th>Situacion de revista</th>
-              <th>Fecha de alta</th>
-              <th>Remuneracion neta</th>
-              <th>Tipo de liquidacion</th>
-              <th>Bonificacion</th>
-              <th>Cantidad de hs extra 50%</th>
-              <th>Importe de hs extra 50%</th>
-              <th>Cantidad de hs extra 100%</th>
-              <th>Importe de hs extra 100%</th>
-              <th>ART</th>
-              <th>Seguro de vida</th>
-              <th>Otros conceptos</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            <ng-container *ngFor="let remuneracion of previsualizacionMasiva">
-              <tr
-                [class.grupo]="false"
-                [class.tiene-error]="remuneracion.tieneError"
-              >
-                <td>
-                  {{ remuneracion.regimen }}
-                </td>
-                <td>
-                  <span
-                    [class.concepto-titulo]="false"
-                    [class.concepto-item]="true"
-                  >
-                    {{ remuneracion.cuil }}
-                  </span>
-                </td>
-                <td>
-                  {{ remuneracion.apellido_nombre }}
-                </td>
-                <td>
-                  {{ remuneracion.situacion_revista }}
-                </td>
-                <td>
-                  {{ remuneracion.fecha_alta }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.remuneracion_neta }}
-                </td>
-                <td>
-                  {{ remuneracion.tipo_liquidacion }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.bonificacion }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.cant_hs_extra_50 }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.importe_hs_extra_50 }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.cant_hs_extra_100 }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.importe_hs_extra_100 }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.art }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.seguro_vida }}
-                </td>
-                <td class="importe">
-                  {{ remuneracion.otros_conceptos }}
-                </td>
-                <td>
-                  <ng-container *ngIf="remuneracion.tieneError">
-                    <ul class="preview-list">
-                      <li class="preview-error">{{ obtenerErrorRemuneracion(remuneracion.cuil) }}</li>
-                    </ul>
-                  </ng-container>
-                  <ng-container *ngIf="!remuneracion.tieneError">
-                    <span class="preview-ok">Listo para enviar</span>
-                  </ng-container>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-          <tfoot *ngIf="!erroresPrevisualizacion.length">
-            <tr>
-              <td class="total-label" [style.textAlign]="'left'">TOTAL</td>
-              <td class="total-placeholder">—</td>
-              <td class="total-placeholder">—</td>
-              <td class="total-placeholder">—</td>
-              <td class="total-placeholder">—</td>
-              <td class="total-valor"> {{ obtenerTotalImporte('remuneracion_neta') }} </td>
-              <td class="total-placeholder">—</td>
-              <td class="total-valor"> {{ obtenerTotalImporte('bonificacion') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('cant_hs_extra_50') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('importe_hs_extra_50') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('cant_hs_extra_100') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('importe_hs_extra_100') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('art') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('seguro_vida') }} </td>
-              <td class="total-valor"> {{ obtenerTotalImporte('otros_conceptos') }} </td>
-              <td class="total-placeholder">—</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div> -->
       <div class="preview-summary">
         <h3 class="preview-summary-title">Resumen de la carga masiva</h3>
         <ng-container *ngFor="let regimen of regimenes">

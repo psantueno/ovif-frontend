@@ -1,7 +1,7 @@
 <div class="home-container">
   <app-back-button class="home-back" text="Volver al menú principal" [link]="['/home']"></app-back-button>
   <div class="home-header">
-    <h1>MENU DE CARGA DE INFORMACIÓN FISCAL</h1>
+    <h1>MENU DE CARGA DE RECTIFICACIONES</h1>
     <p class="municipio-info">
       <mat-icon>location_on</mat-icon>
       <span>Municipio:</span>
@@ -10,9 +10,16 @@
     <mat-card class="container-helper ">
       <p class="selector-helper">
         <mat-icon>info</mat-icon>
-        <span>Los módulos de carga de datos se habilitan al seleccionar el ejercicio, mes, convenio y pauta correspondiente.
+        <span>
+          La rectificación de importes está habilitada del 1 al 10 del mes siguiente al período informado.
         </span>
       </p>
+      <p class="selector-helper">
+        <mat-icon>info</mat-icon>
+        <span>
+          Finalizado dicho plazo, el sistema no permitirá nuevos cambios.
+        </span>
+        </p>
     </mat-card>
   </div>
 
@@ -21,10 +28,9 @@
     <div class="selector-row">
       <label for="ejercicioMes" class="selector-label">
         <mat-icon>event</mat-icon>
-        <span>Ejercicio y Mes:</span>
+        <span>Ejercicio y Mes Habilitado:</span>
       </label>
-      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
-        <option value="">Seleccione el ejercicio fiscal, convenio y pauta que desea cargar</option>
+      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" readonly>
         <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
           {{ em.texto }}
         </option>
@@ -42,22 +48,12 @@
 
   <!-- Acciones principales -->
   <div class="home-actions">
-    <button type="button" class="home-card" (click)="irA('gastos')" [disabled]="!isModuloHabilitado('gastos')">
-      <mat-icon>payments</mat-icon>
-      <span>Gastos</span>
-    </button>
-
-    <button type="button" class="home-card" (click)="irA('recursos')" [disabled]="!isModuloHabilitado('recursos')">
-      <mat-icon>savings</mat-icon>
-      <span>Recursos</span>
-    </button>
-
-    <button type="button" class="home-card" (click)="irA('remuneraciones')" [disabled]="!isModuloHabilitado('remuneraciones')">
+    <button type="button" class="home-card" (click)="irA('remuneraciones', true)" [disabled]="!isModuloHabilitado('remuneraciones')">
       <mat-icon>groups</mat-icon>
       <span>Remuneraciones</span>
     </button>
 
-    <button type="button" class="home-card" (click)="irA('recaudaciones')"
+    <button type="button" class="home-card" (click)="irA('recaudaciones', true)"
       [disabled]="!isModuloHabilitado('recaudaciones')">
       <mat-icon>assessment</mat-icon>
       <span>Recaudaciones</span>

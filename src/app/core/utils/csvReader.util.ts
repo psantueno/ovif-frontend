@@ -27,6 +27,7 @@ const reglasValidacionRemuneraciones: ValidationRules = {
   'regimen': { required: true, options: ['PLANTA POLITICA', 'PLANTA PERMANENTE', 'PLANTA TEMPORARIA', 'MONOTRIBUTISTA', 'CONTRAPRESTA PERCIBIENDO RETRIBUCION POR SUBSIDIO', 'PRESTA SERVICIO Y PERCIBE REUMNERACION', 'PERCIBE SUBSIDIO'] },
   'cuil': { required: true, type: 'number' },
   'apellido_nombre': { required: true },
+  'legajo' : { type: 'number', required: true },
   'situacion_revista': { required: true },
   'fecha_alta': { required: true },
   'remuneracion_neta': { required: true, type: 'decimal', step: 2 },
@@ -246,12 +247,21 @@ const validarFilas = (rows: any[], context: Context): any[] => {
         if (reglas.type) {
           const tipoEsperado = reglas.type;
           const tipoValor = typeof valor;
+          const valorNumerico = Number(valor);
 
-          if (tipoEsperado === 'number' && tipoValor !== 'number' && !Number(valor.replace(",", "."))) {
+          if (tipoEsperado === 'number' && tipoValor !== 'number' && valorNumerico === null) {
+            console.log('Valor inválido para campo numérico:', valor);
+            console.log('Tipo del valor:', tipoValor);
+            console.log('Campo:', campo);
+            console.log('Valor numérico parseado:', valorNumerico);
             errores.push({ row: row[codigo], error: `El campo "${trasnformarCampo(campo)}" debe ser un número.` });
             continue;
           }
-          if (tipoEsperado === 'decimal' && tipoValor !== 'number' && !Number(valor.replace(",", "."))) {
+          if (tipoEsperado === 'decimal' && tipoValor !== 'number' && valorNumerico === null) {
+            console.log('Valor inválido para campo numérico:', valor);
+            console.log('Tipo del valor:', tipoValor);
+            console.log('Campo:', campo);
+            console.log('Valor numérico parseado:', valorNumerico);
             errores.push({ row: row[codigo], error: `El campo "${trasnformarCampo(campo)}" debe ser un número decimal.` });
             continue;
           }
@@ -284,7 +294,7 @@ const convertirCadenasANumeros = (valor: any) => {
 
   if(tipoValor === 'string'){
     const valorStr = valor.toString();
-    mappedValor = Number(valorStr.replace(',', '.'))
+    mappedValor = Number(valorStr.replace(',', '.')).toFixed(2);
 
     if(mappedValor === null || isNaN(mappedValor)) mappedValor = valor;
   }
