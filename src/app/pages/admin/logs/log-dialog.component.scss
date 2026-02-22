@@ -1,0 +1,101 @@
+.dialog-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin: 0;
+  padding-bottom: 0.5rem;
+  min-width: 0;
+}
+
+.dialog-title-icon {
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+  color: var(--color-secondary);
+  flex-shrink: 0;
+}
+
+.dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 1rem;
+  width: 100%;
+}
+
+.detalle-item {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  align-items: start;
+  min-width: 0;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.detalle-label {
+  font-weight: 600;
+  color: var(--color-primary);
+  font-size: 0.9rem;
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+.detalle-value {
+  color: var(--color-on-surface);
+  font-size: 0.9rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mensaje-completo {
+  white-space: normal;
+  line-height: 1.6;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+mat-chip {
+  font-size: 0.75rem;
+  min-height: 24px;
+  display: inline-flex;
+  max-width: 100%;
+  background-color: green;
+}
+
+.chip-green {
+  background-color: #E6F4EA !important;
+  color: white !important;
+}
+
+.chip-red {
+  background-color: #FDECEC !important;
+  color: white !important;
+}
+
+.dialog-actions {
+  padding: 1.5rem 0 0 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.btn-cerrar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
