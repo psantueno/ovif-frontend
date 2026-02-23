@@ -52,6 +52,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   ejercicioSeleccionado?: number;
   mesSeleccionado?: number;
   periodoSeleccionado: PeriodoSeleccionadoMunicipio | null = null;
+  esRectificacion = false;
 
   mesCerrado = false;
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
@@ -91,6 +92,8 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
       const ejercicioMes = params.get('ejercicioMes');
+      const rectificacion = params.get('rectificacion');
+      this.esRectificacion = rectificacion === 'true';
 
       if (!ejercicioMes) {
         this.mostrarAlerta(
@@ -124,42 +127,6 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
-      const periodoGuardado = this.municipioService.getPeriodoSeleccionado(this.municipioActual.municipio_id);
-      const coincidePeriodoGuardado =
-        periodoGuardado?.ejercicio === ejercicio && periodoGuardado?.mes === mes;
-      const tipoPauta = parsedValor?.tipo_pauta ?? (coincidePeriodoGuardado ? periodoGuardado?.tipo_pauta ?? null : null);
-      const pautaId = parsedValor?.pauta_id ?? (coincidePeriodoGuardado ? periodoGuardado?.pauta_id ?? null : null);
-      const base: PeriodoSeleccionadoMunicipio = coincidePeriodoGuardado && periodoGuardado
-        ? { ...periodoGuardado }
-        : {
-            ejercicio,
-            mes
-          };
-      const valor =
-        this.municipioService.buildPeriodoValor({
-          ...base,
-          ejercicio,
-          mes,
-          pauta_id: pautaId ?? undefined,
-          tipo_pauta: tipoPauta ?? undefined
-        }) ?? ejercicioMes;
-      const modulos =
-        (base.modulos && base.modulos.length ? base.modulos : null) ??
-        (tipoPauta ? this.ejerciciosService.mapTipoPautaToModulos(tipoPauta) : null);
-      const tipoPautaLabel =
-        base.tipo_pauta_label ??
-        (tipoPauta ? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) : null);
-
-      this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes, {
-        ...base,
-        pauta_id: pautaId ?? null,
-        tipo_pauta: tipoPauta ?? null,
-        tipo_pauta_label: tipoPautaLabel ?? null,
-        valor,
-        modulos
-      });
-
-      this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -225,7 +192,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       if (concepto.tieneError || concepto.importe_recaudacion === null) {
         return total;
       }
-      return total + (concepto.importe_recaudacion ?? 0);
+      return total + (Number(concepto.importe_recaudacion) ?? 0);
     }, 0);
   }
 
@@ -343,34 +310,73 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     const conceptosPayload: ConceptoRecaudacionUpsertPayload[] = this.previsualizacionMasiva.map((fila) => ({
       cod_concepto: fila.cod_concepto,
-      importe_recaudacion: fila.importe_recaudacion ?? null,
+      importe_recaudacion: Number(fila.importe_recaudacion) ?? null,
     }));
 
-    this.guardando = true;
-
-    this.municipioService
-      .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: conceptosPayload })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.guardando = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if(response.resumen.errores?.length){
-            const erroresConcatenados = response.resumen.errores.join('\n');
-            this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-          }else{
-            this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarConceptos();
-          }
-        },
-        error: (error) => {
-          console.error('Error al guardar las partidas de gastos:', error);
-          this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
-        },
+    if(this.esRectificacion){
+      Swal.fire({
+        title: '¿Confirma que desea guardar los importes de rectificación?',
+        text: 'No se volverá a habilitar un período de rectificación para este ejercicio y mes. Asegurate de que los datos ingresados sean correctos antes de confirmar.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'No, revisar',
+      }).then((result) => {
+        if(result.isConfirmed) {
+          this.guardando = true;
+          this.municipioService
+            .guardarConceptosRecaudacionRectificada({ municipioId, ejercicio, mes, conceptos: conceptosPayload })
+            .pipe(
+              take(1),
+              finalize(() => {
+                this.guardando = false;
+              })
+            )
+            .subscribe({
+              next: (response) => {
+                if(response.resumen.errores?.length){
+                  const erroresConcatenados = response.resumen.errores.join('\n');
+                  this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+                }else{
+                  this.mostrarToastExito('Los importes fueron guardados correctamente.');
+                }
+                this.actualizarConceptos();
+                this.cambiosPendientes = false;
+              },
+              error: (error) => {
+                console.error('Error al guardar los conceptos de recaudación:', error);
+                this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+              },
+            });
+        }
       });
+    } else{
+      this.guardando = true;
+      this.municipioService
+        .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: conceptosPayload })
+        .pipe(
+          take(1),
+          finalize(() => {
+            this.guardando = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            if(response.resumen.errores?.length){
+              const erroresConcatenados = response.resumen.errores.join('\n');
+              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+            }else{
+              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+            }
+            this.actualizarConceptos();
+            this.cambiosPendientes = false;
+          },
+          error: (error) => {
+            console.error('Error al guardar los conceptos de recaudación:', error);
+            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+          },
+        });
+    }
   }
 
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
@@ -399,7 +405,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       if (concepto.tieneError || concepto.importe_recaudacion === null) {
         return total;
       }
-      return total + (concepto.importe_recaudacion ?? 0);
+      return total + (Number(concepto.importe_recaudacion) ?? 0);
     }, 0);
   }
 
@@ -444,7 +450,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     const payload: ConceptoRecaudacionUpsertPayload[] = this.conceptosRecaudacion.filter(concepto => concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== 0).map((concepto) => ({
       cod_concepto: concepto.cod_concepto,
-      importe_recaudacion: concepto.importe_recaudacion ?? null,
+      importe_recaudacion: Number(concepto.importe_recaudacion) ?? null,
     }));
 
     if(payload.length === 0) {
@@ -452,30 +458,70 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.guardando = true;
-
-    this.municipioService
-      .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: payload })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.guardando = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if(response.resumen.errores?.length){
-            const erroresConcatenados = response.resumen.errores.join('\n');
-            this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-          }else{
-            this.mostrarToastExito('Los importes fueron guardados correctamente.');
-          }
-        },
-        error: (error) => {
-          console.error('Error al guardar los conceptos de recaudación:', error);
-          this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
-        },
+    if(this.esRectificacion){
+      Swal.fire({
+        title: '¿Confirma que desea guardar los importes de rectificación?',
+        text: 'No se volverá a habilitar un período de rectificación para este ejercicio y mes. Asegurate de que los datos ingresados sean correctos antes de confirmar.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'No, revisar',
+      }).then((result) => {
+        if(result.isConfirmed) {
+          this.guardando = true;
+          this.municipioService
+            .guardarConceptosRecaudacionRectificada({ municipioId, ejercicio, mes, conceptos: payload })
+            .pipe(
+              take(1),
+              finalize(() => {
+                this.guardando = false;
+              })
+            )
+            .subscribe({
+              next: (response) => {
+                if(response.resumen.errores?.length){
+                  const erroresConcatenados = response.resumen.errores.join('\n');
+                  this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+                }else{
+                  this.mostrarToastExito('Los importes fueron guardados correctamente.');
+                }
+                this.actualizarConceptos();
+                this.cambiosPendientes = false;
+              },
+              error: (error) => {
+                console.error('Error al guardar los conceptos de recaudación:', error);
+                this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+              },
+            });
+        }
       });
+    } else{
+      this.guardando = true;
+      this.municipioService
+        .guardarConceptosRecaudacion({ municipioId, ejercicio, mes, conceptos: payload })
+        .pipe(
+          take(1),
+          finalize(() => {
+            this.guardando = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            if(response.resumen.errores?.length){
+              const erroresConcatenados = response.resumen.errores.join('\n');
+              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+            }else{
+              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+            }
+            this.actualizarConceptos();
+            this.cambiosPendientes = false;
+          },
+          error: (error) => {
+            console.error('Error al guardar los conceptos de recaudación:', error);
+            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+          },
+        });
+    }
   }
 
   generarInforme(): void {
@@ -522,8 +568,37 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     this.descargandoInforme = true;
 
-    this.municipioService
-      .descargarInformeRecaudaciones({ municipioId, ejercicio, mes })
+    if(!this.esRectificacion){
+      this.municipioService
+        .descargarInformeRecaudaciones({ municipioId, ejercicio, mes })
+        .pipe(
+          take(1),
+          finalize(() => {
+            this.descargandoInforme = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            const blob = response.body;
+            if (!blob || blob.size === 0) {
+              this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');
+              return;
+            }
+
+            const contentDisposition = response.headers?.get('Content-Disposition') ?? null;
+            const filename = this.obtenerNombreArchivo(contentDisposition) ?? this.construirNombreArchivoInforme(ejercicio, mes);
+
+            this.descargarArchivo(blob, filename);
+            this.mostrarToastExito('Informe descargado correctamente.');
+          },
+          error: (error) => {
+            console.error('Error al generar el informe de recaudaciones:', error);
+            this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+          },
+        });
+    } else {
+      this.municipioService
+      .descargarInformeRecaudacionesRectificadas({ municipioId, ejercicio, mes })
       .pipe(
         take(1),
         finalize(() => {
@@ -549,6 +624,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
           this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
         },
       });
+    }
   }
 
   permitirSoloNumeros(event: KeyboardEvent): void {
@@ -627,7 +703,6 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
       periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
-      this.persistirPeriodoSeleccionado(periodo);
     }
 
     const ejercicio = periodo?.ejercicio ?? null;
@@ -642,37 +717,69 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-      this.municipioService
-      .obtenerConceptosRecaudacion({ municipioId, ejercicio, mes })
-      .pipe(take(1))
-      .subscribe({
-        next: (response) => {
-          if(response && Array.isArray(response)) {
-            this.conceptosRecaudacion = response.map((concepto) => ({
-              ...concepto,
-              importe_recaudacion: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
-              importeOriginal: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
-              importeTexto: concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== undefined
-                ? String(concepto.importe_recaudacion)
-                : '',
-              tieneError: false,
-            }));
-          }else{
-            this.conceptosRecaudacion = [];
-          }
-          this.cargandoConceptos = false;
+      if(!this.esRectificacion){
+        this.municipioService
+        .obtenerConceptosRecaudacion({ municipioId, ejercicio, mes })
+        .pipe(take(1))
+        .subscribe({
+          next: (response) => {
+            if(response && Array.isArray(response)) {
+              this.conceptosRecaudacion = response.map((concepto) => ({
+                ...concepto,
+                importe_recaudacion: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+                importeOriginal: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+                importeTexto: concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== undefined
+                  ? String(concepto.importe_recaudacion)
+                  : '',
+                tieneError: false,
+              }));
+            }else{
+              this.conceptosRecaudacion = [];
+            }
+            this.cargandoConceptos = false;
 
-          this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
-          this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
-        },
-        error: () => {
-          this.conceptosRecaudacion = [];
-          this.cargandoConceptos = false;
-          this.errorAlCargarConceptos = true;
-          this.cambiosPendientes = false;
-          this.mostrarError('No pudimos obtener las partidas de recaudaciones. Intentá nuevamente más tarde.');
-        },
-      });
+            this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
+          },
+          error: () => {
+            this.conceptosRecaudacion = [];
+            this.cargandoConceptos = false;
+            this.errorAlCargarConceptos = true;
+            this.cambiosPendientes = false;
+            this.mostrarError('No pudimos obtener las partidas de recaudaciones. Intentá nuevamente más tarde.');
+          },
+        });
+      } else {
+        this.municipioService
+        .obtenerConceptosRecaudacionRectificada({ municipioId, ejercicio, mes })
+        .pipe(take(1))
+        .subscribe({
+          next: (response) => {
+            if(response && Array.isArray(response)) {
+              this.conceptosRecaudacion = response.map((concepto) => ({
+                ...concepto,
+                importe_recaudacion: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+                importeOriginal: Number(concepto.importe_recaudacion) != 0 ? Number(concepto.importe_recaudacion) : null,
+                importeTexto: concepto.importe_recaudacion !== null && concepto.importe_recaudacion !== undefined
+                  ? String(concepto.importe_recaudacion)
+                  : '',
+                tieneError: false,
+              }));
+            }else{
+              this.conceptosRecaudacion = [];
+            }
+            this.cargandoConceptos = false;
+
+            this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
+          },
+          error: () => {
+            this.conceptosRecaudacion = [];
+            this.cargandoConceptos = false;
+            this.errorAlCargarConceptos = true;
+            this.cambiosPendientes = false;
+            this.mostrarError('No pudimos obtener las partidas de recaudaciones. Intentá nuevamente más tarde.');
+          },
+        });
+      }
   }
 
   simularEnvioMasivo(): void {
@@ -805,7 +912,11 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   private construirNombreArchivoInforme(ejercicio: number, mes: number): string {
     const slugMunicipio = this.normalizarTextoParaArchivo(this.municipioNombre || 'municipio');
     const mesStr = mes.toString().padStart(2, '0');
-    return `informe_recaudaciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`;
+    const nombre = this.esRectificacion
+      ? `informe_rectificacion_recaudaciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`
+      : `informe_recaudaciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`
+
+    return nombre;
   }
 
   private normalizarTextoParaArchivo(texto: string): string {
@@ -889,44 +1000,12 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
     return combinado;
   }
 
-  private persistirPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
-    const municipioId = this.municipioActual?.municipio_id;
-    if (!municipioId) {
-      return;
-    }
-
-    if (!periodo) {
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const valor =
-      periodo.valor ??
-      this.municipioService.buildPeriodoValor({
-        ejercicio: periodo.ejercicio,
-        mes: periodo.mes,
-        pauta_id: periodo.pauta_id ?? undefined,
-        tipo_pauta: periodo.tipo_pauta ?? undefined
-      });
-    let modulos = periodo.modulos ?? null;
-    if ((!modulos || modulos.length === 0) && periodo.tipo_pauta) {
-      modulos = this.ejerciciosService.mapTipoPautaToModulos(periodo.tipo_pauta);
-    }
-    const payload: PeriodoSeleccionadoMunicipio = {
-      ...periodo,
-      valor: valor ?? periodo.valor,
-      modulos: modulos && modulos.length ? modulos : null
-    };
-
-    this.municipioService.setPeriodoSeleccionado(municipioId, payload);
-  }
-
   private actualizarConceptos() {
     this.conceptosRecaudacion.forEach((concepto) => {
       const filaActual = this.previsualizacionMasiva.find(fila => fila.cod_concepto === concepto.cod_concepto);
       if(filaActual){
-        concepto.importe_recaudacion = filaActual.importe_recaudacion;
-        concepto.importeOriginal = filaActual.importe_recaudacion ?? null;
+        concepto.importe_recaudacion = Number(filaActual.importe_recaudacion) ?? null;
+        concepto.importeOriginal = Number(filaActual.importe_recaudacion) ?? null;
         concepto.importeTexto = filaActual.importe_recaudacion !== null && filaActual.importe_recaudacion !== undefined
           ? String(filaActual.importe_recaudacion)
           : '';

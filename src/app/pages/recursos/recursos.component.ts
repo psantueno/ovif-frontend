@@ -149,42 +149,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
-      const periodoGuardado = this.municipioService.getPeriodoSeleccionado(this.municipioActual.municipio_id);
-      const coincidePeriodoGuardado =
-        periodoGuardado?.ejercicio === ejercicio && periodoGuardado?.mes === mes;
-      const tipoPauta = parsedValor?.tipo_pauta ?? (coincidePeriodoGuardado ? periodoGuardado?.tipo_pauta ?? null : null);
-      const pautaId = parsedValor?.pauta_id ?? (coincidePeriodoGuardado ? periodoGuardado?.pauta_id ?? null : null);
-      const base: PeriodoSeleccionadoMunicipio = coincidePeriodoGuardado && periodoGuardado
-        ? { ...periodoGuardado }
-        : {
-            ejercicio,
-            mes
-          };
-      const valor =
-        this.municipioService.buildPeriodoValor({
-          ...base,
-          ejercicio,
-          mes,
-          pauta_id: pautaId ?? undefined,
-          tipo_pauta: tipoPauta ?? undefined
-        }) ?? ejercicioMes;
-      const modulos =
-        (base.modulos && base.modulos.length ? base.modulos : null) ??
-        (tipoPauta ? this.ejerciciosService.mapTipoPautaToModulos(tipoPauta) : null);
-      const tipoPautaLabel =
-        base.tipo_pauta_label ??
-        (tipoPauta ? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) : null);
-
-      this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes, {
-        ...base,
-        pauta_id: pautaId ?? null,
-        tipo_pauta: tipoPauta ?? null,
-        tipo_pauta_label: tipoPautaLabel ?? null,
-        valor,
-        modulos
-      });
-
-      this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -270,7 +234,31 @@ export class RecursosComponent implements OnInit, OnDestroy {
       if (partida.node.errorImporte || partida.node.importePercibido === null) {
         return total;
       }
-      return total + partida.node.importePercibido;
+      return total + Number(partida.node.importePercibido);
+    }, 0);
+  }
+
+  get totalContribuyentes(): number {
+    return this.partidasPlanas.reduce((total, partida) => {
+      if (!partida.node.carga || partida.node.soloImporte) {
+        return total;
+      }
+      if (partida.node.errorContribuyentes || partida.node.cantidadContribuyentes === null) {
+        return total;
+      }
+      return total + Number(partida.node.cantidadContribuyentes);
+    }, 0);
+  }
+
+  get totalPagaron(): number {
+    return this.previsualizacionMasiva.reduce((total, partida) => {
+      if (!partida.node.carga || partida.node.soloImporte) {
+        return total;
+      }
+      if (partida.node.errorPagaron || partida.node.cantidadPagaron === null) {
+        return total;
+      }
+      return total + Number(partida.node.cantidadPagaron);
     }, 0);
   }
 
@@ -316,7 +304,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
       }
 
       this.obtenerFilasCSV(archivo);
-      /*this.procesarContenidoCsv(contenido);*/
     };
 
     lector.onerror = () => {
@@ -441,9 +428,9 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
       const recursosPayload: PartidaRecursoUpsertPayload[] = loadablePartidas.map((fila) => ({
         partidas_recursos_codigo: fila.node.codigo,
-        recursos_importe_percibido: fila.node.importePercibido,
-        recursos_cantidad_contribuyentes: fila.node.soloImporte ? null : fila.node.cantidadContribuyentes,
-        recursos_cantidad_pagaron: fila.node.soloImporte ? null : fila.node.cantidadPagaron,
+        recursos_importe_percibido: Number(fila.node.importePercibido),
+        recursos_cantidad_contribuyentes: fila.node.soloImporte ? null : Number(fila.node.cantidadContribuyentes),
+        recursos_cantidad_pagaron: fila.node.soloImporte ? null : Number(fila.node.cantidadPagaron),
       }));
 
       this.guardando = true;
@@ -463,7 +450,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
               this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
             }else{
               this.mostrarToastExito('Los importes fueron guardados correctamente.');
-              this.actualizarBaseCambios();
               this.actualizarImportePartidas();
             }
           },
@@ -520,12 +506,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     const partidasPayload: PartidaRecursoUpsertPayload[] = this.partidasPlanas
       .map((partida) => partida.node)
-      .filter((node) => node.carga)
+      .filter((node) => node.carga && Number(node.importePercibido) !== null && Number(node.importePercibido) !== 0)
       .map((node) => ({
         partidas_recursos_codigo: node.codigo,
-        recursos_importe_percibido: node.importePercibido,
-        recursos_cantidad_contribuyentes: node.soloImporte ? null : node.cantidadContribuyentes,
-        recursos_cantidad_pagaron: node.soloImporte ? null : node.cantidadPagaron,
+        recursos_importe_percibido: Number(node.importePercibido),
+        recursos_cantidad_contribuyentes: node.soloImporte ? null : Number(node.cantidadContribuyentes),
+        recursos_cantidad_pagaron: node.soloImporte ? null : (node.cantidadPagaron),
       }));
 
     if (!partidasPayload.length) {
@@ -745,7 +731,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
       periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
-      this.persistirPeriodoSeleccionado(periodo);
     }
 
     const ejercicio = periodo?.ejercicio ?? null;
@@ -772,7 +757,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
           this.cargandoPartidas = false;
 
           this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
-          this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
         },
         error: () => {
           this.partidas = [];
@@ -802,8 +786,8 @@ export class RecursosComponent implements OnInit, OnDestroy {
       soloImporte,
       importePercibido,
       importePercibidoOriginal: importePercibido,
-      importePercibidoTexto: importePercibido !== null ? String(importePercibido) : '',
-      importePercibidoOriginalTexto: importePercibido !== null ? String(importePercibido) : '',
+      importePercibidoTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
+      importePercibidoOriginalTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
       cantidadContribuyentes: soloImporte ? null : cantidadContribuyentes,
       cantidadContribuyentesOriginal: soloImporte ? null : cantidadContribuyentes,
       cantidadContribuyentesTexto: soloImporte
@@ -1082,39 +1066,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
     return combinado;
   }
 
-  private persistirPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
-    const municipioId = this.municipioActual?.municipio_id;
-    if (!municipioId) {
-      return;
-    }
-
-    if (!periodo) {
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const valor =
-      periodo.valor ??
-      this.municipioService.buildPeriodoValor({
-        ejercicio: periodo.ejercicio,
-        mes: periodo.mes,
-        pauta_id: periodo.pauta_id ?? undefined,
-        tipo_pauta: periodo.tipo_pauta ?? undefined
-      });
-    let modulos = periodo.modulos ?? null;
-    if ((!modulos || modulos.length === 0) && periodo.tipo_pauta) {
-      modulos = this.ejerciciosService.mapTipoPautaToModulos(periodo.tipo_pauta);
-    }
-
-    const payload: PeriodoSeleccionadoMunicipio = {
-      ...periodo,
-      valor: valor ?? periodo.valor,
-      modulos: modulos && modulos.length ? modulos : null
-    };
-
-    this.municipioService.setPeriodoSeleccionado(municipioId, payload);
-  }
-
   private flattenPartidas(
     partidas: PartidaNode[],
     nivel = 0,
@@ -1201,14 +1152,14 @@ export class RecursosComponent implements OnInit, OnDestroy {
       }
       const partidaOriginal = this.partidasPlanas.find(p => p.node.codigo === node.codigo);
       if (partidaOriginal) {
-        partidaOriginal.node.importePercibido = node.importePercibido;
-        partidaOriginal.node.importePercibidoTexto = node.importePercibidoTexto;
+        partidaOriginal.node.importePercibido = Number(node.importePercibido) || null;
+        partidaOriginal.node.importePercibidoTexto = String(node.importePercibido) || '';
         partidaOriginal.node.errorImporte = node.errorImporte;
-        partidaOriginal.node.cantidadContribuyentes = node.cantidadContribuyentes;
-        partidaOriginal.node.cantidadContribuyentesTexto = node.cantidadContribuyentesTexto;
+        partidaOriginal.node.cantidadContribuyentes = Number(node.cantidadContribuyentes) || null;
+        partidaOriginal.node.cantidadContribuyentesTexto = String(node.cantidadContribuyentes) || '';
         partidaOriginal.node.errorContribuyentes = node.errorContribuyentes;
-        partidaOriginal.node.cantidadPagaron = node.cantidadPagaron;
-        partidaOriginal.node.cantidadPagaronTexto = node.cantidadPagaronTexto;
+        partidaOriginal.node.cantidadPagaron = Number(node.cantidadPagaron) || null;
+        partidaOriginal.node.cantidadPagaronTexto = String(node.cantidadPagaron) || '';
         partidaOriginal.node.errorPagaron = node.errorPagaron;
       }
     })
@@ -1226,7 +1177,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
       if (partida.node.errorImporte || partida.node.importePercibido === null) {
         return total;
       }
-      return total + partida.node.importePercibido;
+      return total + Number(partida.node.importePercibido);
     }, 0);
   }
 

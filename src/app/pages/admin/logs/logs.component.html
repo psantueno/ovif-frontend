@@ -1,0 +1,211 @@
+<div class="logs-container">
+
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="helper-card">
+    <div class="helper-content">
+      <h3>
+        <mat-icon class="helper-icon" color="primary">info</mat-icon>
+        Listado de logs
+      </h3>
+      <ol>
+        <li>Consultá la lista completa paginada o utiliza algunos de los filtros disponibles</li>
+        <li>Los Resumenes Generales muestran el detalle diario de modulos cerrados y errores obtenidos totales</li>
+        <li>Los Resumenes por Municipio muestran el modulo, ejercicio y mes cerrado para el municipio correspondiente</li>
+      </ol>
+    </div>
+  </mat-card>
+
+  <!-- 🔍 Filtros -->
+  <mat-card class="filtros-card">
+    <form [formGroup]="filtroForm" (ngSubmit)="cargarLogs()" class="filtro-form">
+
+      <!-- Ejercicio -->
+      <mat-form-field appearance="outline">
+        <mat-label>Ejercicio</mat-label>
+        <mat-select formControlName="ejercicio">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let e of ejercicios" [value]="e.ejercicio">
+            {{ e.ejercicio }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Mes -->
+      <mat-form-field appearance="outline">
+        <mat-label>Mes</mat-label>
+        <mat-select formControlName="mes">
+          <mat-option value="">Todos</mat-option>
+          <mat-option value="1">Enero</mat-option>
+          <mat-option value="2">Febrero</mat-option>
+          <mat-option value="3">Marzo</mat-option>
+          <mat-option value="4">Abril</mat-option>
+          <mat-option value="5">Mayo</mat-option>
+          <mat-option value="6">Junio</mat-option>
+          <mat-option value="7">Julio</mat-option>
+          <mat-option value="8">Agosto</mat-option>
+          <mat-option value="9">Septiembre</mat-option>
+          <mat-option value="10">Octubre</mat-option>
+          <mat-option value="11">Noviembre</mat-option>
+          <mat-option value="12">Diciembre</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Municipio -->
+      <mat-form-field appearance="outline">
+        <mat-label>Municipio</mat-label>
+        <mat-select formControlName="municipio_id">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
+            {{ m.municipio_nombre }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Estado -->
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let e of estados" [value]="e">
+            {{ e }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Fecha Desde -->
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha Desde</mat-label>
+        <input
+          matInput
+          [matDatepicker]="pickerDesde"
+          formControlName="desde"
+          [max]="obtenerFechaMaxima(filtroForm.get('hasta')?.value)"
+          readonly="true"
+        >
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Fecha Hasta -->
+      <mat-form-field appearance="outline">
+        <mat-label>Fecha Hasta</mat-label>
+        <input
+          matInput
+          [matDatepicker]="pickerHasta"
+          formControlName="hasta"
+          [min]="obtenerFechaMinima(filtroForm.get('desde')?.value)"
+          readonly="true"
+        >
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+
+      <!-- Botón -->
+      <button mat-raised-button type="submit" class="btn-buscar">
+        <mat-icon>search</mat-icon> Filtrar
+      </button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="limpiarFiltros()">
+        <mat-icon>clear</mat-icon> Limpiar
+      </button>
+    </form>
+  </mat-card>
+
+  <!-- 📋 Resultados -->
+  <ng-container *ngIf="dataSource.data.length > 0; else sinResultados">
+    <mat-card class="logs-card">
+      <mat-card-header>
+        <mat-icon class="header-icon">description</mat-icon>
+        <mat-card-title>Logs del Sistema</mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <table mat-table [dataSource]="dataSource" class="logs-table">
+
+          <!-- ID Log -->
+          <ng-container matColumnDef="id_log">
+            <th mat-header-cell *matHeaderCellDef> ID </th>
+            <td mat-cell *matCellDef="let log"> {{ log.id_log }} </td>
+          </ng-container>
+
+          <!-- Nombre Tarea -->
+          <ng-container matColumnDef="nombre_tarea">
+            <th mat-header-cell *matHeaderCellDef> Tarea </th>
+            <td mat-cell *matCellDef="let log"> {{ log.nombre_tarea }} </td>
+          </ng-container>
+
+          <!-- Ejercicio -->
+          <ng-container matColumnDef="ejercicio">
+            <th mat-header-cell *matHeaderCellDef> Ejercicio </th>
+            <td mat-cell *matCellDef="let log"> {{ log.ejercicio }} </td>
+          </ng-container>
+
+          <!-- Mes -->
+          <ng-container matColumnDef="mes">
+            <th mat-header-cell *matHeaderCellDef> Mes </th>
+            <td mat-cell *matCellDef="let log"> {{ getMesNombre(log.mes) }} </td>
+          </ng-container>
+
+          <!-- Municipio -->
+          <ng-container matColumnDef="municipio_id">
+            <th mat-header-cell *matHeaderCellDef> Municipio </th>
+            <td mat-cell *matCellDef="let log"> {{ getMunicipioNombre(log.municipio_id) }} </td>
+          </ng-container>
+
+          <!-- Estado -->
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef> Estado </th>
+            <td mat-cell *matCellDef="let log">
+              <mat-chip [color]="getEstadoColor(log.estado)" [classList]="log.estado === 'OK' ? ['chip-green'] : ['chip-red']">
+                {{ log.estado }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Mensaje -->
+          <ng-container matColumnDef="mensaje">
+            <th mat-header-cell *matHeaderCellDef> Mensaje </th>
+            <td mat-cell *matCellDef="let log" class="mensaje-cell">
+              <span [matTooltip]="log.mensaje">{{ log.mensaje | slice:0:50 }}{{ log.mensaje.length > 50 ? '...' : '' }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Fecha -->
+          <ng-container matColumnDef="fecha">
+            <th mat-header-cell *matHeaderCellDef> Fecha </th>
+            <td mat-cell *matCellDef="let log"> {{ log.fecha | date:'dd/MM/yyyy HH:mm' }} </td>
+          </ng-container>
+
+          <!-- Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef> Acciones </th>
+            <td mat-cell *matCellDef="let log">
+              <button mat-icon-button color="primary" matTooltip="Ver Detalle" (click)="verDetalle(log)">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <!-- Filas -->
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+        <mat-paginator [length]="totalRegistros" [pageSize]="limite" [pageSizeOptions]="[5, 10, 20]"
+          (page)="cambiarPagina($event)">
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </ng-container>
+
+  <!-- ❌ Sin resultados -->
+  <ng-template #sinResultados>
+    <mat-card class="logs-card sin-resultados-card">
+      <mat-card-content>
+        <div class="sin-resultados">
+          <mat-icon>search_off</mat-icon>
+          <p>No se encontraron logs con los filtros aplicados</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </ng-template>
+</div>

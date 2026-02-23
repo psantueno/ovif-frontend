@@ -1,0 +1,56 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">description</mat-icon>
+  Detalle del Log
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="detalle-item">
+    <span class="detalle-label">ID</span>
+    <span class="detalle-value">{{ data.id_log }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Tarea</span>
+    <span class="detalle-value">{{ data.nombre_tarea }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Ejercicio</span>
+    <span class="detalle-value">{{ data.ejercicio }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Mes</span>
+    <span class="detalle-value">{{ getMesNombre(data.mes) }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Municipio</span>
+    <span class="detalle-value">{{ data.municipio_nombre }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Estado</span>
+    <span class="detalle-value">
+      <mat-chip [color]="getEstadoColor(data.estado)" [classList]="data.estado === 'OK' ? ['chip-green'] : ['chip-red']">
+        {{ data.estado }}
+      </mat-chip>
+    </span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Mensaje</span>
+    <span class="detalle-value mensaje-completo">{{ data.mensaje }}</span>
+  </div>
+
+  <div class="detalle-item">
+    <span class="detalle-label">Fecha</span>
+    <span class="detalle-value">{{ data.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</span>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cerrar" mat-dialog-close>
+    <mat-icon>close</mat-icon> Cerrar
+  </button>
+</mat-dialog-actions>

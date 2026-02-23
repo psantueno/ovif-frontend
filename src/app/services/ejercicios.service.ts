@@ -74,6 +74,10 @@ export interface InformeDownloadResponse {
   downloadUrl: string;
 }
 
+export interface EjerciciosSelectOption {
+  ejercicio: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EjerciciosService {
   private readonly http = inject(HttpClient);
@@ -210,6 +214,15 @@ export class EjerciciosService {
       responseType: 'blob',
       observe: 'response',
     });
+  }
+
+  listarCatalogoEjercicios(): Observable<EjerciciosSelectOption[]> {
+    return this.http.get<any>(`${this.baseUrl}/select`).pipe(
+      map((response) => {
+        const ejercicios = this.unwrapResponseArray(response).map((item) => Number(item));
+        return ejercicios.map((ejercicio) => ({ ejercicio }));
+      })
+    );
   }
 
   private normalizeEjercicio(data: any): EjercicioMes {

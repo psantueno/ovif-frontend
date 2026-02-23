@@ -1,9 +1,9 @@
 <div class="recaudaciones-page">
   <div class="page-header">
-    <app-back-button text="Volver" [link]="['/panel-carga-mensual']"></app-back-button>
+    <app-back-button text="Volver" [link]="[esRectificacion ? '/panel-carga-rectificaciones' : '/panel-carga-mensual']"></app-back-button>
 
     <div class="context">
-      <h1>Carga de recaudaciones</h1>
+      <h1>{{ esRectificacion ? 'Carga de rectificacion de recaudaciones' : 'Carga de recaudaciones' }}</h1>
       <p class="municipio">Municipio: <strong>{{ municipioNombre }}</strong></p>
       <p class="ejercicio" *ngIf="mesActualLabel">{{ mesActualLabel }}</p>
     </div>
@@ -275,7 +275,7 @@
             <tr>
               <th>Codigo</th>
               <th>Concepto</th>
-              <th>Importe Recaudación</th>
+              <th [style.textAlign]="'center'">Importe Recaudación</th>
               <th>Estado</th>
             </tr>
           </thead>

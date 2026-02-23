@@ -1,0 +1,333 @@
+/* ===========================
+📦 CONTENEDOR PRINCIPAL
+=========================== */
+.logs-container {
+  padding: 2rem;
+  background-color: var(--color-neutral);
+  min-height: calc(100vh - 120px);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ===========================
+🔍 FILTROS
+=========================== */
+.filtros-card {
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 1.5rem;
+  background: var(--color-surface);
+  padding: 1.5rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  .filtro-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr auto auto;
+    gap: 1rem;
+    align-items: flex-end;
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    .btn-buscar {
+      align-self: baseline;
+      padding: 1.75rem 1.5rem;
+      background-color: #2b3e4c;
+      color: #ffffff;
+      font-weight: 600;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+      transition: background-color 0.25s ease, color 0.25s ease;
+      border: none;
+
+      &:hover {
+        background-color: var(--color-secondary);
+        color: var(--color-on-secondary);
+      }
+
+      mat-icon {
+        font-size: 20px;
+      }
+    }
+  }
+}
+
+/* ===========================
+📋 TARJETA DE LOGS / TABLA
+=========================== */
+.logs-card {
+  width: 100%;
+  max-width: 1200px;
+  background: var(--color-surface);
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  .header-icon {
+    font-size: 30px;
+    min-width: 30px;
+    height: 30px;
+    color: var(--color-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  mat-card-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Tabla */
+.logs-table {
+  width: 100%;
+  margin-top: 1rem;
+
+  th {
+    font-weight: 600;
+    color: var(--color-primary);
+    background-color: var(--color-surface-variant);
+    padding: 12px 8px;
+  }
+
+  td {
+    padding: 12px 8px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  }
+
+  .mensaje-cell {
+    max-width: 200px;
+
+    span {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  mat-chip {
+    font-size: 0.75rem;
+    min-height: 24px;
+  }
+
+  .chip-green {
+    background-color: #E6F4EA !important;
+    color: white !important;
+  }
+
+  .chip-red {
+    background-color: #FDECEC !important;
+    color: white !important;
+  }
+
+  .acciones {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+}
+
+/* Paginador */
+mat-paginator {
+  margin-top: 1rem;
+  background-color: transparent;
+}
+
+/* ===========================
+❌ SIN RESULTADOS
+=========================== */
+.sin-resultados-card {
+  text-align: center;
+  padding: 3rem 2rem;
+
+  .sin-resultados {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+
+    mat-icon {
+      font-size: 4rem;
+      width: 4rem;
+      height: 4rem;
+      color: var(--color-outline);
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: var(--color-on-surface-variant);
+      margin: 0;
+    }
+  }
+}
+
+.helper-card {
+  padding: 1.5rem;
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+
+  .helper-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: #4a5568;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .helper-icon {
+      font-size: 22px;
+    }
+  }
+}
+
+/* ===========================
+📱 RESPONSIVE
+=========================== */
+@media (max-width: 768px) {
+  .logs-container {
+    padding: 1rem;
+  }
+
+  .filtros-card {
+    padding: 1rem;
+
+    .filtro-form {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+
+      .btn-buscar {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  .logs-card {
+    padding: 0.5rem;
+  }
+
+  .logs-table {
+    font-size: 0.875rem;
+
+    th, td {
+      padding: 8px 4px;
+    }
+
+    .mensaje-cell {
+      max-width: 150px;
+    }
+  }
+}
+
+/* ===========================
+🎭 MODAL DIALOG STYLES
+=========================== */
+::ng-deep .log-detail-dialog {
+  .mdc-dialog__surface {
+    border-radius: 12px;
+    max-width: 650px;
+    width: auto;
+  }
+
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+  }
+
+  .mdc-dialog__title {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    margin: 0;
+  }
+
+  .mat-mdc-dialog-content {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 3px;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.3);
+      }
+    }
+  }
+
+  .mat-mdc-dialog-actions {
+    padding: 1.5rem !important;
+    margin: 0 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* ===========================
+🗂️ COMPONENTE LOG DETAIL
+=========================== */
+.row-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: 90%;
+  max-width: 600px;
+  border-radius: 12px;
+  box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2),
+              0 24px 38px 3px rgba(0, 0, 0, 0.14),
+              0 9px 46px 8px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(4px);
+
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+}

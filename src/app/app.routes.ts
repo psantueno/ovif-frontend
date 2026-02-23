@@ -8,6 +8,7 @@ import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard
 import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { PanelCargaRectificacionesComponent } from './pages/rectificaciones/panel-carga-rectificaciones.component';
 
 // Admin
 import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
@@ -23,6 +24,7 @@ import { ResetPasswordComponent } from './pages/reset-password/reset-password.co
 import { SinAccesoComponent } from './pages/sin-acceso/sin-acceso.component';
 import { ConveniosComponent } from './pages/admin/convenios/convenios.component';
 import { PautasComponent } from './pages/admin/pautas/pautas.component';
+import { LogsComponent } from './pages/admin/logs/logs.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -71,6 +73,10 @@ export const routes: Routes = [
             (m) => m.HistoricoEjerciciosCerradosComponent
           )
       },
+      {
+        path: 'panel-carga-rectificaciones',
+        component: PanelCargaRectificacionesComponent
+      },
       { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
       { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
       { path: 'admin/municipios', component: MunicipiosComponent, canActivate: [AdminGuard] },
@@ -79,7 +85,8 @@ export const routes: Routes = [
       { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent, canActivate: [AdminGuard] },
       { path: 'admin/roles', component: RolesComponent, canActivate: [AdminGuard] },
       { path: 'admin/convenios', component: ConveniosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] }
+      { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] },
+      { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] }
     ]
   },
   { path: '**', redirectTo: '' }

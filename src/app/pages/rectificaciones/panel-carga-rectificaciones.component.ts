@@ -23,13 +23,13 @@ interface EjercicioPautaOption {
 }
 
 @Component({
-  selector: 'app-panel-carga-mensual',
+  selector: 'app-panel-carga-rectificaciones',
   standalone: true,
   imports: [CommonModule, FormsModule, MatIconModule, MatButtonModule, MatCardModule, BackButtonComponent],
-  templateUrl: './panel-carga-mensual.component.html',
-  styleUrls: ['./panel-carga-mensual.component.scss']
+  templateUrl: './panel-carga-rectificaciones.component.html',
+  styleUrls: ['./panel-carga-rectificaciones.component.scss']
 })
-export class PanelCargaMensualComponent implements OnInit, OnDestroy {
+export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
   municipioSeleccionado: any = null;
   ejercicioMes: string = '';
   ejerciciosMeses: EjercicioPautaOption[] = [];
@@ -68,19 +68,6 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
       }
 
       this.sinMunicipioAlertado = false;
-      this.periodoPersistido = this.municipioService.getPeriodoSeleccionado(municipio.municipio_id);
-      if (this.periodoPersistido) {
-        this.periodoActivo = { ...this.periodoPersistido };
-        this.modulosHabilitados = this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta);
-        this.ejercicioMes =
-          this.periodoPersistido.valor ??
-          this.municipioService.buildPeriodoValor(this.periodoPersistido) ??
-          '';
-      } else {
-        this.periodoActivo = null;
-        this.modulosHabilitados = [];
-        this.ejercicioMes = '';
-      }
       this.cargarEjerciciosDisponibles(municipio.municipio_id);
     });
   }
@@ -93,7 +80,7 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
       periodoGuardado?.valor ?? this.municipioService.buildPeriodoValor(periodoGuardado) ?? '';
 
     this.municipioService
-      .getEjerciciosDisponibles(municipioId)
+      .getEjerciciosRectificablesDisponibles(municipioId)
       .pipe(take(1))
       .subscribe({
         next: (ejercicios) => {
@@ -105,7 +92,6 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
               this.municipioService.buildPeriodoValor(periodoGuardado) ??
               '';
             const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valorPersistido);
-
             if (seleccionado) {
               this.ejercicioMes = valorPersistido;
               this.periodoPersistido = { ...seleccionado.metadata };
@@ -122,6 +108,13 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
                 this.municipioService.clearPeriodoSeleccionado(this.municipioSeleccionado.municipio_id);
               }
             }
+          } else if(this.ejerciciosMeses.length === 1) {
+            const unico = this.ejerciciosMeses[0];
+            this.ejercicioMes = unico.valor;
+            this.periodoPersistido = { ...unico.metadata };
+            this.periodoActivo = { ...unico.metadata };
+            this.modulosHabilitados = unico.metadata.modulos ?? this.obtenerModulosPermitidos(unico.metadata.tipo_pauta);
+            this.persistirPeriodoActual();
           } else {
             this.ejercicioMes = '';
             this.periodoPersistido = null;
@@ -173,38 +166,6 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
     return meses[Math.max(0, Math.min(mes - 1, meses.length - 1))];
   }
 
-  onPeriodoChange(valor: string): void {
-    this.ejercicioMes = valor;
-
-    const municipioId = this.municipioSeleccionado?.municipio_id;
-    if (!municipioId) {
-      return;
-    }
-
-    if (!valor) {
-      this.periodoPersistido = null;
-      this.periodoActivo = null;
-      this.modulosHabilitados = [];
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valor);
-    if (!seleccionado) {
-      this.periodoPersistido = null;
-      this.periodoActivo = null;
-      this.modulosHabilitados = [];
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const periodo = { ...seleccionado.metadata };
-    this.periodoPersistido = periodo;
-    this.periodoActivo = periodo;
-    this.modulosHabilitados = periodo.modulos ?? this.obtenerModulosPermitidos(periodo.tipo_pauta);
-    this.persistirPeriodoActual();
-  }
-
   ngOnDestroy(): void {
     this.municipioSub?.unsubscribe();
   }
@@ -227,12 +188,13 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
       valor: valor ?? undefined,
       modulos: this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta)
     };
+    console.log("Periodo a persistir:", periodo);
 
     this.periodoPersistido = periodo;
     this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
   }
 
-  irA(modulo: string) {
+  irA(modulo: string, rectificable: boolean = false): void {
     this.persistirPeriodoActual();
 
     if (!this.ejercicioMes || !this.periodoActivo) {
@@ -260,7 +222,7 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
     const valor = this.periodoActivo.valor ?? this.ejercicioMes;
     // 🚀 Lógica de navegación según módulo
     this.router.navigate([`/${modulo}`], {
-      queryParams: { ejercicioMes: valor }
+      queryParams: { ejercicioMes: valor, rectificacion: rectificable }
     });
   }
 

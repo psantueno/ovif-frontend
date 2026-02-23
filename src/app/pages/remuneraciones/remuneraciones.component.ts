@@ -52,6 +52,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   ejercicioSeleccionado?: number;
   mesSeleccionado?: number;
   periodoSeleccionado: PeriodoSeleccionadoMunicipio | null = null;
+  esRectificacion: boolean = false;
 
   mesCerrado = false;
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
@@ -86,6 +87,8 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
     this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
       const ejercicioMes = params.get('ejercicioMes');
+      const rectificacion = params.get('rectificacion');
+      this.esRectificacion = rectificacion === 'true';
 
       if (!ejercicioMes) {
         this.mostrarAlerta(
@@ -119,42 +122,6 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
-      const periodoGuardado = this.municipioService.getPeriodoSeleccionado(this.municipioActual.municipio_id);
-      const coincidePeriodoGuardado =
-        periodoGuardado?.ejercicio === ejercicio && periodoGuardado?.mes === mes;
-      const tipoPauta = parsedValor?.tipo_pauta ?? (coincidePeriodoGuardado ? periodoGuardado?.tipo_pauta ?? null : null);
-      const pautaId = parsedValor?.pauta_id ?? (coincidePeriodoGuardado ? periodoGuardado?.pauta_id ?? null : null);
-      const base: PeriodoSeleccionadoMunicipio = coincidePeriodoGuardado && periodoGuardado
-        ? { ...periodoGuardado }
-        : {
-            ejercicio,
-            mes
-          };
-      const valor =
-        this.municipioService.buildPeriodoValor({
-          ...base,
-          ejercicio,
-          mes,
-          pauta_id: pautaId ?? undefined,
-          tipo_pauta: tipoPauta ?? undefined
-        }) ?? ejercicioMes;
-      const modulos =
-        (base.modulos && base.modulos.length ? base.modulos : null) ??
-        (tipoPauta ? this.ejerciciosService.mapTipoPautaToModulos(tipoPauta) : null);
-      const tipoPautaLabel =
-        base.tipo_pauta_label ??
-        (tipoPauta ? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) : null);
-
-      this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes, {
-        ...base,
-        pauta_id: pautaId ?? null,
-        tipo_pauta: tipoPauta ?? null,
-        tipo_pauta_label: tipoPautaLabel ?? null,
-        valor,
-        modulos
-      });
-
-      this.persistirPeriodoSeleccionado(this.periodoSeleccionado);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -277,30 +244,66 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       return this.armarPayload(fila);
     });
 
-    this.guardando = true;
-
-    this.municipioService
-      .guardarRemuneraciones({ municipioId, ejercicio, mes, remuneraciones: remuneracionesPayload })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.guardando = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if(response.resumen.errores?.length){
-            const erroresConcatenados = response.resumen.errores.join('\n');
-            this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-          }else{
-            this.mostrarToastExito('Los importes fueron guardados correctamente.');
-          }
-        },
-        error: (error) => {
-          console.error('Error al guardar las remuneraciones:', error);
-          this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
-        },
+    if(this.esRectificacion){
+      Swal.fire({
+        title: '¿Confirma que desea guardar los importes de rectificación?',
+        text: 'No se volverá a habilitar un período de rectificación para este ejercicio y mes. Asegurate de que los datos ingresados sean correctos antes de confirmar.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'No, revisar',
+      }).then((result) => {
+        if(result.isConfirmed) {
+          this.guardando = true;
+          this.municipioService
+          .guardarRemuneracionesRectificadas({ municipioId, ejercicio, mes, remuneraciones: remuneracionesPayload })
+          .pipe(
+            take(1),
+            finalize(() => {
+              this.guardando = false;
+            })
+          )
+          .subscribe({
+            next: (response) => {
+              if(response.resumen.errores?.length){
+                const erroresConcatenados = response.resumen.errores.join('\n');
+                this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+              }else{
+                this.mostrarToastExito('Los importes fueron guardados correctamente.');
+              }
+            },
+            error: (error) => {
+              console.error('Error al guardar las remuneraciones:', error);
+              this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+            },
+          });
+        }
       });
+    } else{
+      this.guardando = true;
+      this.municipioService
+        .guardarRemuneraciones({ municipioId, ejercicio, mes, remuneraciones: remuneracionesPayload })
+        .pipe(
+          take(1),
+          finalize(() => {
+            this.guardando = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            if(response.resumen.errores?.length){
+              const erroresConcatenados = response.resumen.errores.join('\n');
+              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+            }else{
+              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+            }
+          },
+          error: (error) => {
+            console.error('Error al guardar las remuneraciones:', error);
+            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+          },
+        });
+    }
   }
 
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
@@ -364,33 +367,63 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
     this.descargandoInforme = true;
 
-    this.municipioService
-      .descargarInformeRemuneraciones({ municipioId, ejercicio, mes })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.descargandoInforme = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          const blob = response.body;
-          if (!blob || blob.size === 0) {
-            this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');
-            return;
-          }
+    if(!this.esRectificacion){
+      this.municipioService
+        .descargarInformeRemuneraciones({ municipioId, ejercicio, mes })
+        .pipe(
+          take(1),
+          finalize(() => {
+            this.descargandoInforme = false;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            const blob = response.body;
+            if (!blob || blob.size === 0) {
+              this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');
+              return;
+            }
 
-          const contentDisposition = response.headers?.get('Content-Disposition') ?? null;
-          const filename = this.obtenerNombreArchivo(contentDisposition) ?? this.construirNombreArchivoInforme(ejercicio, mes);
+            const contentDisposition = response.headers?.get('Content-Disposition') ?? null;
+            const filename = this.obtenerNombreArchivo(contentDisposition) ?? this.construirNombreArchivoInforme(ejercicio, mes);
 
-          this.descargarArchivo(blob, filename);
-          this.mostrarToastExito('Informe descargado correctamente.');
-        },
-        error: (error) => {
-          console.error('Error al generar el informe de recaudaciones:', error);
-          this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
-        },
-      });
+            this.descargarArchivo(blob, filename);
+            this.mostrarToastExito('Informe descargado correctamente.');
+          },
+          error: (error) => {
+            console.error('Error al generar el informe de recaudaciones:', error);
+            this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+          },
+        });
+      } else {
+        this.municipioService
+          .descargarInformeRemuneracionesRectificadas({ municipioId, ejercicio, mes })
+          .pipe(
+            take(1),
+            finalize(() => {
+              this.descargandoInforme = false;
+            })
+          )
+          .subscribe({
+            next: (response) => {
+              const blob = response.body;
+              if (!blob || blob.size === 0) {
+                this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');
+                return;
+              }
+
+              const contentDisposition = response.headers?.get('Content-Disposition') ?? null;
+              const filename = this.obtenerNombreArchivo(contentDisposition) ?? this.construirNombreArchivoInforme(ejercicio, mes);
+
+              this.descargarArchivo(blob, filename);
+              this.mostrarToastExito('Informe descargado correctamente.');
+            },
+            error: (error) => {
+              console.error('Error al generar el informe de recaudaciones:', error);
+              this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+            },
+          });
+      }
   }
 
   obtenerCantidadFilasPorRegimen(regimen: string): number {
@@ -511,7 +544,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   private construirNombreArchivoInforme(ejercicio: number, mes: number): string {
     const slugMunicipio = this.normalizarTextoParaArchivo(this.municipioNombre || 'municipio');
     const mesStr = mes.toString().padStart(2, '0');
-    return `informe_remuneraciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`;
+
+    const nombre = this.esRectificacion
+      ? `informe_rectificacion_remuneraciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`
+      : `informe_remuneraciones_${slugMunicipio}_${ejercicio}_${mesStr}.pdf`
+    return nombre;
   }
 
   private normalizarTextoParaArchivo(texto: string): string {
@@ -557,98 +594,26 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     return modulos.includes('recaudaciones');
   }
 
-  private sincronizarPeriodoSeleccionado(
-    ejercicio: number,
-    mes: number,
-    extra?: Partial<PeriodoSeleccionadoMunicipio>
-  ): PeriodoSeleccionadoMunicipio {
-    const previo = this.periodoSeleccionado ?? {};
-    const combinado: PeriodoSeleccionadoMunicipio = {
-      ...previo,
-      ...extra,
-      ejercicio,
-      mes
-    };
-
-    const tipo = combinado.tipo_pauta ?? null;
-    if (tipo) {
-      let modulos = combinado.modulos ?? null;
-      if (!modulos || modulos.length === 0) {
-        modulos = this.ejerciciosService.mapTipoPautaToModulos(tipo);
-      }
-      combinado.modulos = modulos && modulos.length ? modulos : null;
-      combinado.tipo_pauta_label =
-        combinado.tipo_pauta_label ??
-        this.ejerciciosService.obtenerEtiquetaTipoPauta(tipo);
-    }
-
-    const valorPreferido = extra?.valor ?? combinado.valor;
-    combinado.valor =
-      valorPreferido ??
-      this.municipioService.buildPeriodoValor({
-        ejercicio,
-        mes,
-        pauta_id: combinado.pauta_id ?? undefined,
-        tipo_pauta: tipo ?? undefined
-      }) ??
-      `${ejercicio}_${mes}`;
-
-    this.periodoSeleccionado = combinado;
-    return combinado;
-  }
-
-  private persistirPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
-    const municipioId = this.municipioActual?.municipio_id;
-    if (!municipioId) {
-      return;
-    }
-
-    if (!periodo) {
-      this.municipioService.clearPeriodoSeleccionado(municipioId);
-      return;
-    }
-
-    const valor =
-      periodo.valor ??
-      this.municipioService.buildPeriodoValor({
-        ejercicio: periodo.ejercicio,
-        mes: periodo.mes,
-        pauta_id: periodo.pauta_id ?? undefined,
-        tipo_pauta: periodo.tipo_pauta ?? undefined
-      });
-    let modulos = periodo.modulos ?? null;
-    if ((!modulos || modulos.length === 0) && periodo.tipo_pauta) {
-      modulos = this.ejerciciosService.mapTipoPautaToModulos(periodo.tipo_pauta);
-    }
-    const payload: PeriodoSeleccionadoMunicipio = {
-      ...periodo,
-      valor: valor ?? periodo.valor,
-      modulos: modulos && modulos.length ? modulos : null
-    };
-
-    this.municipioService.setPeriodoSeleccionado(municipioId, payload);
-  }
-
   private armarPayload(remuneracion: Remuneracion): RemuneracionUpsertPayload{
     const payload: RemuneracionUpsertPayload = {
       cuil: remuneracion.cuil,
-      legajo: remuneracion.legajo,
+      legajo: Number(remuneracion.legajo),
       regimen: remuneracion.regimen,
       apellido_nombre: remuneracion.apellido_nombre,
       situacion_revista: remuneracion.situacion_revista,
       fecha_alta: remuneracion.fecha_alta,
       tipo_liquidacion: remuneracion.tipo_liquidacion,
-      remuneracion_neta: remuneracion.remuneracion_neta,
+      remuneracion_neta: Number(remuneracion.remuneracion_neta),
     }
 
-    if(remuneracion.bonificacion && remuneracion.bonificacion !== 0) payload.bonificacion = remuneracion.bonificacion;
-    if(remuneracion.cant_hs_extra_50 && remuneracion.cant_hs_extra_50 !== 0) payload.cant_hs_extra_50 = remuneracion.cant_hs_extra_50;
-    if(remuneracion.cant_hs_extra_100 && remuneracion.cant_hs_extra_100 !== 0) payload.cant_hs_extra_100 = remuneracion.cant_hs_extra_100;
-    if(remuneracion.importe_hs_extra_50 && remuneracion.importe_hs_extra_50 !== 0) payload.importe_hs_extra_50 = remuneracion.importe_hs_extra_50;
-    if(remuneracion.importe_hs_extra_100 && remuneracion.importe_hs_extra_100 !== 0) payload.importe_hs_extra_100 = remuneracion.importe_hs_extra_100;
-    if(remuneracion.art && remuneracion.art !== 0) payload.art = remuneracion.art;
-    if(remuneracion.seguro_vida && remuneracion.seguro_vida !== 0) payload.seguro_vida = remuneracion.seguro_vida;
-    if(remuneracion.otros_conceptos && remuneracion.otros_conceptos !== 0) payload.otros_conceptos = remuneracion.otros_conceptos;
+    if(remuneracion.bonificacion && remuneracion.bonificacion !== 0) payload.bonificacion = Number(remuneracion.bonificacion);
+    if(remuneracion.cant_hs_extra_50 && remuneracion.cant_hs_extra_50 !== 0) payload.cant_hs_extra_50 = Number(remuneracion.cant_hs_extra_50);
+    if(remuneracion.cant_hs_extra_100 && remuneracion.cant_hs_extra_100 !== 0) payload.cant_hs_extra_100 = Number(remuneracion.cant_hs_extra_100);
+    if(remuneracion.importe_hs_extra_50 && remuneracion.importe_hs_extra_50 !== 0) payload.importe_hs_extra_50 = Number(remuneracion.importe_hs_extra_50);
+    if(remuneracion.importe_hs_extra_100 && remuneracion.importe_hs_extra_100 !== 0) payload.importe_hs_extra_100 = Number(remuneracion.importe_hs_extra_100);
+    if(remuneracion.art && remuneracion.art !== 0) payload.art = Number(remuneracion.art);
+    if(remuneracion.seguro_vida && remuneracion.seguro_vida !== 0) payload.seguro_vida = Number(remuneracion.seguro_vida);
+    if(remuneracion.otros_conceptos && remuneracion.otros_conceptos !== 0) payload.otros_conceptos = Number(remuneracion.otros_conceptos);
 
     return payload;
   }

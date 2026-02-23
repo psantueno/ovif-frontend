@@ -1,0 +1,246 @@
+.home-container {
+  padding: 2rem;
+  background-color: #FCF2DD;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.home-back {
+  align-self: flex-start;
+  margin-bottom: 1rem;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2rem;
+    color: #2B3E4C;
+    margin-bottom: 1.5rem;
+  }
+
+  .municipio-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #2B3E4C;
+    font-weight: 500;
+    margin-top: 0;
+    margin-left: 0;
+    margin-bottom: 2rem;
+    font-size: 20px;
+
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      min-width: 20px;
+      line-height: 17.5px;
+    }
+
+    span {
+      font-weight: 500;
+    }
+  }
+
+  .selector-helper {
+    margin: 0;
+    color: #2B3E4C;
+    font-size: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background-color: #ffffff;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+      color:#2b3e4c
+    }
+  }
+}
+
+.ejercicio-selector {
+  margin-bottom: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+
+  .selector-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 20px;
+  }
+
+  .selector-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: bold;
+    color: #2B3E4C;
+
+    mat-icon {
+      font-size: 20px;
+      height: 20px;
+      width: 20px;
+    }
+  }
+
+  .selector-row select {
+    padding: 0.5rem 1rem;
+    border: 1px solid #C2B394;
+    border-radius: 6px;
+    font-size: 1rem;
+  }
+
+  .pauta-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    max-width: 640px;
+    text-align: center;
+
+    .pauta-modulos {
+      margin: 0;
+      font-size: 0.9rem;
+      color: rgba(0, 0, 0, 0.75);
+    }
+
+    .pauta-fecha-chip {
+
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: #2b3e4c;
+      color: #fff;
+      padding: 0.5rem 1.5rem;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+
+      mat-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+      }
+    }
+  }
+
+}
+
+.home-actions {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 920px;
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+  align-items: stretch;
+}
+
+.home-card {
+  background: var(--color-primary);
+  color: #ffffff;
+  padding: 1.25rem 0rem;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s ease, background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  min-width: 215px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.1rem;
+  text-align: center;
+
+  mat-icon {
+    font-size: 32px;
+    height: 32px;
+    min-width: 32px;
+    color: inherit;
+    transition: color 0.25s ease;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  &:focus-visible {
+    outline: 3px solid rgba(var(--color-secondary-rgb), 0.6);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
+  }
+}
+
+menu-icon-municipio {
+  font-size: 22px;
+  height: 22px;
+  min-width: 22px;
+  color: var(--color-primary);
+}
+
+
+.cerrar-mes {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  cursor: not-allowed;
+
+  .btn-cerrar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    padding: 1.75rem 1.75rem;
+    border-radius: 12px;
+    background-color: var(--color-secondary);
+    color: var(--color-on-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: background-color 0.2s ease, color 0.2s ease;
+    font-size: 1rem;
+
+    mat-icon {
+      color: inherit;
+      font-size: 26px;
+      height: 26px;
+      min-width: 26px;
+    }
+
+    &:hover:not(:disabled) {
+      background-color: #c0392b;
+      color: #ffffff;
+
+      mat-icon {
+        color: inherit;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      box-shadow: none;
+    }
+  }
+}
