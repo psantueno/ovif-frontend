@@ -269,6 +269,8 @@ export class GastosComponent implements OnInit, OnDestroy {
   async obtenerFilasCSV(archivo: File): Promise<any> {
     try {
       const { rows, errores } = await parseCSV(archivo);
+      console.log("rows ", rows);
+      console.log("errores ", errores);
 
       const partidasPrevisualizacion: PartidaDisplay[] = (() => {
         // 1. Mapa para acceso rápido por código
@@ -618,9 +620,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       .pipe(take(1))
       .subscribe({
         next: (response) => {
-          console.log('Partidas de gastos recibidas:', response);
           this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
-          console.log('Partidas transformadas:', this.partidas);
           this.partidasPlanas = this.flattenPartidas(this.partidas);
           this.actualizarBaseCambios();
           this.cargandoPartidas = false;

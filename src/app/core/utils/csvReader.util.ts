@@ -249,19 +249,18 @@ const validarFilas = (rows: any[], context: Context): any[] => {
           const tipoValor = typeof valor;
           const valorNumerico = Number(valor);
 
-          if (tipoEsperado === 'number' && tipoValor !== 'number' && valorNumerico === null) {
-            console.log('Valor inválido para campo numérico:', valor);
-            console.log('Tipo del valor:', tipoValor);
-            console.log('Campo:', campo);
-            console.log('Valor numérico parseado:', valorNumerico);
+          if(index === 0){
+                      console.log("Campo: ", campo)
+          console.log("Valor: ", valor)
+          console.log("Tipo valor: ", tipoValor);
+          console.log("Valor numerico: ", valorNumerico);
+          }
+
+          if (tipoEsperado === 'number' && tipoValor !== 'number' && isNaN(valorNumerico)) {
             errores.push({ row: row[codigo], error: `El campo "${trasnformarCampo(campo)}" debe ser un número.` });
             continue;
           }
-          if (tipoEsperado === 'decimal' && tipoValor !== 'number' && valorNumerico === null) {
-            console.log('Valor inválido para campo numérico:', valor);
-            console.log('Tipo del valor:', tipoValor);
-            console.log('Campo:', campo);
-            console.log('Valor numérico parseado:', valorNumerico);
+          if (tipoEsperado === 'decimal' && tipoValor !== 'number' && isNaN(valorNumerico)) {
             errores.push({ row: row[codigo], error: `El campo "${trasnformarCampo(campo)}" debe ser un número decimal.` });
             continue;
           }
