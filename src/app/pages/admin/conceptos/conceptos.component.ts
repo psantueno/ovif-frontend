@@ -1,13 +1,13 @@
-import { Component, OnInit, ViewChild, DestroyRef, inject } from '@angular/core';
+import { Component, inject, OnInit, ViewChild, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormControl, FormGroup } from '@angular/forms';
+import { ReactiveFormsModule, FormControl } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatPaginator, MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatTableModule, MatTableDataSource } from '@angular/material/table';
+import { MatPaginatorModule, MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -18,17 +18,17 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
-
-import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
-import { Pauta, PautasAdminService } from '../../../services/pautas-admin.service';
-import { PautaService, PautaSelectOption } from '../../../services/pauta.service';
-import { PautaDialogComponent } from './pauta-dialog.component';
+import { AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+import { AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
+import { Concepto, ConceptosAdminService } from '../../../services/conceptos-admin.service';
+import { ConceptoSelectOption, ConceptoService } from '../../../services/concepto.service';
+import { ConceptoDialogComponent } from './concepto-dialog.component';
 
-type PautaControlValue = PautaSelectOption | string;
+type ConceptoControlValue = ConceptoSelectOption | string;
 
 @Component({
-  selector: 'app-admin-pautas',
+  selector: 'app-admin-conceptos',
   standalone: true,
   imports: [
     CommonModule,
@@ -49,31 +49,26 @@ type PautaControlValue = PautaSelectOption | string;
     AdminNavbarComponent,
     LoadingOverlayComponent
   ],
-  templateUrl: './pautas.component.html',
-  styleUrls: ['./pautas.component.scss']
+  templateUrl: './conceptos.component.html',
+  styleUrls: ['./conceptos.component.scss']
 })
 
-export class PautasComponent implements OnInit {
+export class ConceptosComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly breadcrumbs: AdminBreadcrumb[] = [
     { label: 'Admin', link: '/admin' },
-    { label: 'Pautas' }
+    { label: 'Conceptos' }
   ];
 
   readonly displayedColumns = [
-    'pauta_id',
+    'cod_concepto',
     'descripcion',
-    'convenio_nombre',
-    'dia_vto',
-    'plazo_vto',
-    'cant_dias_rectifica',
-    'plazo_mes_rectifica',
-    'tipo_pauta',
+    'cod_recurso',
     'acciones'
   ];
 
-  readonly dataSource = new MatTableDataSource<Pauta>([]);
+  readonly dataSource = new MatTableDataSource<Concepto>([]);
   totalRegistros = 0;
   pageSize = 10;
   pageIndex = 0;
@@ -84,24 +79,24 @@ export class PautasComponent implements OnInit {
   searchTerm: string | null = null;
   private readonly eliminando = new Set<number>();
 
-  readonly buscadorControl = new FormControl<PautaControlValue>('');
-  private readonly pautasSubject = new BehaviorSubject<PautaSelectOption[]>([]);
-  readonly filteredPautas$ = combineLatest([
+  readonly buscadorControl = new FormControl<ConceptoControlValue>('');
+  private readonly conceptosSubject = new BehaviorSubject<ConceptoSelectOption[]>([]);
+  readonly filteredConceptos$ = combineLatest([
     this.buscadorControl.valueChanges.pipe(startWith('')),
-    this.pautasSubject.asObservable()
+    this.conceptosSubject.asObservable()
   ]).pipe(
-    map(([value, pautas]) => {
+    map(([value, conceptos]) => {
       const filterValue =
         typeof value === 'string'
           ? value.trim().toLowerCase()
           : value?.descripcion?.toLowerCase().trim() ?? '';
 
       if (!filterValue) {
-        return pautas;
+        return conceptos;
       }
 
-      return pautas.filter((pauta) =>
-        pauta.descripcion.toLowerCase().includes(filterValue)
+      return conceptos.filter((concepto) =>
+        concepto.descripcion.toLowerCase().includes(filterValue)
       );
     })
   );
@@ -111,36 +106,36 @@ export class PautasComponent implements OnInit {
   @ViewChild(MatPaginator) paginator?: MatPaginator;
 
   constructor(
-    private readonly pautasAdminService: PautasAdminService,
-    private readonly pautaService: PautaService,
+    private readonly conceptosAdminService: ConceptosAdminService,
+    private readonly conceptoService: ConceptoService,
     private readonly dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
     this.cargarCatalogo();
-    this.cargarPautas();
+    this.cargarConceptos();
   }
 
-  displayPauta(value: PautaControlValue | null): string {
+  displayConcepto(value: ConceptoControlValue | null): string {
     if (!value) {
       return '';
     }
     return typeof value === 'string' ? value : value.descripcion;
   }
 
-  buscarPautas(): void {
+  buscarConceptos(): void {
     this.searchTerm = this.extraerTermino(this.buscadorControl.value);
     this.pageIndex = 0;
-    this.cargarPautas();
+    this.cargarConceptos();
   }
 
-  onPautaSelected(event: MatAutocompleteSelectedEvent): void {
-    const pauta = event.option.value as PautaSelectOption | undefined;
-    if (!pauta) {
+  onConceptoSelected(event: MatAutocompleteSelectedEvent): void {
+    const concepto = event.option.value as ConceptoSelectOption | undefined;
+    if (!concepto) {
       return;
     }
-    this.buscadorControl.setValue(pauta);
-    this.buscarPautas();
+    this.buscadorControl.setValue(concepto);
+    this.buscarConceptos();
   }
 
   limpiarBuscador(): void {
@@ -150,60 +145,61 @@ export class PautasComponent implements OnInit {
     this.buscadorControl.setValue('');
     this.searchTerm = null;
     this.pageIndex = 0;
-    this.cargarPautas();
+    this.cargarConceptos();
   }
 
   cambiarPagina(event: PageEvent): void {
     this.pageIndex = event.pageIndex;
     this.pageSize = event.pageSize;
-    this.cargarPautas();
+    this.cargarConceptos();
   }
 
   abrirDialogCrear(): void {
-    const dialogRef = this.dialog.open(PautaDialogComponent, {
+    const dialogRef = this.dialog.open(ConceptoDialogComponent, {
       width: '520px',
       data: null
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
-        this.cargarPautas();
+        this.cargarConceptos();
+        this.cargarCatalogo();
       }
     });
   }
 
-  abrirDialogEditar(pauta: Pauta): void {
-    const dialogRef = this.dialog.open(PautaDialogComponent, {
+  abrirDialogEditar(concepto: Concepto): void {
+    const dialogRef = this.dialog.open(ConceptoDialogComponent, {
       width: '520px',
-      data: pauta
+      data: concepto
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
-        this.cargarPautas();
+        this.cargarConceptos();
+        this.cargarCatalogo();
       }
     });
   }
 
-  eliminarPauta(pauta: Pauta): void {
-    if (!pauta?.pauta_id) {
+  eliminarConcepto(concepto: Concepto): void {
+    if (!concepto?.cod_concepto) {
       return;
     }
 
-    if(!pauta?.modificable) {
+    if(!concepto?.modificable) {
       Swal.fire({
-        title: 'Operación restringida',
-        text: `No puedes eliminar la pauta "${pauta.descripcion}". Esta pauta está asociada a otros datos.`,
+        title: 'No se puede eliminar',
+        text: 'Este concepto no puede ser eliminado porque se encuentra asociado a otros datos o ya fue procesado.',
         icon: 'warning',
-        confirmButtonText: 'Cancelar',
-        confirmButtonColor: '#6c757d'
-      })
+        confirmButtonText: 'Entendido'
+      });
       return;
     }
 
     Swal.fire({
-      title: 'Eliminar pauta',
-      text: `¿Confirmás eliminar "${pauta.descripcion}"? Esta acción no se puede deshacer.`,
+      title: 'Eliminar concepto',
+      text: `¿Confirmás eliminar "${concepto.descripcion}"? Esta acción no se puede deshacer.`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonText: 'Sí, eliminar',
@@ -211,49 +207,43 @@ export class PautasComponent implements OnInit {
       confirmButtonColor: '#d33',
       cancelButtonColor: '#6c757d'
     }).then((result) => {
-      if (!result.isConfirmed) {
-        return;
-      }
-
-      this.enviando = true;
-      this.eliminando.add(pauta.pauta_id);
-      this.pautasAdminService
-        .eliminarPauta(pauta.pauta_id)
-        .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe({
+      if (result.isConfirmed) {
+        this.eliminando.add(concepto.cod_concepto);
+        this.conceptosAdminService.eliminarConcepto(concepto.cod_concepto).subscribe({
           next: () => {
+            this.cargarConceptos();
+            this.cargarCatalogo();
             Swal.fire({
               toast: true,
               position: 'top-end',
               icon: 'success',
-              title: 'Pauta eliminada correctamente',
+              title: 'Concepto eliminado',
               showConfirmButton: false,
-              timer: 2500,
+              timer: 2000,
               timerProgressBar: true,
               background: '#f0fdf4',
               color: '#14532d'
             });
-            this.cargarPautas();
-            this.eliminando.delete(pauta.pauta_id);
-            this.enviando = false;
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el convenio.');
+            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el concepto.');
             Swal.fire({
               toast: true,
               position: 'top-end',
               icon: 'error',
               title: message,
               showConfirmButton: false,
-              timer: 2500,
+              timer: 5000,
               timerProgressBar: true,
               background: '#fee2e2',
               color: '#7f1d1d'
             });
-            this.eliminando.delete(pauta.pauta_id);
-            this.enviando = false;
+          },
+          complete: () => {
+            this.eliminando.delete(concepto.cod_concepto);
           }
         });
+      }
     });
   }
 
@@ -263,15 +253,16 @@ export class PautasComponent implements OnInit {
 
   private cargarCatalogo(): void {
     this.cargandoCatalogo = true;
-    this.pautaService
-      .getCatalogoPautas()
+    this.conceptoService
+      .getCatalogoConceptos()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (pautas) => {
-          this.pautasSubject.next(pautas ?? []);
+        next: (conceptos) => {
+          this.conceptosSubject.next(conceptos ?? []);
         },
         error: (error) => {
-          console.error('Error obteniendo catálogo de pautas', error);
+          console.error('Error cargando catálogo de conceptos:', error);
+          this.conceptosSubject.next([]);
         },
         complete: () => {
           this.cargandoCatalogo = false;
@@ -279,7 +270,7 @@ export class PautasComponent implements OnInit {
       });
   }
 
-  private cargarPautas(): void {
+  private cargarConceptos(): void {
     this.cargandoLista = true;
     const params = {
       pagina: this.pageIndex + 1,
@@ -287,47 +278,40 @@ export class PautasComponent implements OnInit {
       search: this.searchTerm
     };
 
-    this.pautasAdminService
-      .listarPautas(params)
+    this.conceptosAdminService
+      .listarConceptos(params)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (response) => {
-          const datos = Array.isArray(response?.data) ? response.data : [];
-          if (datos.length === 0 && (response?.total ?? 0) > 0 && this.pageIndex > 0) {
-            this.pageIndex = Math.max(this.pageIndex - 1, 0);
-            this.cargandoLista = false;
-            this.cargarPautas();
-            return;
-          }
-          this.dataSource.data = datos;
-          this.totalRegistros = Number(response?.total) || datos.length;
-          const limite = Number(response?.limite);
-          this.pageSize = Number.isFinite(limite) && limite > 0 ? limite : this.pageSize;
-          const pagina = Number(response?.pagina);
-          if (Number.isFinite(pagina) && pagina > 0) {
-            this.pageIndex = pagina - 1;
-          }
+          this.dataSource.data = response.data;
+          this.totalRegistros = response.total;
           if (this.paginator) {
             this.paginator.pageIndex = this.pageIndex;
+            this.paginator.pageSize = this.pageSize;
           }
+          this.cargandoLista = false;
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudieron obtener las pautas.');
+          console.error('Error cargando conceptos:', error);
+          this.dataSource.data = [];
+          this.totalRegistros = 0;
           Swal.fire({
+            toast: true,
+            position: 'top-end',
             icon: 'error',
-            title: 'Error al cargar',
-            text: message,
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
+            title: this.resolveErrorMessage(error, 'No se pudieron cargar los conceptos de recaudación'),
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#fee2e2',
+            color: '#7f1d1d'
           });
-        },
-        complete: () => {
           this.cargandoLista = false;
         }
       });
   }
 
-  private extraerTermino(value: PautaControlValue | null | undefined): string | null {
+  private extraerTermino(value: ConceptoControlValue | null | undefined): string | null {
     if (!value) {
       return null;
     }
@@ -346,9 +330,11 @@ export class PautasComponent implements OnInit {
         return err.message;
       }
     }
+
     if (typeof error?.message === 'string' && error.message.trim().length > 0) {
       return error.message;
     }
+
     return fallback;
   }
 }
