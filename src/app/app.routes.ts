@@ -25,6 +25,7 @@ import { SinAccesoComponent } from './pages/sin-acceso/sin-acceso.component';
 import { ConveniosComponent } from './pages/admin/convenios/convenios.component';
 import { PautasComponent } from './pages/admin/pautas/pautas.component';
 import { LogsComponent } from './pages/admin/logs/logs.component';
+import { ConfiguracionParametrosComponent } from './pages/admin/configuracion-parametros/configuracion-parametros.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -86,7 +87,8 @@ export const routes: Routes = [
       { path: 'admin/roles', component: RolesComponent, canActivate: [AdminGuard] },
       { path: 'admin/convenios', component: ConveniosComponent, canActivate: [AdminGuard] },
       { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] },
-      { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] }
+      { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] },
+      { path: 'admin/parametros', component: ConfiguracionParametrosComponent, canActivate: [AdminGuard] }
     ]
   },
   { path: '**', redirectTo: '' }
