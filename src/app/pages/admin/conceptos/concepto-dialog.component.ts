@@ -5,9 +5,11 @@ import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatSelect, MatOption } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { Concepto, ConceptosAdminService, ConceptoPayload } from '../../../services/conceptos-admin.service';
+import { PartidaRecursoService, PartidaRecursoSelectOption } from '../../../services/partida-recurso.service';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
@@ -22,6 +24,8 @@ import Swal from 'sweetalert2';
     MatInputModule,
     MatButtonModule,
     MatIconModule,
+    MatSelect,
+    MatOption,
     LoadingOverlayComponent
   ],
   templateUrl: './concepto-dialog.component.html',
@@ -30,11 +34,14 @@ import Swal from 'sweetalert2';
 
 export class ConceptoDialogComponent implements OnInit {
   form!: FormGroup;
-  enviando = false;
+  enviando: boolean = false;
+  cargandoPartidas: boolean = false;
+  partidasRecurso: PartidaRecursoSelectOption[] = [];
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly conceptoAdminService: ConceptosAdminService,
+    private readonly partidaRecursoService: PartidaRecursoService,
     private readonly dialogRef: MatDialogRef<ConceptoDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public readonly data: Concepto | null
   ) {}
@@ -45,6 +52,7 @@ export class ConceptoDialogComponent implements OnInit {
       descripcion: new FormControl({ value: this.data?.descripcion || '', disabled: !this.conceptoModificable }, [Validators.required, Validators.maxLength(255)]),
       cod_recurso: new FormControl({ value: this.data?.cod_recurso || '', disabled: !this.conceptoModificable })
     });
+    this.cargarPartidasRecursos();
   }
 
   guardar(): void {
@@ -143,5 +151,22 @@ export class ConceptoDialogComponent implements OnInit {
     }
 
     return fallback;
+  }
+
+    private cargarPartidasRecursos(): void {
+    this.cargandoPartidas = true;
+    this.partidaRecursoService
+      .getCatalogoPartidasRecursos()
+      .subscribe({
+        next: (partidas) => {
+          this.partidasRecurso = partidas ?? []
+        },
+        error: (error) => {
+          console.error('Error obteniendo catálogo de convenio', error);
+        },
+        complete: () => {
+          this.cargandoPartidas = false;
+        }
+      });
   }
 }
