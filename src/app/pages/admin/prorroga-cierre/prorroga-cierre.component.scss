@@ -272,6 +272,38 @@ mat-nav-list a[mat-list-item].activo {
   height: 48px;
 }
 
+.alert-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  margin-bottom: 20px;
+  background-color: #fff7e6;
+  border: 1px solid #f5c27a;
+  border-left: 5px solid #f0a500;
+  border-radius: 6px;
+  margin-top: 20px;
+}
+
+.alert-icon {
+  font-size: 22px;
+  color: #f0a500;
+  align-self: flex-start;
+  justify-self: start;
+  width: 40px;
+}
+
+.alert-title {
+  margin: 0;
+  font-weight: 600;
+  color: #7a4b00;
+}
+
+.alert-message {
+  margin: 0;
+  color: #5f4a2d;
+}
+
 @media (max-width: 1200px) {
   .detalle-card {
     width: 100%;

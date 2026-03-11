@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { MunicipioService } from '../../services/municipio.service';
-import { EjerciciosService, InformesFiltrosResponse } from '../../services/ejercicios.service';
+import { EjerciciosService, ModuloCerrado } from '../../services/ejercicios.service';
 
 type MensajeTipo = 'info' | 'error' | 'success';
 
@@ -25,7 +25,11 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
   private readonly router = inject(Router);
 
   municipioActual: any = null;
-  filtros: InformesFiltrosResponse = { ejercicios: [], meses: [], modulos: [] };
+  //filtros: InformesFiltrosResponse = { ejercicios: [], meses: [], modulos: [] };
+  modulosCerrados: ModuloCerrado[] = []
+  filtroEjercicios: number[] = []
+  filtroMeses: number[] = []
+  filtroModulos: string[] = []
 
   cargandoFiltros = false;
   cargandoInforme = false;
@@ -62,6 +66,43 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     }
 
     this.cargarFiltros();
+
+    this.form.valueChanges.subscribe(() => {
+      this.actualizarFiltros();
+    })
+  }
+
+  private unique<T>(array: T[]): T[] {
+    return [...new Set(array)];
+  }
+
+  private actualizarFiltros(): void {
+    const { ejercicio, mes, modulo } = this.form.value;
+
+    // 1️⃣ filtrar dataset según lo seleccionado
+    const filtrados = this.modulosCerrados.filter(item => {
+      return (
+        (!ejercicio || item.ejercicio === ejercicio) &&
+        (!mes || item.mes === mes) &&
+        (!modulo || item.modulo === modulo)
+      );
+    });
+
+    // 2️⃣ recalcular opciones disponibles
+    this.filtroEjercicios = this.unique(filtrados.map(f => f.ejercicio));
+    this.filtroMeses = this.unique(filtrados.map(f => f.mes));
+    this.filtroModulos = this.unique(filtrados.map(f => f.modulo));
+  }
+
+  limpiarFiltros() {
+    this.form.patchValue({ ejercicio: null }, { emitEvent: false });
+    this.form.patchValue({ mes: null }, { emitEvent: false });
+    this.form.patchValue({ modulo: '' }, { emitEvent: false });
+
+    // 2️⃣ recalcular opciones disponibles
+    this.filtroEjercicios = this.unique(this.modulosCerrados.map(f => f.ejercicio));
+    this.filtroMeses = this.unique(this.modulosCerrados.map(f => f.mes));
+    this.filtroModulos = this.unique(this.modulosCerrados.map(f => f.modulo));
   }
 
   get municipioNombre(): string {
@@ -84,20 +125,13 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     this.ejerciciosService
       .obtenerFiltrosInformes(this.municipioActual.municipio_id)
       .subscribe({
-        next: (filtros) => {
-          this.filtros = filtros ?? { ejercicios: [], meses: [], modulos: [] };
+        next: (modulosCerrados) => {
+          this.modulosCerrados = modulosCerrados
           this.cargandoFiltros = false;
           this.resetMensaje();
-          // Autoselección básica si hay un solo valor disponible
-          if (this.filtros.ejercicios.length === 1) {
-            this.form.patchValue({ ejercicio: this.filtros.ejercicios[0] });
-          }
-          if (this.filtros.meses.length === 1) {
-            this.form.patchValue({ mes: this.filtros.meses[0] });
-          }
-          if (this.filtros.modulos.length === 1) {
-            this.form.patchValue({ modulo: this.filtros.modulos[0] });
-          }
+          this.filtroEjercicios = this.unique(modulosCerrados.map(d => d.ejercicio));
+          this.filtroMeses = this.unique(modulosCerrados.map(d => d.mes));
+          this.filtroModulos = this.unique(modulosCerrados.map(d => d.modulo));
         },
         error: () => {
           this.cargandoFiltros = false;
@@ -121,20 +155,40 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     this.resetMensaje();
 
     this.ejerciciosService
-      .obtenerInformeModulo({
+      .descargarInformeModulo({
         municipio_id: this.municipioActual.municipio_id,
         ejercicio: Number(ejercicio),
         mes: Number(mes),
         modulo: String(modulo ?? '')
       })
       .subscribe({
-        next: (resp) => {
-          this.cargandoInforme = false;
-          if (!resp?.downloadUrl) {
-            this.mostrarAlerta('Sin datos', 'No encontramos un informe para esos filtros.', 'info');
-            return;
-          }
-          this.dispararDescarga(resp.downloadUrl);
+        next: (response) => {
+            this.cargandoInforme = false;
+
+            const blob = response.body!;
+
+            // ⭐ obtener header
+            const contentDisposition =
+              response.headers.get('content-disposition');
+
+            let filename = 'archivo.pdf';
+
+            if (contentDisposition) {
+              const match = contentDisposition.match(/filename="?([^"]+)"?/);
+              if (match?.[1]) {
+                filename = match[1];
+              }
+            }
+
+            // crear descarga
+            const url = window.URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+
+            window.URL.revokeObjectURL(url);
         },
         error: (error) => {
           this.cargandoInforme = false;
@@ -161,42 +215,5 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
   private resetMensaje(): void {
     this.mensaje = null;
-  }
-
-  private dispararDescarga(url: string): void {
-    this.ejerciciosService.descargarInformePDF(url, this.municipioActual.municipio_id).subscribe({
-      next: (response) => {
-        // 1️⃣ Obtener el nombre del archivo desde headers
-        const contentDisposition = response.headers.get('Content-Disposition');
-
-        let fileName = 'informe.pdf'; // fallback
-
-        if (contentDisposition) {
-          // Soporta: filename="archivo.pdf"
-          const match = contentDisposition.match(/filename="?([^"]+)"?/);
-          if (match && match[1]) {
-            fileName = match[1];
-          }
-        }
-
-        // 2️⃣ Obtener el Blob real
-        const blob = response.body!;
-        const objectUrl = URL.createObjectURL(blob);
-
-        // 3️⃣ Descargar
-        const downloadLink = document.createElement('a');
-        downloadLink.href = objectUrl;
-        downloadLink.download = fileName;
-
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-
-        URL.revokeObjectURL(objectUrl);
-      },
-      error: () => {
-        this.mostrarAlerta('Error', 'No pudimos descargar el informe. Intentá nuevamente.', 'error');
-      }
-    });
   }
 }

@@ -169,6 +169,18 @@
 
         <mat-divider></mat-divider>
 
+        <div class="alert-info" *ngIf="periodoNoDisponible">
+          <mat-icon class="alert-icon">
+            warning
+          </mat-icon>
+          <div class="alert-content">
+            <p class="alert-title">Prorroga no asignable</p>
+            <p class="alert-message">
+              No se puede asignar una prorroga para este periodo ya que se encuentra fuera del plazo permitido
+            </p>
+          </div>
+        </div>
+
         <form [formGroup]="prorrogaForm" class="prorroga-form">
           <mat-form-field appearance="outline" class="fecha-field">
             <mat-label>Tipo de solicitud</mat-label>
@@ -236,8 +248,9 @@
               matInput
               [matDatepicker]="picker"
               formControlName="fechaFin"
-          placeholder="Seleccioná la nueva fecha"
-          [min]="minFechaSeleccionable"
+              placeholder="Seleccioná la nueva fecha"
+              [min]="minFechaSeleccionable"
+              [max]="maxFechaSeleccionable"
         />
         <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
         <mat-datepicker #picker></mat-datepicker>
@@ -248,7 +261,7 @@
           No puede ser anterior a la fecha oficial de cierre.
         </mat-error>
         <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('fechaEnPasado')">
-          La fecha debe ser igual o posterior a hoy.
+          Ya se venció el plazo permitido para habilitar una prorroga
         </mat-error>
         <mat-error *ngIf="prorrogaForm.get('fechaFin')?.hasError('fechaInvalida')">
           Ingresá una fecha válida.
@@ -261,7 +274,7 @@
           class="btn-accion"
           type="button"
           (click)="guardarProrroga()"
-          [disabled]="guardandoProrroga || prorrogaForm.invalid"
+          [disabled]="guardandoProrroga || prorrogaForm.invalid || periodoNoDisponible"
         >
               <mat-icon>save</mat-icon>
               <ng-container *ngIf="!guardandoProrroga; else guardando">

@@ -9,6 +9,7 @@
 }
 
 .helper-card,
+.helper-card--secondary,
 .selector-card,
 .tabla-card {
   width: 100%;
@@ -38,6 +39,37 @@
       margin: 0;
       padding-left: 1.25rem;
       color: #4a5568;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+}
+
+.helper-card--secondary {
+  padding: 1.5rem;
+  background-color: #fff8e1; // fondo ámbar muy suave
+  border: 1px solid #f6e05e;
+  border-radius: 0.75rem;
+
+  .helper-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      color: #b7791f;
+      font-weight: 600;
+    }
+
+    ol {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: #744210;
       display: flex;
       flex-direction: column;
       gap: 0.25rem;

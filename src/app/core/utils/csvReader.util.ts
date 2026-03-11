@@ -5,13 +5,11 @@ type ValidationRules = Record<string, ValidationRule>;
 
 const reglasValidacionGastos: ValidationRules = {
   'codigo_partida': { required: true, type: 'number' },
-  'descripcion': { required: true },
   'importe_devengado': { required: true, type: 'decimal', step: 2 },
 };
 
 const reglasValidacionRecursos: ValidationRules = {
   'codigo_partida': { required: true, type: 'number' },
-  'descripcion': { required: true },
   'importe_percibido': { required: true, type: 'decimal', step: 2 },
   'total_contribuyentes': { required: true, type: 'number' },
   'contribuyentes_pagaron': { required: true, type: 'number' },
@@ -250,10 +248,10 @@ const validarFilas = (rows: any[], context: Context): any[] => {
           const valorNumerico = Number(valor);
 
           if(index === 0){
-                      console.log("Campo: ", campo)
-          console.log("Valor: ", valor)
-          console.log("Tipo valor: ", tipoValor);
-          console.log("Valor numerico: ", valorNumerico);
+            console.log("Campo: ", campo)
+            console.log("Valor: ", valor)
+            console.log("Tipo valor: ", tipoValor);
+            console.log("Valor numerico: ", valorNumerico);
           }
 
           if (tipoEsperado === 'number' && tipoValor !== 'number' && isNaN(valorNumerico)) {
