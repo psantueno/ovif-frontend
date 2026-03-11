@@ -117,12 +117,11 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     private readonly dateAdapter: DateAdapter<Date>
   ) {
     this.dateAdapter.setLocale('es-AR');
-    const hoy = this.getToday();
     this.prorrogaForm = this.fb.group({
-      tipo: [this.tipoOpciones[0], [Validators.required]],
-      motivo: ['', [Validators.required, Validators.maxLength(this.maxCaracteres)]],
-      observaciones: ['', [Validators.required, Validators.maxLength(this.maxCaracteres)]],
-      fechaFin: [hoy, [Validators.required, this.validarFechaPermitida()]]
+      tipo: new FormControl({ value: this.tipoOpciones[0], disabled: true }, [Validators.required]),
+      motivo: new FormControl({ value: '', disabled: true }, [Validators.required, Validators.maxLength(this.maxCaracteres)]),
+      observaciones: new FormControl({ value: '', disabled: true }, [Validators.required, Validators.maxLength(this.maxCaracteres)]),
+      fechaFin: new FormControl({ value: this.minFechaSeleccionable, disabled: true }, [Validators.required, this.validarFechaPermitida()])
     });
   }
 
@@ -156,14 +155,18 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     this.periodos = [];
     this.selectedPeriodo = null;
     this.busquedaRealizada = false;
-    const hoy = this.getToday();
     this.prorrogaForm.patchValue({
-      fechaFin: hoy,
+      fechaFin: this.minFechaSeleccionable,
       tipo: this.tipoOpciones[0],
       motivo: '',
       observaciones: ''
     });
     this.prorrogaForm.get('fechaFin')?.updateValueAndValidity();
+
+    this.prorrogaForm.get('tipo')?.disable();
+    this.prorrogaForm.get('motivo')?.disable();
+    this.prorrogaForm.get('observaciones')?.disable();
+    this.prorrogaForm.get('fechaFin')?.disable();
   }
 
   onMunicipioSelected(event: MatAutocompleteSelectedEvent): void {
@@ -186,10 +189,22 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
     }
 
     this.selectedPeriodo = periodo;
-    const fecha = this.obtenerFechaInicialPeriodo(periodo);
-    this.prorrogaForm.patchValue({ fechaFin: fecha });
+    this.prorrogaForm.patchValue({ fechaFin: this.minFechaSeleccionable });
     const control = this.prorrogaForm.get('fechaFin');
     control?.updateValueAndValidity();
+
+    if (!this.periodoNoDisponible) {
+      this.prorrogaForm.get('tipo')?.enable();
+      this.prorrogaForm.get('motivo')?.enable();
+      this.prorrogaForm.get('observaciones')?.enable();
+      this.prorrogaForm.get('fechaFin')?.enable();
+    } else {
+      // Deshabilitar si no está disponible
+      this.prorrogaForm.get('tipo')?.disable();
+      this.prorrogaForm.get('motivo')?.disable();
+      this.prorrogaForm.get('observaciones')?.disable();
+      this.prorrogaForm.get('fechaFin')?.disable();
+    }
   }
 
   guardarProrroga(): void {
@@ -476,12 +491,34 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
   }
 
   get minFechaSeleccionable(): Date | null {
-    const hoy = this.getToday();
-    const oficial = this.parseDate(this.selectedPeriodo?.fecha_fin_oficial);
-    if (oficial && oficial > hoy) {
-      return oficial;
+    const hoy = this.getToday()
+    const fechaMin = this.parseDate(this.selectedPeriodo?.fecha_fin_oficial);
+    if(fechaMin && fechaMin > hoy){
+      return fechaMin
+    }else if(fechaMin && fechaMin < hoy){
+      return hoy
+    }else{
+      fechaMin?.setDate(fechaMin.getDate() + 1)
     }
-    return hoy;
+    return fechaMin
+  }
+
+  get maxFechaSeleccionable(): Date | null {
+    const fechaOficial = this.parseDate(this.selectedPeriodo?.fecha_fin_oficial);
+    if(fechaOficial){
+      const fechaMax = new Date(fechaOficial?.getFullYear(), fechaOficial?.getMonth() + 1, 0);
+      return fechaMax
+    }
+
+    return fechaOficial
+  }
+
+  get periodoNoDisponible(): boolean {
+    const hoy = this.getToday();
+    if (this.maxFechaSeleccionable && this.maxFechaSeleccionable < hoy) {
+      return true;
+    }
+    return false;
   }
 
   private validarFechaPermitida(): ValidatorFn {
@@ -501,7 +538,7 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       }
 
       const hoy = this.getToday();
-      if (value < hoy) {
+      if (this.maxFechaSeleccionable && this.maxFechaSeleccionable < hoy) {
         return { fechaEnPasado: true };
       }
 
@@ -527,19 +564,5 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       return 'Debe seleccionar una fecha de cierre para aplicar la prórroga.';
     }
     return 'La fecha seleccionada no es válida.';
-  }
-
-  private obtenerFechaInicialPeriodo(periodo: EjercicioCerradoResponse): Date | null {
-    const prorroga = this.parseFechaProrroga(periodo);
-    if (prorroga) {
-      return prorroga;
-    }
-
-    const oficial = this.parseDate(periodo.fecha_fin_oficial);
-    const hoy = this.getToday();
-    if (oficial && oficial > hoy) {
-      return oficial;
-    }
-    return hoy;
   }
 }

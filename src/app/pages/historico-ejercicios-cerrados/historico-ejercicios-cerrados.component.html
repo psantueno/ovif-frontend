@@ -37,16 +37,16 @@
       <div class="form-field">
         <label for="ejercicio">Ejercicio</label>
         <select id="ejercicio" formControlName="ejercicio">
-          <option value="">Seleccioná el año</option>
-          <option *ngFor="let ej of filtros.ejercicios" [value]="ej">{{ ej }}</option>
+          <option [ngValue]="null">Seleccioná el año</option>
+          <option *ngFor="let ej of filtroEjercicios" [ngValue]="ej">{{ ej }}</option>
         </select>
       </div>
 
       <div class="form-field">
         <label for="mes">Mes</label>
         <select id="mes" formControlName="mes">
-          <option value="">Seleccioná el mes</option>
-          <option *ngFor="let mes of filtros.meses" [value]="mes">
+          <option [ngValue]="null">Seleccioná el mes</option>
+          <option *ngFor="let mes of filtroMeses" [ngValue]="mes">
             {{ mesesNombres[mes - 1] || mes }}
           </option>
         </select>
@@ -56,13 +56,17 @@
         <label for="modulo">Módulo</label>
         <select id="modulo" formControlName="modulo">
           <option value="">Seleccioná el módulo</option>
-          <option *ngFor="let modulo of filtros.modulos" [value]="modulo">
+          <option *ngFor="let modulo of filtroModulos" [value]="modulo">
             {{ modulo | titlecase }}
           </option>
         </select>
       </div>
 
       <div class="form-actions">
+        <button type="button" class="secondary" [disabled]="cargandoInforme" (click)="limpiarFiltros()">
+          <mat-icon>clear</mat-icon>
+          <span>Limpiar filtros</span>
+        </button>
         <button type="submit" [disabled]="cargandoInforme">
           <mat-icon *ngIf="!cargandoInforme">download</mat-icon>
           <mat-icon *ngIf="cargandoInforme">hourglass_top</mat-icon>

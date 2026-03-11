@@ -317,29 +317,8 @@ export class RecursosComponent implements OnInit, OnDestroy {
     async obtenerFilasCSV(archivo: File): Promise<any> {
       try {
         const { rows, errores } = await parseCSV(archivo, 'recursos');
-
-        const encabezados = Object.keys(rows[0] || {});
-        const indiceCodigo = encabezados.indexOf('codigo_partida');
-        const indiceDescripcion = encabezados.indexOf('descripcion');
-        const indiceImporte = encabezados.indexOf('importe_percibido');
-        const indiceContribuyentes = encabezados.indexOf('total_contribuyentes');
-        const indicePagaron = encabezados.indexOf('contribuyentes_pagaron');
-
-        if(rows.length === 0){
-          this.erroresCargaMasiva.push('El archivo CSV está vacío.');
-          return;
-        }
-
-        if (
-          indiceCodigo === -1 ||
-          indiceDescripcion === -1 ||
-          indiceImporte === -1 ||
-          indiceContribuyentes === -1 ||
-          indicePagaron === -1
-        ) {
-          this.erroresCargaMasiva.push('La cabecera del archivo no coincide con la plantilla esperada.');
-          return;
-        }
+        console.log("rows ", rows);
+        console.log("errores ", errores);
 
         const partidasPrevisualizacion: PartidaDisplay[] = (() => {
           // 1. Mapa para acceso rápido por código
@@ -383,6 +362,11 @@ export class RecursosComponent implements OnInit, OnDestroy {
         const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
         if(partidasFiltradas.length === 0){
           this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+          return;
+        }
+
+        if(rows.length === 0){
+          this.erroresCargaMasiva.push('El archivo CSV está vacío o no cumple con la plantilla requerida.');
           return;
         }
 

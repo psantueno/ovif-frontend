@@ -64,14 +64,14 @@ export interface PautaConvenioParametros {
   plazo_vto: number | null;
 }
 
-export interface InformesFiltrosResponse {
-  ejercicios: number[];
-  meses: number[];
-  modulos: string[];
+export interface ModuloCerrado {
+  ejercicio: number,
+  mes: number,
+  modulo: string
 }
 
-export interface InformeDownloadResponse {
-  downloadUrl: string;
+export interface InformesFiltrosResponse {
+
 }
 
 export interface EjerciciosSelectOption {
@@ -122,20 +122,20 @@ export class EjerciciosService {
     );
   }
 
-  obtenerFiltrosInformes(municipioId: number): Observable<InformesFiltrosResponse> {
+  obtenerFiltrosInformes(municipioId: number): Observable<ModuloCerrado[]> {
     const params: Record<string, string> = {};
     if (municipioId) {
       params['municipio_id'] = String(municipioId);
     }
 
     return this.http
-      .get<InformesFiltrosResponse>(`${this.baseUrl}/informes/filtros`, { params })
+      .get<ModuloCerrado[]>(`${this.baseUrl}/informes/filtros`, { params })
       .pipe(
         catchError((error) => throwError(() => error))
       );
   }
 
-  obtenerInformeModulo(params: { municipio_id: number; ejercicio: number; mes: number; modulo: string }): Observable<InformeDownloadResponse> {
+  descargarInformeModulo(params: { municipio_id: number; ejercicio: number; mes: number; modulo: string }): Observable<HttpResponse<Blob>> {
     const httpParams: Record<string, string> = {
       municipio_id: String(params.municipio_id),
       ejercicio: String(params.ejercicio),
@@ -144,7 +144,7 @@ export class EjerciciosService {
     };
 
     return this.http
-      .get<InformeDownloadResponse>(`${this.baseUrl}/informes`, { params: httpParams })
+      .get(`${this.baseUrl}/informes/download`, { params: httpParams, responseType: 'blob', observe: 'response' })
       .pipe(
         catchError((error) => throwError(() => error))
       );
