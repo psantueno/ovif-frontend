@@ -98,7 +98,7 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
               this.periodoActivo = { ...seleccionado.metadata };
               this.modulosHabilitados =
                 this.periodoActivo.modulos ??
-                this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta);
+                this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta_codigo);
             } else {
               this.ejercicioMes = '';
               this.periodoPersistido = null;
@@ -113,7 +113,7 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
             this.ejercicioMes = unico.valor;
             this.periodoPersistido = { ...unico.metadata };
             this.periodoActivo = { ...unico.metadata };
-            this.modulosHabilitados = unico.metadata.modulos ?? this.obtenerModulosPermitidos(unico.metadata.tipo_pauta);
+            this.modulosHabilitados = unico.metadata.modulos ?? this.obtenerModulosPermitidos(unico.metadata.tipo_pauta_codigo);
             this.persistirPeriodoActual();
           } else {
             this.ejercicioMes = '';
@@ -186,9 +186,8 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     const periodo: PeriodoSeleccionadoMunicipio = {
       ...this.periodoActivo,
       valor: valor ?? undefined,
-      modulos: this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta)
+      modulos: this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta_codigo)
     };
-    console.log("Periodo a persistir:", periodo);
 
     this.periodoPersistido = periodo;
     this.municipioService.setPeriodoSeleccionado(municipioId, periodo);
@@ -236,7 +235,7 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     }
     const modulos = this.modulosHabilitados;
     if (!modulos || modulos.length === 0) {
-      return 'Todos los módulos están habilitados para este periodo.';
+      return 'No hay módulos habilitados para el tipo de pauta seleccionado.';
     }
     return `Módulos habilitados: ${modulos.map((mod) => this.formatearNombreModulo(mod)).join(', ')}`;
   }
@@ -246,10 +245,7 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
       return false;
     }
     const modulos = this.modulosHabilitados;
-    if (!modulos || modulos.length === 0) {
-      return true;
-    }
-    return modulos.includes(modulo);
+    return Array.isArray(modulos) && modulos.includes(modulo);
   }
 
   private obtenerModulosPermitidos(tipo: string | null | undefined): ModuloPauta[] {
@@ -273,25 +269,58 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
       item?.PautaConvenio?.descripcion ??
       item?.pauta ??
       'Pauta sin descripción';
-    const tipoPauta = (item?.tipo_pauta ?? item?.PautaConvenio?.tipo_pauta ?? null) as string | null;
+    const tipoPautaId = this.toOptionalNumber(
+      item?.tipo_pauta_id ??
+      item?.PautaConvenio?.tipo_pauta_id ??
+      item?.PautaConvenio?.TipoPauta?.tipo_pauta_id
+    );
+    const tipoPautaCodigo = (
+      item?.tipo_pauta_codigo ??
+      item?.PautaConvenio?.tipo_pauta_codigo ??
+      item?.PautaConvenio?.TipoPauta?.codigo ??
+      null
+    ) as string | null;
+    const tipoPautaNombre =
+      item?.tipo_pauta_nombre ??
+      item?.PautaConvenio?.tipo_pauta_nombre ??
+      item?.PautaConvenio?.TipoPauta?.nombre ??
+      null;
+    const tipoPautaDescripcion =
+      item?.tipo_pauta_descripcion ??
+      item?.PautaConvenio?.tipo_pauta_descripcion ??
+      item?.PautaConvenio?.TipoPauta?.descripcion ??
+      null;
+    const requierePeriodoRectificar = item?.requiere_periodo_rectificar ??
+      item?.PautaConvenio?.requiere_periodo_rectificar ??
+      item?.PautaConvenio?.TipoPauta?.requiere_periodo_rectificar ??
+      null;
     const tipoLabel =
       item?.tipo_pauta_label ??
-      this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPauta) ??
+      tipoPautaNombre ??
+      tipoPautaDescripcion ??
+      this.ejerciciosService.obtenerEtiquetaTipoPauta(tipoPautaCodigo) ??
       pautaDescripcion;
 
     const metadata: PeriodoSeleccionadoMunicipio = {
       ejercicio,
       mes,
-      convenio_id: this.toOptionalNumber(item?.convenio_id ?? item?.Convenio?.id),
+      convenio_id: this.toOptionalNumber(item?.convenio_id ?? item?.Convenio?.convenio_id),
       convenio_nombre: convenioNombre,
-      pauta_id: this.toOptionalNumber(item?.pauta_id ?? item?.PautaConvenio?.id),
+      pauta_id: this.toOptionalNumber(item?.pauta_id ?? item?.PautaConvenio?.pauta_id),
       pauta_descripcion: pautaDescripcion,
-      tipo_pauta: tipoPauta,
+      tipo_pauta_id: tipoPautaId,
+      tipo_pauta_codigo: tipoPautaCodigo,
+      tipo_pauta_nombre: tipoPautaNombre,
+      tipo_pauta_descripcion: tipoPautaDescripcion,
       tipo_pauta_label: tipoLabel,
+      requiere_periodo_rectificar:
+        requierePeriodoRectificar === null || requierePeriodoRectificar === undefined
+          ? null
+          : Boolean(requierePeriodoRectificar),
       fecha_inicio: item?.fecha_inicio ?? item?.fecha_inicio_oficial ?? null,
       fecha_fin: item?.fecha_fin ?? item?.fecha_fin_oficial ?? null,
       fecha_cierre: item?.fecha_cierre ?? null,
-      modulos: this.obtenerModulosPermitidos(tipoPauta)
+      modulos: this.obtenerModulosPermitidos(tipoPautaCodigo)
     };
 
     const valor = this.municipioService.buildPeriodoValor(metadata) ?? `${ejercicio}_${mes}`;

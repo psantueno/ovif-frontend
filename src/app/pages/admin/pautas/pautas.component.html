@@ -61,7 +61,7 @@
     <mat-card-header>
       <mat-icon class="header-icon">rule</mat-icon>
       <div class="header-text">
-        <mat-card-title>Pautas configurados</mat-card-title>
+        <mat-card-title>Pautas configuradas</mat-card-title>
         <mat-card-subtitle>
           {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrados
         </mat-card-subtitle>
@@ -148,7 +148,7 @@
             <th mat-header-cell *matHeaderCellDef>Tipo pauta</th>
             <td mat-cell *matCellDef="let pauta">
               <div class="nombre-cell">
-                <span class="nombre">{{ pauta.tipo_pauta}}</span>
+                <span class="nombre">{{ getNombreTipoPauta(pauta) }}</span>
               </div>
             </td>
           </ng-container>

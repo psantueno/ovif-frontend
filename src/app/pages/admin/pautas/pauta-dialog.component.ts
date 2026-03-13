@@ -7,22 +7,17 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSelect, MatOption } from '@angular/material/select';
-
-import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
-import { provideNativeDateAdapter } from '@angular/material/core';
-
+import { MatOption, MatSelect } from '@angular/material/select';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 import { Pauta, PautasAdminService, PautaPayload } from '../../../services/pautas-admin.service';
 import { ConvenioSelectOption, ConvenioService } from '../../../services/convenio.service';
-
+import { TipoPauta, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+
 @Component({
-  selector: 'app-convenio-dialog',
+  selector: 'app-pauta-dialog',
   standalone: true,
   imports: [
     CommonModule,
@@ -33,30 +28,26 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
     MatSlideToggleModule,
     MatButtonModule,
     MatIconModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
     LoadingOverlayComponent,
     MatOption,
     MatSelect
-],
+  ],
   templateUrl: './pauta-dialog.component.html',
-  styleUrls: ['./pauta-dialog.component.scss'],
-  providers: [
-    provideNativeDateAdapter(),
-    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
-  ]
+  styleUrls: ['./pauta-dialog.component.scss']
 })
-
 export class PautaDialogComponent implements OnInit {
   form!: FormGroup;
   enviando = false;
 
   convenios: ConvenioSelectOption[] = [];
-  cargandoConvenios: boolean = false;
+  cargandoConvenios = false;
+  tiposPauta: TipoPauta[] = [];
+  cargandoTiposPauta = false;
 
   constructor(
     private readonly fb: FormBuilder,
     private readonly convenioService: ConvenioService,
+    private readonly tiposPautaAdminService: TiposPautaAdminService,
     private readonly pautaAdminService: PautasAdminService,
     private readonly dialogRef: MatDialogRef<PautaDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public readonly data: Pauta | null
@@ -68,15 +59,32 @@ export class PautaDialogComponent implements OnInit {
       descripcion: new FormControl({ value: this.data?.descripcion || '', disabled: !this.pautaModificable }, [Validators.required, Validators.minLength(3), Validators.maxLength(255)]),
       dia_vto: new FormControl({ value: this.data?.dia_vto || '', disabled: !this.pautaModificable }, [Validators.required, Validators.min(1), Validators.max(31)]),
       plazo_vto: new FormControl({ value: this.data?.plazo_vto || '', disabled: !this.pautaModificable }, [Validators.required, Validators.min(0)]),
-      cant_dias_rectifica: new FormControl({ value: this.data?.cant_dias_rectifica || '', disabled: !this.pautaModificable }, [Validators.min(1), Validators.max(31)]),
-      plazo_mes_rectifica: new FormControl({ value: this.data?.plazo_mes_rectifica || '', disabled: !this.pautaModificable }, [Validators.min(0)]),
-      tipo_pauta: new FormControl({ value: this.data?.tipo_pauta || '', disabled: !this.pautaModificable }, [Validators.required]),
+      cant_dias_rectifica: new FormControl({ value: this.data?.cant_dias_rectifica ?? null, disabled: !this.pautaModificable }),
+      plazo_mes_rectifica: new FormControl({ value: this.data?.plazo_mes_rectifica ?? null, disabled: !this.pautaModificable }),
+      tipo_pauta_id: new FormControl({ value: this.data?.tipo_pauta_id || '', disabled: !this.pautaModificable }, [Validators.required]),
+    });
+
+    this.form.get('tipo_pauta_id')?.valueChanges.subscribe((tipoPautaId) => {
+      this.configurarRectificacionSegunTipo(tipoPautaId, true);
     });
 
     this.cargarConvenios();
+    this.cargarTiposPauta();
   }
 
   guardar(): void {
+    if (this.sinTiposPauta) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        title: 'No hay tipos de pauta cargados. Creá uno antes de guardar.',
+        showConfirmButton: false,
+        timer: 3000
+      });
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       Swal.fire({
@@ -90,9 +98,9 @@ export class PautaDialogComponent implements OnInit {
       return;
     }
 
-    const payload = this.construirPayload(this.form.value);
+    const payload = this.construirPayload(this.form.getRawValue());
     this.enviando = true;
-    const request$ = this.data?.convenio_id
+    const request$ = this.data?.pauta_id
       ? this.pautaAdminService.actualizarPauta(this.data.pauta_id, payload)
       : this.pautaAdminService.crearPauta(payload);
 
@@ -130,12 +138,30 @@ export class PautaDialogComponent implements OnInit {
       });
   }
 
-  get pautaModificable(){
-    if(this.data?.modificable !== undefined && this.data?.modificable !== null){
-      return this.data?.modificable
+  get pautaModificable(): boolean {
+    if (this.data?.modificable !== undefined && this.data?.modificable !== null) {
+      return this.data.modificable;
     }
 
     return true;
+  }
+
+  get sinTiposPauta(): boolean {
+    return !this.cargandoTiposPauta && this.tiposPauta.length === 0;
+  }
+
+  get mostrarCamposRectificacion(): boolean {
+    const tipo = this.obtenerTipoPautaSeleccionado();
+    return Boolean(tipo?.requiere_periodo_rectificar);
+  }
+
+  getNombreTipoPauta(tipoPauta: TipoPauta): string {
+    const nombre = String(tipoPauta?.nombre ?? '').trim();
+    const codigo = String(tipoPauta?.codigo ?? '').trim();
+    if (nombre && codigo) {
+      return `${nombre} (${codigo})`;
+    }
+    return nombre || codigo || 'Tipo sin nombre';
   }
 
   private construirPayload(formValue: any): PautaPayload {
@@ -151,10 +177,17 @@ export class PautaDialogComponent implements OnInit {
       descripcion: normalizarString(formValue.descripcion) ?? '',
       dia_vto: Number(formValue.dia_vto ?? 0),
       plazo_vto: Number(formValue.plazo_vto ?? 0),
-      cant_dias_rectifica: Number(formValue.cant_dias_rectifica ?? 0),
-      plazo_mes_rectifica: Number(formValue.plazo_mes_rectifica ?? 0),
-      tipo_pauta: normalizarString(formValue.tipo_pauta) ?? '',
+      tipo_pauta_id: Number(formValue.tipo_pauta_id),
       convenio_id: Number(formValue.convenio_id)
+    };
+
+    const tipoSeleccionado = this.obtenerTipoPautaSeleccionado();
+    if (tipoSeleccionado?.requiere_periodo_rectificar) {
+      payload.cant_dias_rectifica = Number(formValue.cant_dias_rectifica ?? 0);
+      payload.plazo_mes_rectifica = Number(formValue.plazo_mes_rectifica ?? 0);
+    } else {
+      payload.cant_dias_rectifica = null;
+      payload.plazo_mes_rectifica = null;
     }
 
     return payload;
@@ -184,14 +217,77 @@ export class PautaDialogComponent implements OnInit {
       .getCatalogoConvenios()
       .subscribe({
         next: (convenios) => {
-          this.convenios = convenios ?? []
+          this.convenios = convenios ?? [];
         },
         error: (error) => {
-          console.error('Error obteniendo catálogo de convenio', error);
+          console.error('Error obteniendo catálogo de convenios', error);
         },
         complete: () => {
           this.cargandoConvenios = false;
         }
       });
+  }
+
+  private cargarTiposPauta(): void {
+    this.cargandoTiposPauta = true;
+    this.tiposPautaAdminService
+      .getCatalogoTiposPauta()
+      .subscribe({
+        next: (tiposPauta) => {
+          this.tiposPauta = tiposPauta ?? [];
+          this.configurarRectificacionSegunTipo(this.form.get('tipo_pauta_id')?.value, false);
+        },
+        error: (error) => {
+          this.tiposPauta = [];
+          console.error('Error obteniendo catálogo de tipos de pauta', error);
+        },
+        complete: () => {
+          this.cargandoTiposPauta = false;
+        }
+      });
+  }
+
+  private obtenerTipoPautaSeleccionado(): TipoPauta | undefined {
+    const tipoPautaId = Number(this.form.get('tipo_pauta_id')?.value ?? this.data?.tipo_pauta_id ?? 0);
+    if (!Number.isInteger(tipoPautaId) || tipoPautaId <= 0) {
+      return undefined;
+    }
+
+    return this.tiposPauta.find((tipoPauta) => tipoPauta.tipo_pauta_id === tipoPautaId);
+  }
+
+  private configurarRectificacionSegunTipo(tipoPautaId: unknown, limpiarNoRequeridos: boolean): void {
+    const cantDiasCtrl = this.form.get('cant_dias_rectifica');
+    const plazoMesCtrl = this.form.get('plazo_mes_rectifica');
+    if (!cantDiasCtrl || !plazoMesCtrl) {
+      return;
+    }
+
+    const tipoId = Number(tipoPautaId ?? 0);
+    const tipo = this.tiposPauta.find((item) => item.tipo_pauta_id === tipoId);
+    const requiereRectificacion = Boolean(tipo?.requiere_periodo_rectificar);
+
+    if (requiereRectificacion) {
+      if (this.pautaModificable) {
+        cantDiasCtrl.enable({ emitEvent: false });
+        plazoMesCtrl.enable({ emitEvent: false });
+      }
+      cantDiasCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
+      plazoMesCtrl.setValidators([Validators.required, Validators.min(1)]);
+    } else {
+      cantDiasCtrl.clearValidators();
+      plazoMesCtrl.clearValidators();
+
+      if (limpiarNoRequeridos) {
+        cantDiasCtrl.setValue(null, { emitEvent: false });
+        plazoMesCtrl.setValue(null, { emitEvent: false });
+      }
+
+      cantDiasCtrl.disable({ emitEvent: false });
+      plazoMesCtrl.disable({ emitEvent: false });
+    }
+
+    cantDiasCtrl.updateValueAndValidity({ emitEvent: false });
+    plazoMesCtrl.updateValueAndValidity({ emitEvent: false });
   }
 }

@@ -5,7 +5,7 @@ import Swal from 'sweetalert2';
 import { API_URL } from '../app.config';
 import {
   ModuloPauta,
-  PautaTipo,
+  PautaTipoCodigo,
   mapTipoPautaToModulos,
   obtenerEtiquetaTipoPauta
 } from '../models/pauta.model';
@@ -129,8 +129,12 @@ export interface PeriodoSeleccionadoMunicipio {
   convenio_nombre?: string | null;
   pauta_id?: number | null;
   pauta_descripcion?: string | null;
-  tipo_pauta?: PautaTipo | null;
+  tipo_pauta_id?: number | null;
+  tipo_pauta_codigo?: PautaTipoCodigo | null;
+  tipo_pauta_nombre?: string | null;
+  tipo_pauta_descripcion?: string | null;
   tipo_pauta_label?: string | null;
+  requiere_periodo_rectificar?: boolean | null;
   modulos?: ModuloPauta[] | null;
   fecha_inicio?: string | null;
   fecha_fin?: string | null;
@@ -539,23 +543,27 @@ export class MunicipioService {
     const periodos = this.leerPeriodosSeleccionados();
     const key = String(municipioId);
     const valor = periodo.valor ?? this.buildPeriodoValor(periodo);
-    const tipo = periodo.tipo_pauta ?? null;
+    const tipoCodigo = periodo.tipo_pauta_codigo ?? null;
+    const tipoNombre = periodo.tipo_pauta_nombre ?? null;
     const modulos =
       periodo.modulos && periodo.modulos.length
         ? periodo.modulos
-        : tipo
-          ? mapTipoPautaToModulos(tipo)
+        : tipoCodigo
+          ? mapTipoPautaToModulos(tipoCodigo)
           : null;
     const tipoLabel =
       periodo.tipo_pauta_label ??
-      (tipo ? obtenerEtiquetaTipoPauta(tipo) : null);
+      tipoNombre ??
+      periodo.tipo_pauta_descripcion ??
+      (tipoCodigo ? obtenerEtiquetaTipoPauta(tipoCodigo) : null);
 
     periodos[key] = {
       ...periodo,
       valor: valor ?? periodo.valor,
-      tipo_pauta: tipo,
+      tipo_pauta_codigo: tipoCodigo,
+      tipo_pauta_nombre: tipoNombre,
       tipo_pauta_label: tipoLabel,
-      modulos: modulos && modulos.length ? modulos : null
+      modulos: modulos ?? []
     };
     this.escribirPeriodosSeleccionados(periodos);
   }
@@ -593,13 +601,13 @@ export class MunicipioService {
     }
 
     const pautaId = pautaStr !== undefined && pautaStr !== '' ? Number(pautaStr) : null;
-    const tipo = tipoStr && tipoStr !== 'na' ? tipoStr : null;
+    const tipoCodigo = tipoStr && tipoStr !== 'na' ? tipoStr : null;
 
     return {
       ejercicio,
       mes,
       pauta_id: Number.isFinite(pautaId) ? Number(pautaId) : null,
-      tipo_pauta: (tipo as PautaTipo | null) ?? null
+      tipo_pauta_codigo: (tipoCodigo as PautaTipoCodigo | null) ?? null
     };
   }
 
@@ -612,7 +620,7 @@ export class MunicipioService {
       periodo.pauta_id !== undefined && periodo.pauta_id !== null
         ? String(periodo.pauta_id)
         : '0';
-    const tipoSegment = periodo.tipo_pauta ?? 'na';
+    const tipoSegment = periodo.tipo_pauta_codigo ?? 'na';
 
     return `${periodo.ejercicio}_${periodo.mes}_${pautaSegment}_${tipoSegment}`;
   }
@@ -783,28 +791,34 @@ export class MunicipioService {
       convenio_nombre: periodo.convenio_nombre ?? null,
       pauta_id: periodo.pauta_id ?? null,
       pauta_descripcion: periodo.pauta_descripcion ?? null,
-      tipo_pauta: periodo.tipo_pauta ?? null,
+      tipo_pauta_id: (periodo as any).tipo_pauta_id ?? null,
+      tipo_pauta_codigo: (periodo as any).tipo_pauta_codigo ?? (periodo as any).tipo_pauta ?? null,
+      tipo_pauta_nombre: (periodo as any).tipo_pauta_nombre ?? null,
+      tipo_pauta_descripcion: (periodo as any).tipo_pauta_descripcion ?? null,
       tipo_pauta_label: periodo.tipo_pauta_label ?? null,
+      requiere_periodo_rectificar: (periodo as any).requiere_periodo_rectificar ?? null,
       modulos: Array.isArray(periodo.modulos) ? periodo.modulos : null,
       fecha_inicio: periodo.fecha_inicio ?? null,
       fecha_fin: periodo.fecha_fin ?? null
     };
 
-    if ((!base.pauta_id || !base.tipo_pauta) && base.valor) {
+    if ((!base.pauta_id || !base.tipo_pauta_codigo) && base.valor) {
       const parsed = this.parsePeriodoValor(base.valor);
       if (parsed) {
         base.pauta_id = base.pauta_id ?? (parsed.pauta_id ?? null);
-        base.tipo_pauta = base.tipo_pauta ?? (parsed.tipo_pauta ?? null);
+        base.tipo_pauta_codigo = base.tipo_pauta_codigo ?? (parsed.tipo_pauta_codigo ?? null);
       }
     }
 
-    if (base.tipo_pauta && (!base.modulos || base.modulos.length === 0)) {
-      const modulos = mapTipoPautaToModulos(base.tipo_pauta);
-      base.modulos = modulos.length ? modulos : null;
+    if (base.tipo_pauta_codigo && (!base.modulos || base.modulos.length === 0)) {
+      base.modulos = mapTipoPautaToModulos(base.tipo_pauta_codigo);
     }
 
-    if (base.tipo_pauta && !base.tipo_pauta_label) {
-      base.tipo_pauta_label = obtenerEtiquetaTipoPauta(base.tipo_pauta);
+    if (base.tipo_pauta_codigo && !base.tipo_pauta_label) {
+      base.tipo_pauta_label =
+        base.tipo_pauta_nombre ??
+        base.tipo_pauta_descripcion ??
+        obtenerEtiquetaTipoPauta(base.tipo_pauta_codigo);
     }
 
     return base;

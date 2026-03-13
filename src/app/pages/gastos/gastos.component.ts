@@ -768,7 +768,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private esModuloPermitido(): boolean {
-    const tipo = this.periodoSeleccionado?.tipo_pauta ?? null;
+    const tipo = this.periodoSeleccionado?.tipo_pauta_codigo ?? null;
     if (!tipo) {
       return true;
     }
@@ -798,7 +798,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       mes
     };
 
-    const tipo = combinado.tipo_pauta ?? null;
+    const tipo = combinado.tipo_pauta_codigo ?? null;
     if (tipo) {
       let modulos = combinado.modulos ?? null;
       if (!modulos || modulos.length === 0) {
@@ -817,7 +817,7 @@ export class GastosComponent implements OnInit, OnDestroy {
         ejercicio,
         mes,
         pauta_id: combinado.pauta_id ?? undefined,
-        tipo_pauta: tipo ?? undefined
+        tipo_pauta_codigo: tipo ?? undefined
       }) ??
       `${ejercicio}_${mes}`;
 
