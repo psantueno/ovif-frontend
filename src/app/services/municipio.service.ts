@@ -42,8 +42,6 @@ export interface PartidaRecursoResponse {
 export interface PartidaRecursoUpsertPayload {
   partidas_recursos_codigo: number;
   recursos_importe_percibido: number | null;
-  recursos_cantidad_contribuyentes: number | null;
-  recursos_cantidad_pagaron: number | null;
 }
 
 export interface ConceptoRecaudacion {
