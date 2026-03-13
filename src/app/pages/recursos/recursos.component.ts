@@ -14,7 +14,8 @@ import {
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
-import { parseCSV } from '../../core/utils/csvReader.util';
+import { onFileChange, Recursos, RecursosParseados } from '../../core/utils/excelReader.util';
+import { parseRecursos, ParseError } from '../../core/utils/cargaTypesParser';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
 
 type MensajeTipo = 'info' | 'error';
@@ -29,17 +30,7 @@ interface PartidaNode {
   importePercibidoOriginal: number | null;
   importePercibidoTexto: string;
   importePercibidoOriginalTexto: string;
-  cantidadContribuyentes: number | null;
-  cantidadContribuyentesOriginal: number | null;
-  cantidadContribuyentesTexto: string;
-  cantidadContribuyentesOriginalTexto: string;
-  cantidadPagaron: number | null;
-  cantidadPagaronOriginal: number | null;
-  cantidadPagaronTexto: string;
-  cantidadPagaronOriginalTexto: string;
   errorImporte: boolean;
-  errorContribuyentes: boolean;
-  errorPagaron: boolean;
   hijos?: PartidaNode[];
 }
 
@@ -92,7 +83,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
-  erroresPrevisualizacionMasiva: Array<{ row: number; error: string }> = [];
+  erroresPrevisualizacion: ParseError<Recursos>[] = [];
   cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
@@ -187,7 +178,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
       if (!node.carga) {
         return false;
       }
-      if (node.errorImporte || node.errorContribuyentes || node.errorPagaron) {
+      if (node.errorImporte) {
         return true;
       }
       if (node.importePercibidoOriginal !== node.importePercibido) {
@@ -196,10 +187,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
       if (node.soloImporte) {
         return false;
       }
-      return (
-        node.cantidadContribuyentesOriginal !== node.cantidadContribuyentes ||
-        node.cantidadPagaronOriginal !== node.cantidadPagaron
-      );
+      return false
     });
   }
 
@@ -207,10 +195,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.partidasPlanas.forEach(({ node }) => {
       node.importePercibidoOriginal = node.importePercibido;
       node.importePercibidoOriginalTexto = node.importePercibidoTexto;
-      node.cantidadContribuyentesOriginal = node.cantidadContribuyentes;
-      node.cantidadContribuyentesOriginalTexto = node.cantidadContribuyentesTexto;
-      node.cantidadPagaronOriginal = node.cantidadPagaron;
-      node.cantidadPagaronOriginalTexto = node.cantidadPagaronTexto;
     });
     this.cambiosPendientes = false;
   }
@@ -238,30 +222,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  get totalContribuyentes(): number {
-    return this.partidasPlanas.reduce((total, partida) => {
-      if (!partida.node.carga || partida.node.soloImporte) {
-        return total;
-      }
-      if (partida.node.errorContribuyentes || partida.node.cantidadContribuyentes === null) {
-        return total;
-      }
-      return total + Number(partida.node.cantidadContribuyentes);
-    }, 0);
-  }
-
-  get totalPagaron(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga || partida.node.soloImporte) {
-        return total;
-      }
-      if (partida.node.errorPagaron || partida.node.cantidadPagaron === null) {
-        return total;
-      }
-      return total + Number(partida.node.cantidadPagaron);
-    }, 0);
-  }
-
   cambiarVista(vista: 'manual' | 'masiva'): void {
     if (this.vistaActual === vista) {
       return;
@@ -270,116 +230,36 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.vistaActual = vista;
   }
 
-  onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
-    const target = event.target as HTMLInputElement | null;
-    const archivo = target?.files?.[0] ?? null;
+  async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
+      try{
+        const { rows, file } = await onFileChange<Recursos>(event)
 
-    this.resetEstadoCargaMasiva();
-    this.archivoMasivoSeleccionado = null;
+        this.resetEstadoCargaMasiva();
+        this.archivoMasivoSeleccionado = null;
 
-    if (!archivo) {
-      if (input) {
-        input.value = '';
-      }
-      return;
-    }
-
-    this.archivoMasivoSeleccionado = archivo;
-
-    if (!archivo.name.toLowerCase().endsWith('.csv')) {
-      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .csv.');
-      return;
-    }
-
-    this.cargandoArchivoMasivo = true;
-
-    const lector = new FileReader();
-    lector.onload = () => {
-      this.cargandoArchivoMasivo = false;
-      const contenido = typeof lector.result === 'string' ? lector.result : '';
-
-      if (!contenido) {
-        this.erroresCargaMasiva.push('No pudimos leer el archivo seleccionado.');
-        return;
-      }
-
-      this.obtenerFilasCSV(archivo);
-    };
-
-    lector.onerror = () => {
-      this.cargandoArchivoMasivo = false;
-      this.erroresCargaMasiva.push('Ocurrió un error al leer el archivo. Intentá nuevamente.');
-    };
-
-    lector.readAsText(archivo, 'utf-8');
-  }
-
-    async obtenerFilasCSV(archivo: File): Promise<any> {
-      try {
-        const { rows, errores } = await parseCSV(archivo, 'recursos');
-        console.log("rows ", rows);
-        console.log("errores ", errores);
-
-        const partidasPrevisualizacion: PartidaDisplay[] = (() => {
-          // 1. Mapa para acceso rápido por código
-          const rowsMap = new Map<number, {codigo_partida: number; descripcion: string; importe_percibido: number, total_contribuyentes: number, contribuyentes_pagaron: number}>(
-            rows.map(row => [row.codigo_partida, row])
-          );
-
-          // 2. Copia de partidasPlanas con modificación condicional
-          return this.partidasPlanas.map(({ node, nivel }) => {
-            const row = rowsMap.get(node.codigo);
-
-            const nuevoNode: PartidaNode = {
-              ...node,
-              importePercibido: row ? row.importe_percibido : null,
-              importePercibidoOriginal: row ? row.importe_percibido : null,
-              importePercibidoTexto: row ? String(row.importe_percibido) : '',
-              importePercibidoOriginalTexto: row
-                ? String(row.importe_percibido)
-                : '',
-              cantidadContribuyentes: row ? row.total_contribuyentes : null,
-              cantidadContribuyentesOriginal: row ? row.total_contribuyentes : null,
-              cantidadContribuyentesTexto: row ? String(row.total_contribuyentes) : '',
-              cantidadContribuyentesOriginalTexto: row
-                ? String(row.total_contribuyentes)
-                : '',
-              cantidadPagaron: row ? row.contribuyentes_pagaron : null,
-              cantidadPagaronOriginal: row ? row.contribuyentes_pagaron : null,
-              cantidadPagaronTexto: row ? String(row.contribuyentes_pagaron) : '',
-              cantidadPagaronOriginalTexto: row
-                ? String(row.contribuyentes_pagaron)
-                : '',
-            };
-
-            return {
-              nivel,
-              node: nuevoNode
-            };
-          });
-        })()
-
-        const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
-        if(partidasFiltradas.length === 0){
-          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+        if (!file) {
+          if (input) {
+            input.value = '';
+          }
           return;
         }
 
-        if(rows.length === 0){
-          this.erroresCargaMasiva.push('El archivo CSV está vacío o no cumple con la plantilla requerida.');
-          return;
-        }
+        this.archivoMasivoSeleccionado = file
 
-        this.previsualizacionMasiva = partidasFiltradas;
+        const { rows: importesParseados, errors: errores } = parseRecursos(rows)
+        const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesParseados, errores)
+        const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
 
-        const erroresFiltrados = this.limpiarErroresPrevisualizacion(errores);
+        if(importesFiltrado.length === 0){
+            this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+            return;
+          }
 
-        this.asignarErroresPrevisualizacion(erroresFiltrados);
-        this.erroresPrevisualizacionMasiva = erroresFiltrados;
-      }
-      catch (error) {
+        this.previsualizacionMasiva = importesFiltrado;
+        this.erroresPrevisualizacion = errores;
+      }catch (error) {
         this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
-        return [];
+        console.error('Error al procesar CSV:', error);
       }
     }
 
@@ -408,14 +288,14 @@ export class RecursosComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const loadablePartidas = this.previsualizacionMasiva.filter(fila => fila.node.carga);
+      const loadablePartidas = this.previsualizacionMasiva.filter(fila => fila.node.carga && fila.node.importePercibido !== null && !isNaN(fila.node.importePercibido));
 
       const recursosPayload: PartidaRecursoUpsertPayload[] = loadablePartidas.map((fila) => ({
         partidas_recursos_codigo: fila.node.codigo,
         recursos_importe_percibido: Number(fila.node.importePercibido),
-        recursos_cantidad_contribuyentes: fila.node.soloImporte ? null : Number(fila.node.cantidadContribuyentes),
-        recursos_cantidad_pagaron: fila.node.soloImporte ? null : Number(fila.node.cantidadPagaron),
       }));
+
+      console.log("Recursos payload ", recursosPayload)
 
       this.guardando = true;
 
@@ -494,8 +374,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
       .map((node) => ({
         partidas_recursos_codigo: node.codigo,
         recursos_importe_percibido: Number(node.importePercibido),
-        recursos_cantidad_contribuyentes: node.soloImporte ? null : Number(node.cantidadContribuyentes),
-        recursos_cantidad_pagaron: node.soloImporte ? null : (node.cantidadPagaron),
       }));
 
     if (!partidasPayload.length) {
@@ -635,33 +513,15 @@ export class RecursosComponent implements OnInit, OnDestroy {
     const selectionStart = input.selectionStart ?? value.length;
     const selectionEnd = input.selectionEnd ?? value.length;
     const nuevoValor = value.slice(0, selectionStart) + sanitized + value.slice(selectionEnd);
-    this.updateCampo(partida, campo, nuevoValor);
+    this.updateCampo(partida, nuevoValor);
   }
 
-  updateCampo(partida: PartidaNode, campo: CampoEditable, rawValue: string): void {
-    if (campo !== 'importe' && partida.soloImporte) {
-      return;
-    }
-
+  updateCampo(partida: PartidaNode, rawValue: string): void {
     const sanitized = rawValue.replace(',', '.').trim();
     if (sanitized === '') {
-      switch (campo) {
-        case 'importe':
-          partida.importePercibido = null;
-          partida.importePercibidoTexto = '';
-          partida.errorImporte = false;
-          break;
-        case 'contribuyentes':
-          partida.cantidadContribuyentes = null;
-          partida.cantidadContribuyentesTexto = '';
-          partida.errorContribuyentes = false;
-          break;
-        case 'pagaron':
-          partida.cantidadPagaron = null;
-          partida.cantidadPagaronTexto = '';
-          partida.errorPagaron = false;
-          break;
-      }
+      partida.importePercibido = null;
+      partida.importePercibidoTexto = '';
+      partida.errorImporte = false;
       this.actualizarEstadoCambios();
       return;
     }
@@ -669,38 +529,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
     const numericValue = Number(sanitized);
 
     if (Number.isFinite(numericValue)) {
-      switch (campo) {
-        case 'importe':
-          partida.importePercibido = numericValue;
-          partida.importePercibidoTexto = sanitized;
-          partida.errorImporte = false;
-          break;
-        case 'contribuyentes':
-          partida.cantidadContribuyentes = numericValue;
-          partida.cantidadContribuyentesTexto = sanitized;
-          partida.errorContribuyentes = false;
-          break;
-        case 'pagaron':
-          partida.cantidadPagaron = numericValue;
-          partida.cantidadPagaronTexto = sanitized;
-          partida.errorPagaron = false;
-          break;
-      }
+      partida.importePercibido = numericValue;
+      partida.importePercibidoTexto = sanitized;
+      partida.errorImporte = false;
     } else {
-      switch (campo) {
-        case 'importe':
-          partida.importePercibidoTexto = rawValue;
-          partida.errorImporte = true;
-          break;
-        case 'contribuyentes':
-          partida.cantidadContribuyentesTexto = rawValue;
-          partida.errorContribuyentes = true;
-          break;
-        case 'pagaron':
-          partida.cantidadPagaronTexto = rawValue;
-          partida.errorPagaron = true;
-          break;
-      }
+      partida.importePercibidoTexto = rawValue;
+      partida.errorImporte = true;
     }
 
     this.actualizarEstadoCambios();
@@ -755,9 +589,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
   private transformarPartida(partida: PartidaRecursoResponse): PartidaNode {
     const importePercibido = this.parseNumero(partida.recursos_importe_percibido);
-    const cantidadContribuyentes = this.parseNumero(partida.recursos_cantidad_contribuyentes);
-    const cantidadPagaron = this.parseNumero(partida.recursos_cantidad_pagaron);
-    const soloImporte = Boolean(partida.partidas_recursos_sl);
 
     const hijos = Array.isArray(partida.children)
       ? partida.children.map((child) => this.transformarPartida(child))
@@ -767,38 +598,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
       codigo: Number(partida.partidas_recursos_codigo),
       descripcion: partida.partidas_recursos_descripcion ?? 'Partida sin nombre',
       carga: Boolean(partida.partidas_recursos_carga ?? partida.puede_cargar),
-      soloImporte,
+      soloImporte: Boolean(partida.partidas_recursos_sl),
       importePercibido,
       importePercibidoOriginal: importePercibido,
       importePercibidoTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
       importePercibidoOriginalTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
-      cantidadContribuyentes: soloImporte ? null : cantidadContribuyentes,
-      cantidadContribuyentesOriginal: soloImporte ? null : cantidadContribuyentes,
-      cantidadContribuyentesTexto: soloImporte
-        ? ''
-        : cantidadContribuyentes !== null
-        ? String(cantidadContribuyentes)
-        : '',
-      cantidadContribuyentesOriginalTexto: soloImporte
-        ? ''
-        : cantidadContribuyentes !== null
-        ? String(cantidadContribuyentes)
-        : '',
-      cantidadPagaron: soloImporte ? null : cantidadPagaron,
-      cantidadPagaronOriginal: soloImporte ? null : cantidadPagaron,
-      cantidadPagaronTexto: soloImporte
-        ? ''
-        : cantidadPagaron !== null
-        ? String(cantidadPagaron)
-        : '',
-      cantidadPagaronOriginalTexto: soloImporte
-        ? ''
-        : cantidadPagaron !== null
-        ? String(cantidadPagaron)
-        : '',
       errorImporte: false,
-      errorContribuyentes: false,
-      errorPagaron: false,
     };
 
     if (hijos.length) {
@@ -824,7 +629,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   private resetEstadoCargaMasiva(): void {
     this.previsualizacionMasiva = [];
     this.erroresCargaMasiva = [];
-    this.erroresPrevisualizacionMasiva = [];
+    this.erroresPrevisualizacion = [];
     this.cargandoArchivoMasivo = false;
   }
 
@@ -836,7 +641,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
         return;
       }
 
-      if (node.errorImporte || node.errorContribuyentes || node.errorPagaron) {
+      if (node.errorImporte) {
         valido = false;
         return;
       }
@@ -845,19 +650,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
         node.errorImporte = true;
         valido = false;
         return;
-      }
-
-      if(!node.soloImporte && node.importePercibido !== 0 && node.importePercibido !== null){
-        if (node.cantidadContribuyentes === null || node.cantidadContribuyentes <= 0) {
-          node.errorContribuyentes = true;
-          valido = false;
-          return;
-        }
-        if (node.cantidadPagaron === null || node.cantidadPagaron <= 0) {
-          node.errorPagaron = true;
-          valido = false;
-          return;
-        }
       }
     });
 
@@ -1064,7 +856,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     return acumulado;
   }
 
-  private filtrarPartidasPlanas(
+  private filtrarImportesPlanos(
     partidas: PartidaDisplay[]
   ): PartidaDisplay[] {
     const codigosAConservar = new Set<number>();
@@ -1097,38 +889,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
     );
   }
 
-  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
-    errores.forEach(({ row, error }) => {
-      const fila = this.previsualizacionMasiva.find(f => f.node.codigo === row);
-
-      if (fila) fila.node.errorImporte = true;
-    });
-  }
-
-  private limpiarErroresPrevisualizacion(errores: { row: number; error: string }[]): { row: number; error: string }[] {
-    const nuevosErrores: { row: number; error: string }[] = [];
-
-    for(let i = 0; i < errores.length; i++){
-      const { row, error } = errores[i];
-      const fila = this.previsualizacionMasiva.find(f => f.node.codigo === row);
-      if(!fila?.node.carga){
-        continue;
-      }
-
-      if(!fila?.node.soloImporte){
-        nuevosErrores.push({ row, error });
-        continue;
-      }
-
-      if(fila?.node.soloImporte && !(error.includes('contribuyentes') || error.includes('Contribuyentes'))){
-        nuevosErrores.push({ row, error });
-        continue;
-      }
-    }
-
-    return nuevosErrores;
-  }
-
   private actualizarImportePartidas(): void {
     this.previsualizacionMasiva.forEach(({ node }) => {
       if (!node.carga) {
@@ -1137,63 +897,98 @@ export class RecursosComponent implements OnInit, OnDestroy {
       const partidaOriginal = this.partidasPlanas.find(p => p.node.codigo === node.codigo);
       if (partidaOriginal) {
         partidaOriginal.node.importePercibido = Number(node.importePercibido) || null;
-        partidaOriginal.node.importePercibidoTexto = String(node.importePercibido) || '';
+        partidaOriginal.node.importePercibidoTexto = node.importePercibido !== null ? String(node.importePercibido) : '';
         partidaOriginal.node.errorImporte = node.errorImporte;
-        partidaOriginal.node.cantidadContribuyentes = Number(node.cantidadContribuyentes) || null;
-        partidaOriginal.node.cantidadContribuyentesTexto = String(node.cantidadContribuyentes) || '';
-        partidaOriginal.node.errorContribuyentes = node.errorContribuyentes;
-        partidaOriginal.node.cantidadPagaron = Number(node.cantidadPagaron) || null;
-        partidaOriginal.node.cantidadPagaronTexto = String(node.cantidadPagaron) || '';
-        partidaOriginal.node.errorPagaron = node.errorPagaron;
       }
     })
   }
 
-  public obtenerTotalFilasMasivas(): number {
+  get obtenerTotalFilasMasivas(): number {
     return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
   }
 
-  public obtenerTotalImportesMasivos(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga) {
-        return total;
-      }
-      if (partida.node.errorImporte || partida.node.importePercibido === null) {
-        return total;
-      }
-      return total + Number(partida.node.importePercibido);
-    }, 0);
-  }
+  get obtenerTotalImportesMasivos(): number {
+  const total = this.previsualizacionMasiva.reduce((total, partida) => {
+    if (!partida.node.carga) return total;
+    if (partida.node.errorImporte || partida.node.importePercibido === null) return total;
 
-  public obtenerTotalContribuyentesMasivos(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga || partida.node.soloImporte) {
-        return total;
-      }
-      if (partida.node.errorContribuyentes || partida.node.cantidadContribuyentes === null) {
-        return total;
-      }
-      return total + partida.node.cantidadContribuyentes;
-    }, 0);
-  }
+    return total + Number(partida.node.importePercibido);
+  }, 0);
 
-  public obtenerTotalPagaronMasivos(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga || partida.node.soloImporte) {
-        return total;
-      }
-      if (partida.node.errorPagaron || partida.node.cantidadPagaron === null) {
-        return total;
-      }
-      return total + partida.node.cantidadPagaron;
-    }, 0);
-  }
+  return Number(total.toFixed(2));
+}
 
   public obtenerErrorPartida(codigo: number): string | undefined | null {
     const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
 
-    if (fila && fila.node.errorImporte) return this.erroresPrevisualizacionMasiva.find(e => e.row === codigo)?.error;
+    if (fila && fila.node.errorImporte) return this.erroresPrevisualizacion.find(e => e.row.codigo_partida === String(codigo))?.error;
 
     return null;
   }
+
+  private armarPrevisualizacionMasiva(rows: RecursosParseados[], errors: ParseError<Recursos>[]): PartidaDisplay[] {
+        // 1. Mapa para acceso rápido por código
+        const rowsMap = new Map<number, RecursosParseados>(
+          rows.map(row => [row.codigo_partida, row])
+        );
+
+        const errorsMap = new Map<string, ParseError<Recursos>>(
+          errors.map(error => [
+            error.row.codigo_partida,
+            error
+          ])
+        );
+
+        // 2. Copia de partidasPlanas con modificación condicional
+        return this.partidasPlanas.map(({ node, nivel }) => {
+          const row = rowsMap.get(node.codigo);
+          const rowError = errorsMap.get(String(node.codigo))
+
+          if(row){
+            const importeCadena = String(row.importe)
+
+            const nuevoNode: PartidaNode = {
+              ...node,
+              importePercibido: row.importe,
+              importePercibidoOriginal:  row.importe,
+              importePercibidoTexto: importeCadena ?? '',
+              importePercibidoOriginalTexto: importeCadena ?? '',
+              errorImporte: false
+            };
+
+            return {
+              nivel,
+              node: nuevoNode
+            };
+          }else if(rowError){
+            const nuevoNode: PartidaNode = {
+              ...node,
+              importePercibido: 0,
+              importePercibidoOriginal:  0,
+              importePercibidoTexto: rowError.row.importe,
+              importePercibidoOriginalTexto: rowError.row.importe,
+              errorImporte: true
+            };
+
+            return {
+              nivel,
+              node: nuevoNode
+            }
+          } else{
+            const nuevoNode: PartidaNode = {
+              ...node,
+              importePercibido: null,
+              importePercibidoOriginal:  null,
+              importePercibidoTexto: '',
+              importePercibidoOriginalTexto: '',
+              errorImporte: false
+            };
+
+            return {
+              nivel,
+              node: nuevoNode
+            }
+          }
+        });
+    }
 }

@@ -14,7 +14,8 @@ import {
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
-import { parseCSV } from '../../core/utils/csvReader.util';
+import { onFileChange, Gastos, GastosParseados } from '../../core/utils/excelReader.util';
+import { parseGastos, ParseError } from '../../core/utils/cargaTypesParser';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
 
 interface PartidaNode {
@@ -81,6 +82,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
+  erroresPrevisualizacion: ParseError<Gastos>[] = [];
   cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
@@ -227,95 +229,36 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.vistaActual = vista;
   }
 
-  onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
-    const target = event.target as HTMLInputElement | null;
-    const archivo = target?.files?.[0] ?? null;
+  async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
+    try{
+      const { rows, file } = await onFileChange<Gastos>(event)
 
-    this.resetEstadoCargaMasiva();
-    this.archivoMasivoSeleccionado = null;
+      this.resetEstadoCargaMasiva();
+      this.archivoMasivoSeleccionado = null;
 
-    if (!archivo) {
-      if (input) {
-        input.value = '';
-      }
-      return;
-    }
-
-    this.archivoMasivoSeleccionado = archivo;
-
-    if (!archivo.name.toLowerCase().endsWith('.csv')) {
-      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .csv.');
-      return;
-    }
-
-    this.cargandoArchivoMasivo = true;
-
-    const lector = new FileReader();
-    lector.onload = () => {
-      this.cargandoArchivoMasivo = false;
-      this.obtenerFilasCSV(archivo);
-    };
-
-    lector.onerror = () => {
-      this.cargandoArchivoMasivo = false;
-      this.erroresCargaMasiva.push('Ocurrió un error al leer el archivo. Intentá nuevamente.');
-    };
-
-    lector.readAsText(archivo, 'utf-8');
-  }
-
-  erroresPrevisualizacion: any[] = [];
-
-  async obtenerFilasCSV(archivo: File): Promise<any> {
-    try {
-      const { rows, errores } = await parseCSV(archivo);
-      console.log("rows ", rows);
-      console.log("errores ", errores);
-
-      const partidasPrevisualizacion: PartidaDisplay[] = (() => {
-        // 1. Mapa para acceso rápido por código
-        const rowsMap = new Map<number, {codigo_partida: number; descripcion: string; importe_devengado: number}>(
-          rows.map(row => [row.codigo_partida, row])
-        );
-
-        // 2. Copia de partidasPlanas con modificación condicional
-        return this.partidasPlanas.map(({ node, nivel }) => {
-          const row = rowsMap.get(node.codigo);
-
-          const nuevoNode: PartidaNode = {
-            ...node,
-            importe: row ? row.importe_devengado : null,
-            importeOriginal: row ? row.importe_devengado : null,
-            importeTexto: row ? String(row.importe_devengado) : '',
-            importeOriginalTexto: row
-              ? String(row.importe_devengado)
-              : '',
-            tieneError: false
-          };
-
-          return {
-            nivel,
-            node: nuevoNode
-          };
-        });
-      })()
-
-      const partidasFiltradas: PartidaDisplay[] = this.filtrarPartidasPlanas(partidasPrevisualizacion);
-
-      if(partidasFiltradas.length === 0){
-        this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+      if (!file) {
+        if (input) {
+          input.value = '';
+        }
         return;
       }
 
-      this.previsualizacionMasiva = partidasFiltradas;
+      this.archivoMasivoSeleccionado = file
 
-      this.asignarErroresPrevisualizacion(errores);
+      const { rows: importesParseados, errors: errores } = parseGastos(rows)
+      const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesParseados, errores)
+      const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
+
+      if(importesFiltrado.length === 0){
+          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+          return;
+        }
+
+      this.previsualizacionMasiva = importesFiltrado;
       this.erroresPrevisualizacion = errores;
-    }
-    catch (error) {
+    }catch (error) {
       this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
       console.error('Error al procesar CSV:', error);
-      return;
     }
   }
 
@@ -344,7 +287,7 @@ export class GastosComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const loadablePartidas = this.previsualizacionMasiva.filter((fila) => fila.node.carga);
+    const loadablePartidas = this.previsualizacionMasiva.filter((fila) => fila.node.carga && fila.node.importe !== null && !isNaN(fila.node.importe));
 
     const gastosPayload: PartidaGastoUpsertPayload[] = loadablePartidas.map((fila) => ({
       partidas_gastos_codigo: fila.node.codigo,
@@ -679,7 +622,6 @@ export class GastosComponent implements OnInit, OnDestroy {
   private validarImportes(): boolean {
     let valido = true;
     this.partidasPlanas.forEach((partida) => {
-      console.log("Validando importe: ",partida);
       if (!partida.node.carga) {
         return;
       }
@@ -897,7 +839,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     return acumulado;
   }
 
-  private filtrarPartidasPlanas(
+  private filtrarImportesPlanos(
     partidas: PartidaDisplay[]
   ): PartidaDisplay[] {
     const codigosAConservar = new Set<number>();
@@ -905,7 +847,9 @@ export class GastosComponent implements OnInit, OnDestroy {
     for (let i = 0; i < partidas.length; i++) {
       const actual = partidas[i];
 
-      if (actual.node.importe !== null && actual.node.carga) {
+      const nodoValido = actual.node.importe !== null && actual.node.carga && !isNaN(actual.node.importe)
+
+      if (nodoValido) {
         // Conservar el nodo actual
         codigosAConservar.add(actual.node.codigo);
 
@@ -930,14 +874,6 @@ export class GastosComponent implements OnInit, OnDestroy {
     );
   }
 
-  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
-    errores.forEach(({ row, error }) => {
-      const fila = this.previsualizacionMasiva.find(f => f.node.codigo === row);
-
-      if (fila) fila.node.tieneError = true;
-    });
-  }
-
   private actualizarImportesPartidas(){
     this.previsualizacionMasiva.forEach(fila => {
       const partidaPlana = this.partidasPlanas.find(p => p.node.codigo === fila.node.codigo);
@@ -950,7 +886,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.cambiosPendientes = false;
   }
 
-  public obtenerTotalFilasMasivas(): number {
+  get obtenerTotalFilasMasivas(): number {
     return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
   }
 
@@ -966,11 +902,77 @@ export class GastosComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
-  public obtenerErrorPartida(codigo: number): string | null {
+  public obtenerErrorPartida(codigo: number): string | undefined | null {
     const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
 
-    if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row === codigo)?.error;
+    if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row.codigo_partida === String(codigo))?.error
 
     return null;
+  }
+
+  private armarPrevisualizacionMasiva(rows: GastosParseados[], errors: ParseError<Gastos>[]): PartidaDisplay[] {
+      // 1. Mapa para acceso rápido por código
+      const rowsMap = new Map<number, GastosParseados>(
+        rows.map(row => [row.codigo_partida, row])
+      );
+
+      const errorsMap = new Map<string, ParseError<Gastos>>(
+        errors.map(error => [
+          error.row.codigo_partida,
+          error
+        ])
+      );
+
+      // 2. Copia de partidasPlanas con modificación condicional
+      return this.partidasPlanas.map(({ node, nivel }) => {
+        const row = rowsMap.get(node.codigo);
+        const rowError = errorsMap.get(String(node.codigo))
+
+        if(row){
+          const importeCadena = String(row.importe_devengado)
+
+          const nuevoNode: PartidaNode = {
+            ...node,
+            importe: row.importe_devengado,
+            importeOriginal:  row.importe_devengado,
+            importeTexto: importeCadena ?? '',
+            importeOriginalTexto: importeCadena ?? '',
+            tieneError: false
+          };
+
+          return {
+            nivel,
+            node: nuevoNode
+          };
+        }else if(rowError){
+          const nuevoNode: PartidaNode = {
+            ...node,
+            importe: 0,
+            importeOriginal:  0,
+            importeTexto: rowError.row.importe_devengado,
+            importeOriginalTexto: rowError.row.importe_devengado,
+            tieneError: true
+          };
+
+          return {
+            nivel,
+            node: nuevoNode
+          }
+        } else{
+          const nuevoNode: PartidaNode = {
+            ...node,
+            importe: null,
+            importeOriginal:  null,
+            importeTexto: '',
+            importeOriginalTexto: '',
+            tieneError: false
+          };
+
+          return {
+            nivel,
+            node: nuevoNode
+          }
+        }
+      });
   }
 }

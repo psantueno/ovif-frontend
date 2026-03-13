@@ -198,14 +198,14 @@
     <header class="gastos-card__header">
       <div>
         <h2>Importar gastos desde un archivo</h2>
-        <p>Subí un archivo CSV con los importes devengados para este período.</p>
+        <p>Subí un archivo Excel con los importes devengados para este período.</p>
       </div>
     </header>
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
         <h3>Plantilla</h3>
-        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <p>Descargá la plantilla de ejemplo para ver como deberían completarse los importes de tu municipio.</p>
         <a class="plantilla-link" [href]="plantillaGastosExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar plantilla Excel</span>
@@ -221,24 +221,24 @@
       <div class="carga-masiva__upload" aria-live="polite">
         <label class="upload-dropzone" [class.upload-dropzone--file]="archivoMasivoSeleccionado">
           <input
-            #archivoCsv
+            #archivoExcel
             class="upload-dropzone__input"
             type="file"
-            accept=".csv"
-            (change)="onArchivoSeleccionado($event, archivoCsv)"
+            accept=".xls,.xlsx"
+            (change)="onArchivoSeleccionado($event, archivoExcel)"
           />
           <div class="upload-dropzone__content" *ngIf="!archivoMasivoSeleccionado">
             <mat-icon aria-hidden="true">cloud_upload</mat-icon>
-            <p>Arrastrá tu archivo CSV o <span>buscalo en tu equipo</span>.</p>
+            <p>Arrastrá tu archivo .xlsx o <span>buscalo en tu equipo</span>.</p>
             <small>Tamaño recomendado máximo: 5&nbsp;MB.</small>
           </div>
           <div class="upload-dropzone__content upload-dropzone__content--file" *ngIf="archivoMasivoSeleccionado">
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas() }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
             </div>
-            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
+            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
               Reemplazar archivo
             </button>
           </div>
@@ -265,7 +265,7 @@
           <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ obtenerTotalFilasMasivas() }} filas</span>
+          <span>{{ obtenerTotalFilasMasivas }} filas</span>
           <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
         </div>
       </header>
@@ -299,7 +299,7 @@
                   </span>
                 </td>
                 <td *ngIf="partida.node.carga" class="importe">
-                  {{ (partida.node.importe ?? 0) }}
+                  {{ partida.node.importeTexto !== '' ? partida.node.importeTexto : '-' }}
                 </td>
                 <td>
                   <ng-container *ngIf="partida.node.tieneError && partida.node.carga">
@@ -337,7 +337,7 @@
       </button>
       <button
         type="button"
-        (click)="limpiarArchivoMasiva(archivoCsv)"
+        (click)="limpiarArchivoMasiva(archivoExcel)"
         [disabled]="!archivoMasivoSeleccionado"
       >
         Limpiar selección
