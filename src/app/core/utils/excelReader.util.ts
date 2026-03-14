@@ -24,6 +24,34 @@ export interface RecursosParseados {
   importe: number
 }
 
+export interface Remuneraciones {
+  legajo: number,
+  cuil: string,
+  apellido_nombre: string,
+  regimen_laboral: string,
+  categoria: string,
+  sector: string,
+  fecha_ingreso: string,
+  fecha_inicio_servicio: string,
+  fecha_fin_servicio: string | null,
+  basico_cargo_salarial: number,
+  total_remunerativo: number,
+  sac: number,
+  cant_hs_extra_50: number,
+  importe_hs_extra_50: number,
+  cant_hs_extra_100: number,
+  importe_hs_extra_100: number,
+  total_no_remunerativo: number,
+  total_ropa: number,
+  total_bonos: number,
+  asignaciones_familiares: number,
+  total_descuentos: number,
+  total_issn: number,
+  art: number,
+  seguro_vida_obligatorio: number,
+  neto_a_cobrar: number
+}
+
 export interface Recaudaciones {
   cod_concepto: string,
   importe_recaudacion: string,
@@ -34,14 +62,6 @@ export interface RecaudacionesParseados {
   cod_concepto: number,
   importe_recaudacion: number,
   ente_recaudador: string
-}
-
-export interface Remuneraciones {
-
-}
-
-export interface RemuneracionesParseados {
-
 }
 
 interface ExcelParser<T> {
@@ -99,14 +119,23 @@ const normalizeHeader = (header: string) => {
 const transformRowsToJson = <T>(rows: any[][]): T[] => {
   if (!rows.length) return [];
 
-  // 1️⃣ primera fila = headers
-  const headers = rows[0].map(h => normalizeHeader(h));
+  // 🔎 encontrar índice del header real
+  const headerIndex = rows.findIndex(row =>
+    row.every(cell => cell !== null && cell !== undefined && cell !== "")
+  );
 
-  // 2️⃣ resto de filas = data
-  const dataRows = rows.slice(1);
+  if (headerIndex === -1) return [];
 
-  // 3️⃣ construir objetos dinámicamente
-  return dataRows.map(row => {
+  // ✅ headers dinámicos
+  const headers = rows[headerIndex].map(h =>
+    normalizeHeader(String(h))
+  );
+
+   // ✅ datos empiezan después del header
+  const dataRows = rows.slice(headerIndex + 1);
+
+  // construir objetos dinámicamente
+  const objects = dataRows.map(row => {
     const obj: any = {};
 
     headers.forEach((header, index) => {
@@ -115,4 +144,9 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
 
     return obj;
   });
+
+  // 🔎 eliminar objetos que tengan algún valor null
+  return objects.filter(obj =>
+    Object.values(obj).every(value => value !== null)
+  );
 }

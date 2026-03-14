@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
 import { take, finalize } from 'rxjs/operators';
-import { parseCSV } from '../../core/utils/csvReader.util';
 import Swal from 'sweetalert2';
 
 import {
@@ -14,8 +13,10 @@ import {
   RemuneracionUpsertPayload,
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
+import { onFileChange, Remuneraciones } from '../../core/utils/excelReader.util';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
+import { parseRemuneraciones, ParseError } from '../../core/utils/cargaTypesParser';
 
 type MensajeTipo = 'info' | 'error';
 
@@ -62,9 +63,10 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   readonly plantillaRecaudacionesExcelUrl = 'assets/plantillas/plantilla_remuneraciones.xlsx';
   readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
-  previsualizacionMasiva: Remuneracion[] = [];
-  regimenes: string[] = [];
+  previsualizacionMasiva: Remuneraciones[] = [];
+  regimenes: Set<string> = new Set;
   erroresCargaMasiva: string[] = [];
+  erroresPrevisualizacion:ParseError<Remuneraciones>[] = [];
   cargandoArchivoMasivo = false;
 
   guardando = false;
@@ -152,70 +154,41 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     return nombreMes ? `${nombreMes} ${periodo.ejercicio}` : '';
   }
 
-  onArchivoSeleccionado(event: Event, input?: HTMLInputElement): void {
-    const target = event.target as HTMLInputElement | null;
-    const archivo = target?.files?.[0] ?? null;
+  async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
+    try{
+      const { rows, file } = await onFileChange<Remuneraciones>(event)
 
-    this.resetEstadoCargaMasiva();
-    this.archivoMasivoSeleccionado = null;
+      this.resetEstadoCargaMasiva();
+      this.archivoMasivoSeleccionado = null;
 
-    if (!archivo) {
-      if (input) {
-        input.value = '';
+      if (!file) {
+        if (input) {
+          input.value = '';
+        }
+        return;
       }
-      return;
-    }
 
-    this.archivoMasivoSeleccionado = archivo;
+      this.archivoMasivoSeleccionado = file
 
-    if (!archivo.name.toLowerCase().endsWith('.csv')) {
-      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .csv.');
-      return;
-    }
+      const { rows: importesParseados, errors: errores } = parseRemuneraciones(rows)
+      console.log("Filas procesadas: ", importesParseados)
+      console.log("Errores: ", errores)
 
-    this.cargandoArchivoMasivo = true;
-
-    const lector = new FileReader();
-    lector.onload = () => {
-      this.cargandoArchivoMasivo = false;
-      this.obtenerFilasCSV(archivo);
-    };
-
-    lector.onerror = () => {
-      this.cargandoArchivoMasivo = false;
-      this.erroresCargaMasiva.push('Ocurrió un error al leer el archivo. Intentá nuevamente.');
-    };
-
-    lector.readAsText(archivo, 'utf-8');
-  }
-
-  erroresPrevisualizacion: any[] = [];
-
-  async obtenerFilasCSV(archivo: File): Promise<any> {
-    try {
-      const { rows, errores } = await parseCSV(archivo, 'remuneraciones');
-
-      if(rows.length === 0){
+      if(importesParseados.length === 0){
         this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
         return;
       }
 
-      this.previsualizacionMasiva = rows;
-
-      this.regimenes = [...new Set(rows.map(row => row.regimen))];
-
-      this.asignarErroresPrevisualizacion(errores);
-
+      this.obtenerRegimenes(importesParseados);
+      this.previsualizacionMasiva = importesParseados;
       this.erroresPrevisualizacion = errores;
-    }
-    catch (error) {
+    }catch (error) {
       this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
       console.error('Error al procesar CSV:', error);
-      return;
     }
   }
 
-  async insertarRecaudacionesMasivas(): Promise<void> {
+  async insertarRemuneracionesMasivas(): Promise<void> {
     const municipioId = this.municipioActual?.municipio_id ?? null;
     if(!municipioId){
       this.mostrarError('No pudimos identificar el municipio seleccionado.');
@@ -243,6 +216,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     const remuneracionesPayload: RemuneracionUpsertPayload[] = this.previsualizacionMasiva.map((fila) => {
       return this.armarPayload(fila);
     });
+    console.log("Remuneraciones payload: ", remuneracionesPayload)
 
     if(this.esRectificacion){
       Swal.fire({
@@ -317,26 +291,6 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
   get obtenerTotalFilasMasivas(): number {
     return this.previsualizacionMasiva.length;
-  }
-
-  public obtenerErrorRemuneracion(cuil: number): string | null {
-    const fila = this.previsualizacionMasiva.find(f => f.cuil === cuil);
-
-    if (fila && fila.tieneError) return this.erroresPrevisualizacion.find(e => e.row === cuil)?.error;
-
-    return null;
-  }
-
-  obtenerTotalImporte(clave: keyof Remuneracion): number {
-    return this.previsualizacionMasiva.reduce((total, remuneracion) => {
-      if(remuneracion.tieneError || remuneracion[clave] === null){
-        return total;
-      }
-
-      const numberParsedValue: number = Number(remuneracion[clave]) ?? 0;
-
-      return total + numberParsedValue;
-    }, 0);
   }
 
   generarInforme(): void {
@@ -427,9 +381,15 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   }
 
   obtenerCantidadFilasPorRegimen(regimen: string): number {
-    const remuneracionPorRegimen = this.previsualizacionMasiva.filter(rem => rem.regimen === regimen);
+    const remuneracionPorRegimen = this.previsualizacionMasiva.filter(rem => rem.regimen_laboral === regimen);
 
     return remuneracionPorRegimen.length;
+  }
+
+  private obtenerRegimenes(remuneraciones: Remuneraciones[]): void {
+    remuneraciones.forEach((rem) => {
+      this.regimenes.add(rem.regimen_laboral)
+    })
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {
@@ -565,15 +525,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     this.erroresCargaMasiva = [];
     this.erroresPrevisualizacion = [];
     this.cargandoArchivoMasivo = false;
-    this.regimenes = [];
-  }
-
-  private asignarErroresPrevisualizacion(errores: { row: number; error: string }[]): void {
-    errores.forEach(({ row, error }) => {
-      const fila = this.previsualizacionMasiva.find(f => f.cuil === row);
-
-      if (fila) fila.tieneError = true;
-    });
+    this.regimenes.clear()
   }
 
   private esModuloPermitido(): boolean {
@@ -594,26 +546,35 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     return modulos.includes('recaudaciones');
   }
 
-  private armarPayload(remuneracion: Remuneracion): RemuneracionUpsertPayload{
+  private armarPayload(remuneracion: Remuneraciones): RemuneracionUpsertPayload{
     const payload: RemuneracionUpsertPayload = {
       cuil: remuneracion.cuil,
-      legajo: Number(remuneracion.legajo),
-      regimen: remuneracion.regimen,
+      legajo: remuneracion.legajo,
       apellido_nombre: remuneracion.apellido_nombre,
-      situacion_revista: remuneracion.situacion_revista,
-      fecha_alta: remuneracion.fecha_alta,
-      tipo_liquidacion: remuneracion.tipo_liquidacion,
-      remuneracion_neta: Number(remuneracion.remuneracion_neta),
+      regimen_laboral: remuneracion.regimen_laboral,
+      categoria: remuneracion.categoria,
+      sector: remuneracion.sector,
+      fecha_ingreso: remuneracion.fecha_ingreso,
+      fecha_inicio_servicio: remuneracion.fecha_inicio_servicio,
+      basico_cargo_salarial: remuneracion.basico_cargo_salarial,
+      total_remunerativo: remuneracion.total_remunerativo,
+      total_descuentos: remuneracion.total_bonos,
+      total_issn: remuneracion.total_issn,
+      seguro_vida_obligatorio: remuneracion.seguro_vida_obligatorio,
+      neto_a_cobrar: remuneracion.neto_a_cobrar
     }
 
-    if(remuneracion.bonificacion && remuneracion.bonificacion !== 0) payload.bonificacion = Number(remuneracion.bonificacion);
-    if(remuneracion.cant_hs_extra_50 && remuneracion.cant_hs_extra_50 !== 0) payload.cant_hs_extra_50 = Number(remuneracion.cant_hs_extra_50);
-    if(remuneracion.cant_hs_extra_100 && remuneracion.cant_hs_extra_100 !== 0) payload.cant_hs_extra_100 = Number(remuneracion.cant_hs_extra_100);
-    if(remuneracion.importe_hs_extra_50 && remuneracion.importe_hs_extra_50 !== 0) payload.importe_hs_extra_50 = Number(remuneracion.importe_hs_extra_50);
-    if(remuneracion.importe_hs_extra_100 && remuneracion.importe_hs_extra_100 !== 0) payload.importe_hs_extra_100 = Number(remuneracion.importe_hs_extra_100);
-    if(remuneracion.art && remuneracion.art !== 0) payload.art = Number(remuneracion.art);
-    if(remuneracion.seguro_vida && remuneracion.seguro_vida !== 0) payload.seguro_vida = Number(remuneracion.seguro_vida);
-    if(remuneracion.otros_conceptos && remuneracion.otros_conceptos !== 0) payload.otros_conceptos = Number(remuneracion.otros_conceptos);
+    if(remuneracion.fecha_fin_servicio) payload.fecha_fin_servicio = remuneracion.fecha_fin_servicio;
+    if(remuneracion.sac && remuneracion.sac !== 0) payload.sac = remuneracion.sac;
+    if(remuneracion.cant_hs_extra_50 && remuneracion.cant_hs_extra_50 !== 0) payload.cant_hs_extra_50 = remuneracion.cant_hs_extra_50;
+    if(remuneracion.cant_hs_extra_100 && remuneracion.cant_hs_extra_100 !== 0) payload.cant_hs_extra_100 = remuneracion.cant_hs_extra_100;
+    if(remuneracion.importe_hs_extra_50 && remuneracion.importe_hs_extra_50 !== 0) payload.importe_hs_extra_50 = remuneracion.importe_hs_extra_50;
+    if(remuneracion.importe_hs_extra_100 && remuneracion.importe_hs_extra_100 !== 0) payload.importe_hs_extra_100 = remuneracion.importe_hs_extra_100;
+    if(remuneracion.total_no_remunerativo && remuneracion.total_no_remunerativo !== 0) payload.total_no_remunerativo = Number(remuneracion.total_no_remunerativo);
+    if(remuneracion.total_bonos && remuneracion.total_bonos !== 0) payload.total_bonos = Number(remuneracion.total_bonos);
+    if(remuneracion.total_ropa && remuneracion.total_ropa !== 0) payload.total_ropa = Number(remuneracion.total_ropa);
+    if(remuneracion.asignaciones_familiares && remuneracion.asignaciones_familiares !== 0) payload.asignaciones_familiares = remuneracion.asignaciones_familiares;
+    if(remuneracion.art && remuneracion.art !== 0) payload.art = remuneracion.art;
 
     return payload;
   }
