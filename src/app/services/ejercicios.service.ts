@@ -5,7 +5,7 @@ import { Observable, throwError, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
   ModuloPauta,
-  PautaTipo,
+  PautaTipoCodigo,
   mapTipoPautaToModulos as mapTipoPautaToModulosUtil,
   obtenerEtiquetaTipoPauta as obtenerEtiquetaTipoPautaUtil
 } from '../models/pauta.model';
@@ -21,8 +21,12 @@ export interface EjercicioMes {
   pauta_id?: number | null;
   createdAt?: string;
   updatedAt?: string;
-  tipo_pauta?: PautaTipo | null;
+  tipo_pauta_id?: number | null;
+  tipo_pauta_codigo?: PautaTipoCodigo | null;
+  tipo_pauta_nombre?: string | null;
+  tipo_pauta_descripcion?: string | null;
   tipo_pauta_label?: string | null;
+  requiere_periodo_rectificar?: boolean | null;
 }
 
 export interface EjerciciosPageResponse {
@@ -55,24 +59,33 @@ export interface ConvenioOption {
 export interface PautaConvenioOption {
   id: number;
   descripcion: string;
-  tipo_pauta?: PautaTipo | null;
+  tipo_pauta_id?: number | null;
+  tipo_pauta_codigo?: PautaTipoCodigo | null;
+  tipo_pauta_nombre?: string | null;
+  tipo_pauta_descripcion?: string | null;
   tipo_pauta_label?: string | null;
+  requiere_periodo_rectificar?: boolean | null;
 }
 
 export interface PautaConvenioParametros {
   dia_vto: number | null;
   plazo_vto: number | null;
+  tipo_pauta_id?: number | null;
+  tipo_pauta_codigo?: PautaTipoCodigo | null;
+  tipo_pauta_nombre?: string | null;
+  tipo_pauta_descripcion?: string | null;
+  requiere_periodo_rectificar?: boolean | null;
+  cant_dias_rectifica?: number | null;
+  plazo_mes_rectifica?: number | null;
 }
 
 export interface ModuloCerrado {
-  ejercicio: number,
-  mes: number,
-  modulo: string
+  ejercicio: number;
+  mes: number;
+  modulo: string;
 }
 
-export interface InformesFiltrosResponse {
-
-}
+export interface InformesFiltrosResponse {}
 
 export interface EjerciciosSelectOption {
   ejercicio: number;
@@ -130,9 +143,7 @@ export class EjerciciosService {
 
     return this.http
       .get<ModuloCerrado[]>(`${this.baseUrl}/informes/filtros`, { params })
-      .pipe(
-        catchError((error) => throwError(() => error))
-      );
+      .pipe(catchError((error) => throwError(() => error)));
   }
 
   descargarInformeModulo(params: { municipio_id: number; ejercicio: number; mes: number; modulo: string }): Observable<HttpResponse<Blob>> {
@@ -145,9 +156,7 @@ export class EjerciciosService {
 
     return this.http
       .get(`${this.baseUrl}/informes/download`, { params: httpParams, responseType: 'blob', observe: 'response' })
-      .pipe(
-        catchError((error) => throwError(() => error))
-      );
+      .pipe(catchError((error) => throwError(() => error)));
   }
 
   crearEjercicio(payload: CreateEjercicioPayload): Observable<EjercicioMes> {
@@ -201,11 +210,7 @@ export class EjerciciosService {
     );
   }
 
-  descargarInformePDF(
-    downloadUrl: string,
-    municipioId: number
-  ): Observable<HttpResponse<Blob>> {
-
+  descargarInformePDF(downloadUrl: string, municipioId: number): Observable<HttpResponse<Blob>> {
     if (!municipioId) {
       return throwError(() => new Error('Municipio no seleccionado'));
     }
@@ -237,9 +242,35 @@ export class EjerciciosService {
       data?.descripcion ??
       null;
 
-    const tipoPauta = (data?.tipo_pauta ??
-      data?.PautaConvenio?.tipo_pauta ??
-      null) as PautaTipo | null;
+    const tipoPautaId = this.toOptionalNumber(
+      data?.tipo_pauta_id ??
+      data?.PautaConvenio?.tipo_pauta_id ??
+      data?.PautaConvenio?.TipoPauta?.tipo_pauta_id
+    );
+
+    const tipoPautaCodigo = (
+      data?.tipo_pauta_codigo ??
+      data?.PautaConvenio?.tipo_pauta_codigo ??
+      data?.PautaConvenio?.TipoPauta?.codigo ??
+      null
+    ) as PautaTipoCodigo | null;
+
+    const tipoPautaNombre =
+      data?.tipo_pauta_nombre ??
+      data?.PautaConvenio?.tipo_pauta_nombre ??
+      data?.PautaConvenio?.TipoPauta?.nombre ??
+      null;
+
+    const tipoPautaDescripcion =
+      data?.tipo_pauta_descripcion ??
+      data?.PautaConvenio?.tipo_pauta_descripcion ??
+      data?.PautaConvenio?.TipoPauta?.descripcion ??
+      null;
+
+    const requierePeriodoRectificar = data?.requiere_periodo_rectificar ??
+      data?.PautaConvenio?.requiere_periodo_rectificar ??
+      data?.PautaConvenio?.TipoPauta?.requiere_periodo_rectificar ??
+      null;
 
     return {
       ejercicio: Number(data?.ejercicio) || 0,
@@ -248,12 +279,22 @@ export class EjerciciosService {
       fecha_fin: this.toDateString(data?.fecha_fin),
       convenio: convenioNombre ?? data?.convenio ?? data?.convenio_id ?? null,
       pauta: pautaDescripcion ?? data?.pauta ?? data?.pauta_id ?? null,
-      convenio_id: this.toOptionalNumber(data?.convenio_id ?? data?.Convenio?.id),
-      pauta_id: this.toOptionalNumber(data?.pauta_id ?? data?.PautaConvenio?.id),
+      convenio_id: this.toOptionalNumber(data?.convenio_id ?? data?.Convenio?.convenio_id),
+      pauta_id: this.toOptionalNumber(data?.pauta_id ?? data?.PautaConvenio?.pauta_id),
       createdAt: data?.createdAt ?? data?.created_at ?? undefined,
       updatedAt: data?.updatedAt ?? data?.updated_at ?? undefined,
-      tipo_pauta: tipoPauta,
-      tipo_pauta_label: obtenerEtiquetaTipoPautaUtil(tipoPauta)
+      tipo_pauta_id: tipoPautaId,
+      tipo_pauta_codigo: tipoPautaCodigo,
+      tipo_pauta_nombre: tipoPautaNombre,
+      tipo_pauta_descripcion: tipoPautaDescripcion,
+      tipo_pauta_label:
+        tipoPautaNombre ??
+        tipoPautaDescripcion ??
+        obtenerEtiquetaTipoPautaUtil(tipoPautaCodigo),
+      requiere_periodo_rectificar:
+        requierePeriodoRectificar === null || requierePeriodoRectificar === undefined
+          ? null
+          : Boolean(requierePeriodoRectificar)
     };
   }
 
@@ -266,20 +307,69 @@ export class EjerciciosService {
   }
 
   private normalizePauta(data: any): PautaConvenioOption {
-    const tipoPauta = (data?.tipo_pauta ?? null) as PautaTipo | null;
+    const tipoPautaId = this.toOptionalNumber(
+      data?.tipo_pauta_id ??
+      data?.TipoPauta?.tipo_pauta_id
+    );
+
+    const tipoPautaCodigo = (
+      data?.tipo_pauta_codigo ??
+      data?.TipoPauta?.codigo ??
+      null
+    ) as PautaTipoCodigo | null;
+
+    const tipoPautaNombre =
+      data?.tipo_pauta_nombre ??
+      data?.TipoPauta?.nombre ??
+      null;
+
+    const tipoPautaDescripcion =
+      data?.tipo_pauta_descripcion ??
+      data?.TipoPauta?.descripcion ??
+      null;
+
+    const requierePeriodoRectificar =
+      data?.requiere_periodo_rectificar ??
+      data?.TipoPauta?.requiere_periodo_rectificar ??
+      null;
 
     return {
       id: Number(data?.id ?? data?.pauta_id) || 0,
       descripcion: data?.descripcion ?? 'Pauta sin descripción',
-      tipo_pauta: tipoPauta,
-      tipo_pauta_label: obtenerEtiquetaTipoPautaUtil(tipoPauta)
+      tipo_pauta_id: tipoPautaId,
+      tipo_pauta_codigo: tipoPautaCodigo,
+      tipo_pauta_nombre: tipoPautaNombre,
+      tipo_pauta_descripcion: tipoPautaDescripcion,
+      tipo_pauta_label:
+        tipoPautaNombre ??
+        tipoPautaDescripcion ??
+        obtenerEtiquetaTipoPautaUtil(tipoPautaCodigo),
+      requiere_periodo_rectificar:
+        requierePeriodoRectificar === null || requierePeriodoRectificar === undefined
+          ? null
+          : Boolean(requierePeriodoRectificar)
     };
   }
 
   private normalizePautaParametros(data: any): PautaConvenioParametros {
+    const tipoPautaCodigo = (data?.tipo_pauta_codigo ?? null) as PautaTipoCodigo | null;
+    const tipoPautaNombre = data?.tipo_pauta_nombre ?? null;
+    const tipoPautaDescripcion = data?.tipo_pauta_descripcion ?? null;
+    const requierePeriodoRectificar = data?.requiere_periodo_rectificar;
+
     return {
       dia_vto: this.toOptionalNumber(data?.dia_vto),
-      plazo_vto: this.toOptionalNumber(data?.plazo_vto)
+      plazo_vto: this.toOptionalNumber(data?.plazo_vto),
+      tipo_pauta_id: this.toOptionalNumber(data?.tipo_pauta_id),
+      tipo_pauta_codigo: tipoPautaCodigo,
+      tipo_pauta_nombre: tipoPautaNombre,
+      tipo_pauta_descripcion: tipoPautaDescripcion,
+      requiere_periodo_rectificar:
+        requierePeriodoRectificar === null || requierePeriodoRectificar === undefined
+          ? null
+          : Boolean(requierePeriodoRectificar),
+      cant_dias_rectifica: this.toOptionalNumber(data?.cant_dias_rectifica),
+      plazo_mes_rectifica: this.toOptionalNumber(data?.plazo_mes_rectifica)
     };
   }
 
@@ -331,21 +421,21 @@ export class EjerciciosService {
     return '';
   }
 
-  mapTipoPautaToModulos(tipo: PautaTipo | null | undefined): ModuloPauta[] {
+  mapTipoPautaToModulos(tipo: PautaTipoCodigo | null | undefined): ModuloPauta[] {
     return mapTipoPautaToModulosUtil(tipo);
   }
 
   filtrarEjerciciosPorTipoPauta(
     ejercicios: EjercicioMes[],
-    tipo: PautaTipo | null | undefined
+    tipo: PautaTipoCodigo | null | undefined
   ): EjercicioMes[] {
     if (!tipo) {
       return ejercicios;
     }
-    return ejercicios.filter((item) => (item.tipo_pauta ?? null) === tipo);
+    return ejercicios.filter((item) => (item.tipo_pauta_codigo ?? null) === tipo);
   }
 
-  obtenerEtiquetaTipoPauta(tipo: PautaTipo | null | undefined): string | null {
+  obtenerEtiquetaTipoPauta(tipo: PautaTipoCodigo | null | undefined): string | null {
     return obtenerEtiquetaTipoPautaUtil(tipo);
   }
 }

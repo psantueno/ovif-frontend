@@ -1,21 +1,22 @@
-export type PautaTipo = 'gastos_recursos' | 'recaudaciones_remuneraciones' | 'recaudaciones_personal' | string;
+export type PautaTipoCodigo = 'gastos_recursos' | 'recaudaciones_remuneraciones' | string;
 export type ModuloPauta = 'gastos' | 'recursos' | 'recaudaciones' | 'remuneraciones';
 
-const TIPO_PAUTA_LABELS: Record<string, string> = {
-  gastos_recursos: 'Gastos y Recursos',
-  recaudaciones_remuneraciones: 'Recaudaciones y Remuneraciones',
-  recaudaciones_personal: 'Recaudaciones y Remuneraciones'
-};
+export interface PautaTipoMetadata {
+  tipo_pauta_id: number | null;
+  tipo_pauta_codigo: PautaTipoCodigo | null;
+  tipo_pauta_nombre?: string | null;
+  tipo_pauta_descripcion?: string | null;
+  requiere_periodo_rectificar?: boolean | null;
+}
 
-export function obtenerEtiquetaTipoPauta(tipo: PautaTipo | null | undefined): string | null {
+export function obtenerEtiquetaTipoPauta(tipo: PautaTipoCodigo | null | undefined): string | null {
   if (!tipo) {
     return null;
   }
-  const label = TIPO_PAUTA_LABELS[tipo];
-  return label ?? formatearSlug(tipo);
+  return String(tipo);
 }
 
-export function mapTipoPautaToModulos(tipo: PautaTipo | null | undefined): ModuloPauta[] {
+export function mapTipoPautaToModulos(tipo: PautaTipoCodigo | null | undefined): ModuloPauta[] {
   if (!tipo) {
     return [];
   }
@@ -24,19 +25,9 @@ export function mapTipoPautaToModulos(tipo: PautaTipo | null | undefined): Modul
     return ['gastos', 'recursos'];
   }
 
-  if (tipo === 'recaudaciones_remuneraciones' || tipo === 'recaudaciones_personal') {
+  if (tipo === 'recaudaciones_remuneraciones') {
     return ['recaudaciones', 'remuneraciones'];
   }
 
   return [];
-}
-
-function formatearSlug(value: string): string {
-  return value
-    .split('_')
-    .map((chunk) => {
-      const lowerChunk = chunk.toLowerCase();
-      return lowerChunk.charAt(0).toUpperCase() + lowerChunk.slice(1);
-    })
-    .join(' ');
 }

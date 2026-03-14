@@ -238,7 +238,7 @@ export class PautasComponent implements OnInit {
             this.enviando = false;
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el convenio.');
+            const message = this.resolveErrorMessage(error, 'No se pudo eliminar la pauta.');
             Swal.fire({
               toast: true,
               position: 'top-end',
@@ -259,6 +259,24 @@ export class PautasComponent implements OnInit {
 
   estaEliminando(id: number): boolean {
     return this.eliminando.has(id);
+  }
+
+  getNombreTipoPauta(pauta: Pauta): string {
+    const nombre = String(pauta?.tipo_pauta_nombre ?? '').trim();
+    if (nombre.length > 0) {
+      return nombre;
+    }
+
+    const codigo = String(pauta?.tipo_pauta_codigo ?? '').trim();
+    if (codigo.length > 0) {
+      return codigo;
+    }
+
+    if (pauta?.tipo_pauta_id) {
+      return `Tipo #${pauta.tipo_pauta_id}`;
+    }
+
+    return 'Tipo sin descripción';
   }
 
   private cargarCatalogo(): void {
