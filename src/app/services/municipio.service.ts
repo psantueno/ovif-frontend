@@ -563,7 +563,7 @@ export class MunicipioService {
       tipo_pauta_codigo: tipoCodigo,
       tipo_pauta_nombre: tipoNombre,
       tipo_pauta_label: tipoLabel,
-      modulos: modulos ?? []
+      modulos: modulos
     };
     this.escribirPeriodosSeleccionados(periodos);
   }

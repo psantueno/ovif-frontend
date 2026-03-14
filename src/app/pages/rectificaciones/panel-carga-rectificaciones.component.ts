@@ -183,10 +183,13 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     }
 
     const valor = this.periodoActivo.valor ?? this.municipioService.buildPeriodoValor(this.periodoActivo);
+    const modulosDerivados = this.periodoActivo.tipo_pauta_codigo
+      ? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta_codigo)
+      : null;
     const periodo: PeriodoSeleccionadoMunicipio = {
       ...this.periodoActivo,
       valor: valor ?? undefined,
-      modulos: this.periodoActivo.modulos ?? this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta_codigo)
+      modulos: this.periodoActivo.modulos ?? modulosDerivados
     };
 
     this.periodoPersistido = periodo;
@@ -208,10 +211,13 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     }
 
     if (this.esModuloControlado(modulo) && !this.isModuloHabilitado(modulo)) {
+      const tipoCodigo = this.periodoActivo?.tipo_pauta_codigo ?? null;
       Swal.fire({
         icon: 'info',
         title: 'Pauta no habilitada',
-        text: 'La pauta seleccionada no habilita este módulo. Elegí otra combinación.',
+        text: !tipoCodigo
+          ? 'El período seleccionado no tiene tipo de pauta asociado. No se puede operar.'
+          : 'No hay módulos operativos implementados para el tipo de pauta seleccionado.',
         confirmButtonText: 'Aceptar',
         confirmButtonColor: '#3085d6',
       });
@@ -233,9 +239,12 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     if (!this.ejercicioMes) {
       return 'Seleccioná un periodo para ver los módulos habilitados.';
     }
+    if (!this.periodoActivo?.tipo_pauta_codigo) {
+      return 'El período seleccionado no tiene tipo de pauta asociado.';
+    }
     const modulos = this.modulosHabilitados;
     if (!modulos || modulos.length === 0) {
-      return 'No hay módulos habilitados para el tipo de pauta seleccionado.';
+      return 'No hay módulos operativos implementados para el tipo de pauta seleccionado.';
     }
     return `Módulos habilitados: ${modulos.map((mod) => this.formatearNombreModulo(mod)).join(', ')}`;
   }
@@ -244,8 +253,14 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     if (!this.ejercicioMes) {
       return false;
     }
+    if (!this.periodoActivo?.tipo_pauta_codigo) {
+      return false;
+    }
     const modulos = this.modulosHabilitados;
-    return Array.isArray(modulos) && modulos.includes(modulo);
+    if (!Array.isArray(modulos) || modulos.length === 0) {
+      return false;
+    }
+    return modulos.includes(modulo);
   }
 
   private obtenerModulosPermitidos(tipo: string | null | undefined): ModuloPauta[] {
@@ -320,7 +335,7 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
       fecha_inicio: item?.fecha_inicio ?? item?.fecha_inicio_oficial ?? null,
       fecha_fin: item?.fecha_fin ?? item?.fecha_fin_oficial ?? null,
       fecha_cierre: item?.fecha_cierre ?? null,
-      modulos: this.obtenerModulosPermitidos(tipoPautaCodigo)
+      modulos: tipoPautaCodigo ? this.obtenerModulosPermitidos(tipoPautaCodigo) : null
     };
 
     const valor = this.municipioService.buildPeriodoValor(metadata) ?? `${ejercicio}_${mes}`;
