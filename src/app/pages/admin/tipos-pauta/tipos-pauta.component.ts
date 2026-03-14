@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import Swal from 'sweetalert2';
+import { finalize } from 'rxjs/operators';
 
 import { AdminBreadcrumb, AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { TipoPauta, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
@@ -171,6 +172,11 @@ export class TiposPautaComponent implements OnInit {
         limite: this.pageSize,
         search: this.searchTerm.trim() || null
       })
+      .pipe(
+        finalize(() => {
+          this.cargandoLista = false;
+        })
+      )
       .subscribe({
         next: (response) => {
           const datos = Array.isArray(response?.data) ? response.data : [];
@@ -201,9 +207,6 @@ export class TiposPautaComponent implements OnInit {
             background: '#fee2e2',
             color: '#7f1d1d'
           });
-        },
-        complete: () => {
-          this.cargandoLista = false;
         }
       });
   }
