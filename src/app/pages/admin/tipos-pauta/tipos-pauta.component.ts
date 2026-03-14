@@ -75,7 +75,7 @@ export class TiposPautaComponent implements OnInit {
   }
 
   limpiarBuscador(): void {
-    if (!this.searchTerm.trim()) return;
+    if (!this.searchTerm) return;
     this.searchTerm = '';
     this.pageIndex = 0;
     this.cargarTiposPauta();
