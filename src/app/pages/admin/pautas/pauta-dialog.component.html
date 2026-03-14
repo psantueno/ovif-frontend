@@ -111,7 +111,7 @@
     <mat-form-field appearance="fill">
       <mat-label>Plazo de mes para rectificar</mat-label>
       <mat-hint>Cantidad en meses</mat-hint>
-      <input matInput type="number" formControlName="plazo_mes_rectifica" min="1" />
+      <input matInput type="number" formControlName="plazo_mes_rectifica" />
       <mat-error *ngIf="form.get('plazo_mes_rectifica')?.hasError('required') && form.get('plazo_mes_rectifica')?.touched">
         Este campo es obligatorio
       </mat-error>

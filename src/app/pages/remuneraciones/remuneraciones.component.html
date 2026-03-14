@@ -32,14 +32,14 @@
     <header class="remuneraciones-card__header">
       <div>
         <h2>Importar remuneraciones desde un archivo</h2>
-        <p>Subí un archivo CSV con los importes para este período.</p>
+        <p>Subí un archivo Excel con los importes para este período.</p>
       </div>
     </header>
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
         <h3>Plantilla</h3>
-        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <p>Descargá la plantilla de ejemplo para ver como deberían completarse los importes de tu municipio.</p>
         <a class="plantilla-link" [href]="plantillaRecaudacionesExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar plantilla Excel</span>
@@ -55,15 +55,15 @@
       <div class="carga-masiva__upload" aria-live="polite">
         <label class="upload-dropzone" [class.upload-dropzone--file]="archivoMasivoSeleccionado">
           <input
-            #archivoCsv
+            #archivoExcel
             class="upload-dropzone__input"
             type="file"
-            accept=".csv"
-            (change)="onArchivoSeleccionado($event, archivoCsv)"
+            accept=".xlsx, .xls"
+            (change)="onArchivoSeleccionado($event, archivoExcel)"
           />
           <div class="upload-dropzone__content" *ngIf="!archivoMasivoSeleccionado">
             <mat-icon aria-hidden="true">cloud_upload</mat-icon>
-            <p>Arrastrá tu archivo CSV o <span>buscalo en tu equipo</span>.</p>
+            <p>Arrastrá tu archivo .xlsx o <span>buscalo en tu equipo</span>.</p>
             <small>Tamaño recomendado máximo: 5&nbsp;MB.</small>
           </div>
           <div class="upload-dropzone__content upload-dropzone__content--file" *ngIf="archivoMasivoSeleccionado">
@@ -72,7 +72,7 @@
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
               <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
             </div>
-            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
+            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
               Reemplazar archivo
             </button>
           </div>
@@ -116,7 +116,7 @@
         <h3 class="preview-errors-title">Errores en la carga masiva</h3>
         <ng-container *ngFor="let error of erroresPrevisualizacion">
           <div class="preview-errors-item">
-            <p class="preview-errors-item-bold">CUIL {{ error.row }}:</p>
+            <p class="preview-errors-item-bold">CUIL {{ error.row.cuil }}:</p>
             <p>{{ error.error }}</p>
           </div>
         </ng-container>
@@ -126,7 +126,7 @@
     <div class="carga-masiva__acciones acciones acciones--masiva">
       <button
         type="button"
-        (click)="insertarRecaudacionesMasivas()"
+        (click)="insertarRemuneracionesMasivas()"
         [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
@@ -134,7 +134,7 @@
       </button>
       <button
         type="button"
-        (click)="limpiarArchivoMasiva(archivoCsv)"
+        (click)="limpiarArchivoMasiva(archivoExcel)"
         [disabled]="!archivoMasivoSeleccionado"
       >
         Limpiar selección

@@ -80,22 +80,31 @@ export interface Remuneracion {
 }
 
 export interface RemuneracionUpsertPayload {
-  regimen: string;
-  cuil: number;
-  legajo: number;
-  apellido_nombre: string;
-  situacion_revista: string;
-  fecha_alta: string;
-  remuneracion_neta: number;
-  tipo_liquidacion: string;
-  bonificacion?: number;
-  cant_hs_extra_50?: number;
-  cant_hs_extra_100?: number;
-  importe_hs_extra_50?: number;
-  importe_hs_extra_100?: number;
-  art?: number;
-  seguro_vida?: number;
-  otros_conceptos?: number;
+  legajo: number,
+  cuil: string,
+  apellido_nombre: string,
+  regimen_laboral: string,
+  categoria: string,
+  sector: string,
+  fecha_ingreso: string,
+  fecha_inicio_servicio: string,
+  fecha_fin_servicio?: string | null,
+  basico_cargo_salarial: number,
+  total_remunerativo: number,
+  sac?: number,
+  cant_hs_extra_50?: number,
+  importe_hs_extra_50?: number,
+  cant_hs_extra_100?: number,
+  importe_hs_extra_100?: number,
+  total_no_remunerativo?: number,
+  total_ropa?: number,
+  total_bonos?: number,
+  asignaciones_familiares?: number,
+  total_descuentos: number,
+  total_issn: number,
+  art?: number,
+  seguro_vida_obligatorio: number,
+  neto_a_cobrar: number
 }
 
 export interface MunicipioSelectOption {
