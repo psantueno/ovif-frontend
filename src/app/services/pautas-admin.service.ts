@@ -4,37 +4,41 @@ import { API_URL } from '../app.config';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-export interface Pauta{
-  pauta_id: number,
-  convenio_id: number,
-  convenio_nombre: string,
-  descripcion: string,
-  cant_dias_rectifica: number,
-  plazo_mes_rectifica: number,
-  dia_vto: number,
-  plazo_vto: number,
-  tipo_pauta: string,
-  modificable: boolean,
-  fecha_creacion?: string,
-  fecha_actualizacion?: string,
+export interface Pauta {
+  pauta_id: number;
+  convenio_id: number;
+  convenio_nombre: string;
+  descripcion: string;
+  cant_dias_rectifica: number | null;
+  plazo_mes_rectifica: number | null;
+  dia_vto: number;
+  plazo_vto: number;
+  tipo_pauta_id: number;
+  tipo_pauta_codigo: string;
+  tipo_pauta_nombre: string;
+  tipo_pauta_descripcion: string;
+  requiere_periodo_rectificar: boolean;
+  modificable: boolean;
+  fecha_creacion?: string;
+  fecha_actualizacion?: string;
 }
 
 export interface PautaPageResponse {
-  data: Pauta[],
-  total: number,
-  pagina: number,
-  limite: number,
-  totalPaginas?: number
+  data: Pauta[];
+  total: number;
+  pagina: number;
+  limite: number;
+  totalPaginas?: number;
 }
 
 export interface PautaPayload {
-  convenio_id: number,
-  descripcion: string,
-  cant_dias_rectifica: number,
-  plazo_mes_rectifica: number,
-  dia_vto: number,
-  plazo_vto: number,
-  tipo_pauta: string
+  convenio_id: number;
+  descripcion: string;
+  cant_dias_rectifica?: number | null;
+  plazo_mes_rectifica?: number | null;
+  dia_vto: number;
+  plazo_vto: number;
+  tipo_pauta_id: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -105,9 +109,13 @@ export class PautasAdminService {
         descripcion: 'Pauta sin descripción',
         dia_vto: 0,
         plazo_vto: 0,
-        cant_dias_rectifica: 0,
-        plazo_mes_rectifica: 0,
-        tipo_pauta: 'Tipo sin descripción',
+        cant_dias_rectifica: null,
+        plazo_mes_rectifica: null,
+        tipo_pauta_id: 0,
+        tipo_pauta_codigo: '',
+        tipo_pauta_nombre: '',
+        tipo_pauta_descripcion: 'Tipo sin descripción',
+        requiere_periodo_rectificar: false,
         modificable: false,
       };
     }
@@ -116,14 +124,22 @@ export class PautasAdminService {
       pauta_id: Number(data?.pauta_id ?? 0),
       convenio_id: Number(data?.convenio_id ?? 0),
       convenio_nombre: String(data?.convenio_nombre ?? 'Convenio sin nombre'),
-      descripcion: String(data?.descripcion ?? data?.pauta_descripcion ?? 'Pauta sin descripcion'),
+      descripcion: String(data?.descripcion ?? data?.pauta_descripcion ?? 'Pauta sin descripción'),
       dia_vto: Number(data?.dia_vto ?? 0),
       plazo_vto: Number(data?.plazo_vto ?? 0),
-      cant_dias_rectifica: Number(data?.cant_dias_rectifica ?? 0),
-      plazo_mes_rectifica: Number(data?.plazo_mes_rectifica ?? 0),
-      tipo_pauta: String(data?.tipo_pauta ?? 'Tipo sin descripción'),
+      cant_dias_rectifica: data?.cant_dias_rectifica === null || data?.cant_dias_rectifica === undefined
+        ? null
+        : Number(data?.cant_dias_rectifica),
+      plazo_mes_rectifica: data?.plazo_mes_rectifica === null || data?.plazo_mes_rectifica === undefined
+        ? null
+        : Number(data?.plazo_mes_rectifica),
+      tipo_pauta_id: Number(data?.tipo_pauta_id ?? 0),
+      tipo_pauta_codigo: String(data?.tipo_pauta_codigo ?? ''),
+      tipo_pauta_nombre: String(data?.tipo_pauta_nombre ?? data?.tipo_pauta_codigo ?? ''),
+      tipo_pauta_descripcion: String(data?.tipo_pauta_descripcion ?? ''),
+      requiere_periodo_rectificar: Boolean(data?.requiere_periodo_rectificar),
       modificable: data?.modificable ?? false
-    }
+    };
   }
 
   private unwrapResponseArray(response: any): any[] {
@@ -133,8 +149,8 @@ export class PautasAdminService {
     if (Array.isArray(response?.data)) {
       return response.data;
     }
-    if (Array.isArray(response?.convenios)) {
-      return response.convenios;
+    if (Array.isArray(response?.pautas)) {
+      return response.pautas;
     }
     return [];
   }

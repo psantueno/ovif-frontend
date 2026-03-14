@@ -27,6 +27,7 @@ import { PautasComponent } from './pages/admin/pautas/pautas.component';
 import { ConceptosComponent } from './pages/admin/conceptos/conceptos.component';
 import { LogsComponent } from './pages/admin/logs/logs.component';
 import { ConfiguracionParametrosComponent } from './pages/admin/configuracion-parametros/configuracion-parametros.component';
+import { TiposPautaComponent } from './pages/admin/tipos-pauta/tipos-pauta.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -89,6 +90,7 @@ export const routes: Routes = [
       { path: 'admin/convenios', component: ConveniosComponent, canActivate: [AdminGuard] },
       { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] },
       { path: 'admin/conceptos-recaudacion', component: ConceptosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/tipos-pauta', component: TiposPautaComponent, canActivate: [AdminGuard] },
       { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] },
       { path: 'admin/parametros', component: ConfiguracionParametrosComponent, canActivate: [AdminGuard] }
     ]

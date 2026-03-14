@@ -577,7 +577,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   }
 
   private esModuloPermitido(): boolean {
-    const tipo = this.periodoSeleccionado?.tipo_pauta ?? null;
+    const tipo = this.periodoSeleccionado?.tipo_pauta_codigo ?? null;
     if (!tipo) {
       return true;
     }

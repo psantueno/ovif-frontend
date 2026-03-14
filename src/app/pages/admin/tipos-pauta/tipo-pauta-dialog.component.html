@@ -1,0 +1,63 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">{{ data?.tipo_pauta_id ? 'edit' : 'add' }}</mat-icon>
+  {{ data?.tipo_pauta_id ? 'Editar tipo de pauta' : 'Nuevo tipo de pauta' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Código</mat-label>
+    <input matInput formControlName="codigo" placeholder="Ejemplo: gastos_recursos" />
+    <mat-hint>Usá minúsculas, números y guion bajo.</mat-hint>
+    <mat-error *ngIf="form.get('codigo')?.hasError('required') && form.get('codigo')?.touched">
+      El código es obligatorio
+    </mat-error>
+    <mat-error *ngIf="form.get('codigo')?.hasError('pattern') && form.get('codigo')?.touched">
+      Formato inválido. Permitido: a-z, 0-9 y _
+    </mat-error>
+    <mat-error *ngIf="form.get('codigo')?.hasError('maxlength') && form.get('codigo')?.touched">
+      El código no puede superar los 100 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Nombre visible</mat-label>
+    <input matInput formControlName="nombre" placeholder="Ejemplo: Gastos y Recursos" />
+    <mat-error *ngIf="form.get('nombre')?.hasError('required') && form.get('nombre')?.touched">
+      El nombre visible es obligatorio
+    </mat-error>
+    <mat-error *ngIf="form.get('nombre')?.hasError('maxlength') && form.get('nombre')?.touched">
+      El nombre visible no puede superar los 150 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Descripción</mat-label>
+    <textarea matInput rows="4" formControlName="descripcion"
+      placeholder="Texto visible para el usuario"></textarea>
+    <mat-error *ngIf="form.get('descripcion')?.hasError('maxlength') && form.get('descripcion')?.touched">
+      La descripción no puede superar los 1000 caracteres
+    </mat-error>
+  </mat-form-field>
+
+  <mat-slide-toggle formControlName="requiere_periodo_rectificar">
+    Requiere período de rectificación
+  </mat-slide-toggle>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando"
+  >
+    <mat-icon *ngIf="!enviando">save</mat-icon>
+    <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
+    {{ data?.tipo_pauta_id ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>
