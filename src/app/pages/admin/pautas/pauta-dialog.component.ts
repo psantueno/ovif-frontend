@@ -272,8 +272,8 @@ export class PautaDialogComponent implements OnInit {
         cantDiasCtrl.enable({ emitEvent: false });
         plazoMesCtrl.enable({ emitEvent: false });
       }
-      cantDiasCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
-      plazoMesCtrl.setValidators([Validators.required, Validators.min(1)]);
+      //cantDiasCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
+      //plazoMesCtrl.setValidators([Validators.required, Validators.min(0)]);
     } else {
       cantDiasCtrl.clearValidators();
       plazoMesCtrl.clearValidators();
