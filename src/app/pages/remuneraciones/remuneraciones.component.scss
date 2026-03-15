@@ -149,6 +149,46 @@
   gap: 1rem;
 }
 
+.preview-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.preview-summary-card {
+  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
+  border-radius: 10px;
+  padding: 0.7rem;
+  background: rgba(var(--color-primary-rgb), 0.04);
+}
+
+.preview-summary-card--ok {
+  border-color: rgba(var(--color-secondary-rgb), 0.35);
+  background: rgba(var(--color-secondary-rgb), 0.1);
+}
+
+.preview-summary-card--error {
+  border-color: rgba(220, 53, 69, 0.35);
+  background: rgba(220, 53, 69, 0.08);
+}
+
+.preview-summary-card__label {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.66);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.preview-summary-card__value {
+  margin: 0.4rem 0 0;
+  color: var(--color-primary);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
 .preview-summary-title {
   margin: 0;
   font-size: 1.05rem;
@@ -188,6 +228,12 @@
   font-weight: 700;
   color: var(--color-secondary);
   margin: 0;
+}
+
+.preview-summary-item-empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(0, 0, 0, 0.65);
 }
 
 .recaudaciones-form {

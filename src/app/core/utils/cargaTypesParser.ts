@@ -1,10 +1,18 @@
-import { Gastos, GastosParseados, Recursos, RecursosParseados, Remuneraciones } from "./excelReader.util"
+import {
+  ExcelRowWithMetadata,
+  Gastos,
+  GastosParseados,
+  Recursos,
+  RecursosParseados,
+  Remuneraciones
+} from "./excelReader.util"
 import { GastosSchema, RecursosSchema, RemuneracionesSchema } from "./cargaValidator"
 import { ZodError } from "zod"
 
 export interface ParseError<T> {
   row: T,
-  error: string
+  error: string,
+  filaExcel?: number
 }
 
 export interface ParseResponse<T, N>{
@@ -102,6 +110,36 @@ export const parseRemuneraciones = (rows: Remuneraciones[]): ParseResponse<Remun
           error: obtenerMensajeError(result.error)
         }
         errors.push(error)
+    }
+  })
+
+  const parseResponse: ParseResponse<Remuneraciones[], Remuneraciones> = {
+    rows: parsedRemuneraciones,
+    errors: errors
+  }
+
+  return parseResponse
+}
+
+export const parseRemuneracionesConMetadata = (
+  rows: ExcelRowWithMetadata<Remuneraciones>[]
+): ParseResponse<Remuneraciones[], Remuneraciones> => {
+  const parsedRemuneraciones: Remuneraciones[] = []
+  const errors: ParseError<Remuneraciones>[] = []
+
+  rows.forEach(({ row, filaExcel }) => {
+    const result = RemuneracionesSchema.safeParse(row);
+
+    if(result.success){
+      const remuneracionValida: Remuneraciones = { ...result.data }
+      parsedRemuneraciones.push(remuneracionValida)
+    } else {
+      const error: ParseError<Remuneraciones> = {
+        row: row,
+        error: obtenerMensajeError(result.error),
+        filaExcel
+      }
+      errors.push(error)
     }
   })
 

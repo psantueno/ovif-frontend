@@ -53,13 +53,15 @@ export interface Remuneraciones {
 }
 
 export interface Recaudaciones {
-  cod_concepto: string,
+  codigo_tributo: string,
+  descripcion: string,
   importe_recaudacion: string,
   ente_recaudador: string
 }
 
 export interface RecaudacionesParseados {
-  cod_concepto: number,
+  codigo_tributo: number,
+  descripcion: string,
   importe_recaudacion: number,
   ente_recaudador: string
 }
@@ -69,8 +71,25 @@ interface ExcelParser<T> {
   file: File | null
 }
 
+export interface ExcelRowWithMetadata<T> {
+  row: T;
+  filaExcel: number;
+}
+
+interface ExcelParserWithMetadata<T> {
+  rows: ExcelRowWithMetadata<T>[],
+  file: File | null
+}
+
 export const onFileChange = <T>(event: any): Promise<ExcelParser<T>> => {
-  const file = event.target.files[0];
+  const file = event.target.files?.[0] ?? null;
+
+  if (!file) {
+    return Promise.resolve({
+      rows: [],
+      file: null
+    });
+  }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -103,6 +122,48 @@ export const onFileChange = <T>(event: any): Promise<ExcelParser<T>> => {
 
     reader.onerror = reject;
 
+    reader.readAsBinaryString(file);
+  });
+};
+
+export const onFileChangeWithMetadata = <T>(event: any): Promise<ExcelParserWithMetadata<T>> => {
+  const file = event.target.files?.[0] ?? null;
+
+  if (!file) {
+    return Promise.resolve({
+      rows: [],
+      file: null
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e: any) => {
+      try {
+        const binary = e.target.result;
+
+        const workbook = XLSX.read(binary, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, {
+          header: 1,
+          defval: null
+        });
+
+        const rowsWithMetadata = transformRowsToJsonWithMetadata<T>(rows);
+
+        resolve({
+          rows: rowsWithMetadata,
+          file
+        });
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = reject;
     reader.readAsBinaryString(file);
   });
 };
@@ -149,4 +210,50 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
   return objects.filter(obj =>
     Object.values(obj).every(value => value !== null)
   );
+}
+
+const isCellEmpty = (value: any): boolean => {
+  if (value === null || value === undefined) {
+    return true;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() === '';
+  }
+
+  return false;
+}
+
+const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata<T>[] => {
+  if (!rows.length) return [];
+
+  const headerIndex = rows.findIndex(row =>
+    row.every(cell => cell !== null && cell !== undefined && cell !== "")
+  );
+
+  if (headerIndex === -1) return [];
+
+  const headers = rows[headerIndex].map(h =>
+    normalizeHeader(String(h))
+  );
+
+  const dataRows = rows.slice(headerIndex + 1);
+
+  return dataRows.reduce<ExcelRowWithMetadata<T>[]>((acc, row, index) => {
+    if (!row || row.every((cell) => isCellEmpty(cell))) {
+      return acc;
+    }
+
+    const obj: any = {};
+    headers.forEach((header, colIndex) => {
+      obj[header] = row[colIndex] ?? null;
+    });
+
+    acc.push({
+      row: obj as T,
+      filaExcel: headerIndex + index + 2
+    });
+
+    return acc;
+  }, []);
 }
