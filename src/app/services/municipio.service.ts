@@ -45,18 +45,20 @@ export interface PartidaRecursoUpsertPayload {
 }
 
 export interface ConceptoRecaudacion {
-  cod_concepto: number;
+  codigo_tributo: number;
   descripcion: string;
-  partida_recurso_codigo: number;
   importe_recaudacion: number | null;
-  importeOriginal?: number | null;
-  importeTexto?: string | null;
+  ente_recaudador: string;
+  filaExcel?: number;
+  errores?: string[];
   tieneError?: boolean;
 }
 
 export interface ConceptoRecaudacionUpsertPayload {
-  cod_concepto: number;
-  importe_recaudacion: number | null;
+  codigo_tributo: number;
+  descripcion: string;
+  importe_recaudacion: number;
+  ente_recaudador: string;
 }
 
 export interface Remuneracion {

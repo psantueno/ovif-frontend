@@ -13,10 +13,10 @@ import {
   RemuneracionUpsertPayload,
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
-import { onFileChange, Remuneraciones } from '../../core/utils/excelReader.util';
+import { onFileChangeWithMetadata, Remuneraciones } from '../../core/utils/excelReader.util';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
-import { parseRemuneraciones, ParseError } from '../../core/utils/cargaTypesParser';
+import { ParseError, parseRemuneracionesConMetadata } from '../../core/utils/cargaTypesParser';
 
 type MensajeTipo = 'info' | 'error';
 
@@ -154,27 +154,61 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     return nombreMes ? `${nombreMes} ${periodo.ejercicio}` : '';
   }
 
-  async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
-    try{
-      const { rows, file } = await onFileChange<Remuneraciones>(event)
+  get totalFilasDetectadas(): number {
+    return this.previsualizacionMasiva.length + this.erroresPrevisualizacion.length;
+  }
 
-      this.resetEstadoCargaMasiva();
-      this.archivoMasivoSeleccionado = null;
+  get filasCorrectas(): number {
+    return this.previsualizacionMasiva.length;
+  }
+
+  get filasConErrores(): number {
+    return this.erroresPrevisualizacion.length;
+  }
+
+  get tieneErroresPrevisualizacion(): boolean {
+    return this.filasConErrores > 0;
+  }
+
+  get mostrarPrevisualizacionMasiva(): boolean {
+    return this.totalFilasDetectadas > 0;
+  }
+
+  async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
+    const target = event.target as HTMLInputElement | null;
+    const archivo = target?.files?.[0] ?? null;
+
+    this.resetEstadoCargaMasiva();
+    this.archivoMasivoSeleccionado = null;
+
+    if (!archivo) {
+      if (input) {
+        input.value = '';
+      }
+      return;
+    }
+
+    const archivoNombre = archivo.name.toLowerCase();
+    if (!archivoNombre.endsWith('.xlsx') && !archivoNombre.endsWith('.xls')) {
+      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .xlsx o .xls.');
+      return;
+    }
+
+    this.archivoMasivoSeleccionado = archivo;
+    this.cargandoArchivoMasivo = true;
+
+    try{
+      const { rows, file } = await onFileChangeWithMetadata<Remuneraciones>(event);
 
       if (!file) {
-        if (input) {
-          input.value = '';
-        }
+        this.archivoMasivoSeleccionado = null;
+        this.erroresCargaMasiva.push('No se detectó ningún archivo para procesar.');
         return;
       }
 
-      this.archivoMasivoSeleccionado = file
+      const { rows: importesParseados, errors: errores } = parseRemuneracionesConMetadata(rows);
 
-      const { rows: importesParseados, errors: errores } = parseRemuneraciones(rows)
-      console.log("Filas procesadas: ", importesParseados)
-      console.log("Errores: ", errores)
-
-      if(importesParseados.length === 0){
+      if (importesParseados.length === 0 && errores.length === 0) {
         this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
         return;
       }
@@ -182,9 +216,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       this.obtenerRegimenes(importesParseados);
       this.previsualizacionMasiva = importesParseados;
       this.erroresPrevisualizacion = errores;
-    }catch (error) {
-      this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
-      console.error('Error al procesar CSV:', error);
+    } catch (error) {
+      this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo Excel.');
+      console.error('Error al procesar Excel:', error);
+    } finally {
+      this.cargandoArchivoMasivo = false;
     }
   }
 
@@ -290,7 +326,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   }
 
   get obtenerTotalFilasMasivas(): number {
-    return this.previsualizacionMasiva.length;
+    return this.totalFilasDetectadas;
   }
 
   generarInforme(): void {

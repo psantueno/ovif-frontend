@@ -918,6 +918,22 @@ export class RecursosComponent implements OnInit, OnDestroy {
   return Number(total.toFixed(2));
 }
 
+  public formatearImporte(valor: number | null | undefined): string {
+    if (valor === null || valor === undefined) {
+      return '-';
+    }
+
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) {
+      return '-';
+    }
+
+    return numero.toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
   public obtenerErrorPartida(codigo: number): string | undefined | null {
     const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
 

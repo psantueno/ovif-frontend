@@ -69,7 +69,7 @@
       </div>
       <div class="gastos-card__total">
         <span>Total acumulado</span>
-        <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+        <strong>{{ formatearImporte(totalImportes) }}</strong>
       </div>
     </header>
 
@@ -140,7 +140,7 @@
             <tr>
               <td class="total-label">TOTAL</td>
               <td class="total-valor">
-                <strong>{{ totalImportes | number: '1.0-2' }}</strong>
+                <strong>{{ formatearImporte(totalImportes) }}</strong>
               </td>
             </tr>
           </tfoot>
@@ -299,7 +299,7 @@
                   </span>
                 </td>
                 <td *ngIf="partida.node.carga" class="importe">
-                  {{ partida.node.importeTexto !== '' ? partida.node.importeTexto : '-' }}
+                  {{ partida.node.tieneError ? (partida.node.importeTexto !== '' ? partida.node.importeTexto : '-') : formatearImporte(partida.node.importe) }}
                 </td>
                 <td>
                   <ng-container *ngIf="partida.node.tieneError && partida.node.carga">
@@ -318,7 +318,7 @@
             <tr>
               <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
               <td class="total-valor">
-                <strong>{{ obtenerTotalImportesMasivos() | number: '1.0-2' }}</strong>
+                <strong>{{ formatearImporte(obtenerTotalImportesMasivos()) }}</strong>
               </td>
               <td class="total-valor"></td>
             </tr>

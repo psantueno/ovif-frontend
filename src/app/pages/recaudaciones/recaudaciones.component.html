@@ -22,195 +22,28 @@
     </div>
   </section>
 
-  <section
-    class="gastos-tabs"
-    role="tablist"
-    aria-label="Modos de carga de recaudaciones"
-  >
-    <button
-      type="button"
-      id="tab-manual"
-      role="tab"
-      class="gastos-tabs__button"
-      [class.is-active]="vistaActual === 'manual'"
-      [attr.aria-selected]="vistaActual === 'manual'"
-      aria-controls="panel-manual"
-      (click)="cambiarVista('manual')"
-    >
-      <mat-icon aria-hidden="true">edit</mat-icon>
-      <span>Carga manual</span>
-    </button>
-    <button
-      type="button"
-      id="tab-masiva"
-      role="tab"
-      class="gastos-tabs__button"
-      [class.is-active]="vistaActual === 'masiva'"
-      [attr.aria-selected]="vistaActual === 'masiva'"
-      aria-controls="panel-masiva"
-      (click)="cambiarVista('masiva')"
-    >
-      <mat-icon aria-hidden="true">upload_file</mat-icon>
-      <span>Importar desde archivo</span>
-    </button>
-  </section>
-
-  <section
-    class="recaudaciones-card"
-    *ngIf="vistaActual === 'manual'"
-    id="panel-manual"
-    role="tabpanel"
-    aria-labelledby="tab-manual"
-  >
-    <header class="recaudaciones-card__header">
-      <div>
-        <h2>Importes de recaudación</h2>
-        <p>Ingresá los valores correspondientes a cada concepto para el período seleccionado.</p>
-      </div>
-      <div class="recaudaciones-card__total">
-        <span>Total acumulado</span>
-        <strong>{{ totalImportes | number: '1.0-2' }}</strong>
-      </div>
-    </header>
-
-    <form class="recaudaciones-form" (ngSubmit)="onSubmitGuardar()" novalidate>
-      <div class="tabla-wrapper">
-        <table class="recaudaciones-tabla">
-          <thead>
-            <tr>
-              <th>Codigo</th>
-              <th>Concepto</th>
-              <th [style.textAlign]="'center'">Importe</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="cargandoConceptos">
-              <td colspan="2" class="tabla-info">
-                <div class="tabla-loader" role="status" aria-live="polite">
-                  <span class="tabla-loader__spinner" aria-hidden="true"></span>
-                  <span class="tabla-loader__label">Cargando conceptos...</span>
-                </div>
-              </td>
-            </tr>
-            <tr *ngIf="!cargandoConceptos && errorAlCargarConceptos">
-              <td colspan="2" class="tabla-info tabla-info--error">No pudimos obtener los conceptos. Intentá nuevamente.</td>
-            </tr>
-            <tr
-              *ngIf="!cargandoConceptos && !errorAlCargarConceptos && conceptosRecaudacion.length === 0"
-            >
-              <td colspan="2" class="tabla-info">No hay conceptos de recaudaciones disponibles.</td>
-            </tr>
-            <ng-container *ngIf="!cargandoConceptos && !errorAlCargarConceptos">
-              <ng-container *ngFor="let concepto of conceptosRecaudacion">
-                <tr
-                  [class.tiene-error]="concepto.tieneError"
-                >
-                  <td>
-                    {{ concepto.cod_concepto }}
-                  </td>
-                  <td
-                  >
-                    <span
-                      [class.partida-titulo]="false"
-                      [class.partida-item]="true"
-                    >
-                      {{ concepto.descripcion }}
-                    </span>
-                  </td>
-                  <td class="importe">
-                    <input
-                      type="text"
-                      class="importe-input"
-                      [class.input-error]="concepto.tieneError"
-                      [name]="'importe_' + concepto.cod_concepto"
-                      [attr.id]="'importe_' + concepto.cod_concepto"
-                      [readOnly]="mesCerrado"
-                      inputmode="decimal"
-                      (keydown)="permitirSoloNumeros($event)"
-                      (paste)="sanearPegado($event, concepto.cod_concepto)"
-                      [(ngModel)]="concepto.importeTexto"
-                      (ngModelChange)="updateImporte(concepto.cod_concepto, $event)"
-                      [ngModelOptions]="{ standalone: true }"
-                    />
-                  </td>
-                </tr>
-              </ng-container>
-            </ng-container>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td class="total-label" colspan="2">TOTAL</td>
-              <td class="total-valor">
-                <strong>{{ totalImportes | number: '1.0-2' }}</strong>
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      <div class="acciones">
-        <button type="submit" [disabled]="mesCerrado || cargandoConceptos || errorAlCargarConceptos || guardando">
-          <mat-icon aria-hidden="true">save</mat-icon>
-          <ng-container *ngIf="!guardando; else guardandoTexto">
-            <span>Guardar cambios</span>
-          </ng-container>
-          <ng-template #guardandoTexto>
-            <span>Guardando...</span>
-          </ng-template>
-        </button>
-        <button
-          type="button"
-          (click)="generarInforme()"
-          [disabled]="mesCerrado || cargandoConceptos || errorAlCargarConceptos || guardando || descargandoInforme"
-        >
-          <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
-          <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
-            <span>Generar informe</span>
-          </ng-container>
-          <ng-template #generandoInformeTexto>
-            <span>Generando informe...</span>
-          </ng-template>
-        </button>
-      </div>
-      <p class="acciones__helper" role="note">
-        <span class="acciones__helper-icon" aria-hidden="true">!</span>
-        <span>
-          <strong>Importante:</strong>
-          guardá los cambios antes de generar el informe para visualizarlo con los datos actualizados.
-        </span>
-      </p>
-    </form>
-
-    <div class="guardando-overlay" *ngIf="guardando" aria-live="assertive">
-      <div class="guardando-overlay__content">
-        <span class="guardando-overlay__spinner" aria-hidden="true"></span>
-        <span class="guardando-overlay__label">Guardando cambios...</span>
-      </div>
-    </div>
-  </section>
-
-  <section
-    class="recaudaciones-card recaudaciones-card--masiva"
-    *ngIf="vistaActual === 'masiva'"
-    id="panel-masiva"
-    role="tabpanel"
-    aria-labelledby="tab-masiva"
-  >
+  <section class="recaudaciones-card recaudaciones-card--masiva" id="panel-masiva" role="tabpanel">
     <header class="recaudaciones-card__header">
       <div>
         <h2>Importar recaudaciones desde un archivo</h2>
-        <p>Subí un archivo CSV con los importes recaudados para este período.</p>
+        <p>
+          Subí una planilla Excel con encabezados en la fila 1 y datos a partir de la fila 2.
+        </p>
       </div>
     </header>
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
         <h3>Plantilla</h3>
-        <p>Descargá la plantilla base y completala con los datos de tu municipio.</p>
+        <p>
+          Descargá la plantilla base y completala con columnas: codigo_tributo, descripcion,
+          importe_recaudacion y ente_recaudador.
+        </p>
         <a class="plantilla-link" [href]="plantillaRecaudacionesExcelUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar plantilla Excel</span>
         </a>
+
         <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
         <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
         <a class="plantilla-link" [href]="plantillaRecaudacionesManualUrl" download>
@@ -222,24 +55,24 @@
       <div class="carga-masiva__upload" aria-live="polite">
         <label class="upload-dropzone" [class.upload-dropzone--file]="archivoMasivoSeleccionado">
           <input
-            #archivoCsv
+            #archivoExcel
             class="upload-dropzone__input"
             type="file"
-            accept=".csv"
-            (change)="onArchivoSeleccionado($event, archivoCsv)"
+            accept=".xlsx, .xls"
+            (change)="onArchivoSeleccionado($event, archivoExcel)"
           />
           <div class="upload-dropzone__content" *ngIf="!archivoMasivoSeleccionado">
             <mat-icon aria-hidden="true">cloud_upload</mat-icon>
-            <p>Arrastrá tu archivo CSV o <span>buscalo en tu equipo</span>.</p>
+            <p>Arrastrá tu archivo .xlsx o <span>buscalo en tu equipo</span>.</p>
             <small>Tamaño recomendado máximo: 5&nbsp;MB.</small>
           </div>
           <div class="upload-dropzone__content upload-dropzone__content--file" *ngIf="archivoMasivoSeleccionado">
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas leídas</small>
             </div>
-            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoCsv)">
+            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
               Reemplazar archivo
             </button>
           </div>
@@ -263,88 +96,116 @@
       <header class="carga-masiva__preview-header">
         <div>
           <h3>Previsualización</h3>
-          <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
+          <p>Verificá que todas las filas estén en estado correcto antes de guardar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
           <span>{{ obtenerTotalFilasMasivas }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
+          <span class="preview-flag preview-flag--error" *ngIf="tieneErroresPrevisualizacion">
+            Hay filas con errores
+          </span>
         </div>
       </header>
-      <table class="recaudaciones-tabla">
+
+      <div class="preview-summary">
+        <article class="preview-summary-card">
+          <p class="preview-summary-card__label">Filas leídas</p>
+          <p class="preview-summary-card__value">{{ totalFilasLeidas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--ok">
+          <p class="preview-summary-card__label">Filas válidas</p>
+          <p class="preview-summary-card__value">{{ filasValidas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--error">
+          <p class="preview-summary-card__label">Filas con error</p>
+          <p class="preview-summary-card__value">{{ filasConErrores }}</p>
+        </article>
+      </div>
+
+      <section class="preview-totales">
+        <h4>Resumen agrupado por Codigo de Tributo</h4>
+
+        <div class="tabla-wrapper" *ngIf="totalesAgrupadosPorCodigo.length; else sinTotalesAgrupadosTabla">
+          <table class="recaudaciones-tabla recaudaciones-tabla--resumen">
+            <thead>
+              <tr>
+                <th>Código de Tributo</th>
+                <th>Descripción</th>
+                <th [style.textAlign]="'right'">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let total of totalesAgrupadosPorCodigo">
+                <td>{{ total.codigo_tributo }}</td>
+                <td>{{ total.descripcion || '-' }}</td>
+                <td [style.textAlign]="'right'">{{ total.total | number: '1.0-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <ng-template #sinTotalesAgrupadosTabla>
+          <p class="preview-totales__empty">Sin filas validas para agrupar.</p>
+        </ng-template>
+      </section>
+
+      <div class="tabla-wrapper">
+        <table class="recaudaciones-tabla">
           <thead>
             <tr>
-              <th>Codigo</th>
-              <th>Concepto</th>
-              <th [style.textAlign]="'center'">Importe Recaudación</th>
+              <th>Fila</th>
+              <th>Código Tributo</th>
+              <th>Descripción</th>
+              <th [style.textAlign]="'right'">Importe Recaudación</th>
+              <th>Ente Recaudador</th>
               <th>Estado</th>
             </tr>
           </thead>
           <tbody>
-            <ng-container *ngFor="let concepto of previsualizacionMasiva">
-              <tr
-                [class.grupo]="false"
-                [class.tiene-error]="concepto.tieneError"
-              >
-                <td>
-                  {{ concepto.cod_concepto }}
-                </td>
-                <td>
-                  <span
-                    [class.concepto-titulo]="false"
-                    [class.concepto-item]="true"
-                  >
-                    {{ concepto.descripcion }}
-                  </span>
-                </td>
-                <td class="importe">
-                  {{ (concepto.importe_recaudacion ?? 0) }}
-                </td>
-                <td>
-                  <ng-container *ngIf="concepto.tieneError">
-                    <ul class="preview-list">
-                      <li class="preview-error">{{ obtenerErrorConcepto(concepto.cod_concepto) }}</li>
-                    </ul>
-                  </ng-container>
-                  <ng-container *ngIf="!concepto.tieneError">
-                    <span class="preview-ok">Listo para enviar</span>
-                  </ng-container>
-                </td>
-              </tr>
-            </ng-container>
-          </tbody>
-          <tfoot *ngIf="!erroresPrevisualizacion.length">
-            <tr>
-              <td class="total-label" colspan="2" [style.textAlign]="'left'">TOTAL</td>
-              <td class="total-valor">
-                <strong>{{ obtenerTotalImportesMasivos | number: '1.0-2' }}</strong>
+            <tr *ngFor="let fila of previsualizacionMasiva" [class.tiene-error]="fila.tieneError">
+              <td>{{ fila.filaExcel }}</td>
+              <td>{{ fila.codigo_tributo ?? '-' }}</td>
+              <td>{{ fila.descripcion || '-' }}</td>
+              <td [style.textAlign]="'right'">{{ fila.importe_recaudacion ?? '-' }}</td>
+              <td>{{ fila.ente_recaudador || '-' }}</td>
+              <td>
+                <ng-container *ngIf="fila.tieneError; else estadoOk">
+                  <ul class="preview-list">
+                    <li class="preview-error" *ngFor="let error of fila.errores">{{ error }}</li>
+                  </ul>
+                </ng-container>
+                <ng-template #estadoOk>
+                  <span class="preview-ok">Listo para enviar</span>
+                </ng-template>
               </td>
-              <td class="total-valor"></td>
             </tr>
-          </tfoot>
+          </tbody>
         </table>
+      </div>
     </section>
 
     <div class="carga-masiva__acciones acciones acciones--masiva">
-      <button
-        type="button"
-        (click)="insertarRecaudacionesMasivas()"
-        [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
-      >
+      <button type="button" (click)="insertarRecaudacionesMasivas()" [disabled]="!puedeSubirMasiva">
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
         <span>Subir importes</span>
       </button>
-      <button
-        type="button"
-        (click)="limpiarArchivoMasiva(archivoCsv)"
-        [disabled]="!archivoMasivoSeleccionado"
-      >
+      <button type="button" (click)="limpiarArchivoMasiva(archivoExcel)" [disabled]="!archivoMasivoSeleccionado">
         Limpiar selección
+      </button>
+      <button type="button" (click)="generarInforme()" [disabled]="mesCerrado || guardando || descargandoInforme">
+        <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
+        <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
+          <span>Generar informe</span>
+        </ng-container>
+        <ng-template #generandoInformeTexto>
+          <span>Generando informe...</span>
+        </ng-template>
       </button>
     </div>
 
-    <p class="carga-masiva__helper" *ngIf="erroresPrevisualizacion.length" role="note">
-      Corregí los errores señalados en el archivo antes de continuar con la carga masiva.
+    <p class="carga-masiva__helper" *ngIf="tieneErroresPrevisualizacion" role="note">
+      Corregí las filas con error en el archivo y volvé a cargarlo antes de guardar.
     </p>
   </section>
+
   <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
 </div>

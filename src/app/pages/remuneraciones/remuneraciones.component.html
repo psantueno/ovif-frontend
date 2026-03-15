@@ -70,7 +70,7 @@
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
+              <small *ngIf="totalFilasDetectadas">{{ totalFilasDetectadas }} filas detectadas</small>
             </div>
             <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
               Reemplazar archivo
@@ -92,17 +92,33 @@
       </div>
     </div>
 
-    <section class="carga-masiva__preview" *ngIf="previsualizacionMasiva.length">
+    <section class="carga-masiva__preview" *ngIf="mostrarPrevisualizacionMasiva">
       <header class="carga-masiva__preview-header">
         <div>
           <h3>Previsualización</h3>
           <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ obtenerTotalFilasMasivas }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
+          <span>{{ totalFilasDetectadas }} filas</span>
+          <span class="preview-flag preview-flag--error" *ngIf="tieneErroresPrevisualizacion">Hay filas con errores</span>
         </div>
       </header>
+
+      <div class="preview-metrics">
+        <article class="preview-summary-card">
+          <p class="preview-summary-card__label">Filas detectadas</p>
+          <p class="preview-summary-card__value">{{ totalFilasDetectadas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--ok">
+          <p class="preview-summary-card__label">Filas correctas</p>
+          <p class="preview-summary-card__value">{{ filasCorrectas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--error">
+          <p class="preview-summary-card__label">Filas con errores</p>
+          <p class="preview-summary-card__value">{{ filasConErrores }}</p>
+        </article>
+      </div>
+
       <div class="preview-summary">
         <h3 class="preview-summary-title">Resumen de la carga masiva</h3>
         <ng-container *ngFor="let regimen of regimenes">
@@ -111,12 +127,16 @@
             <p>{{ obtenerCantidadFilasPorRegimen(regimen) }}</p>
           </div>
         </ng-container>
+        <p class="preview-summary-item-empty" *ngIf="!regimenes.size">Sin filas válidas para resumir por régimen.</p>
       </div>
       <div class="preview-errors" *ngIf="erroresPrevisualizacion.length">
         <h3 class="preview-errors-title">Errores en la carga masiva</h3>
         <ng-container *ngFor="let error of erroresPrevisualizacion">
           <div class="preview-errors-item">
-            <p class="preview-errors-item-bold">CUIL {{ error.row.cuil }}:</p>
+            <p class="preview-errors-item-bold">
+              Fila {{ error.filaExcel ?? 'N/D' }}
+              <ng-container *ngIf="error.row.cuil"> - CUIL {{ error.row.cuil }}</ng-container>
+            </p>
             <p>{{ error.error }}</p>
           </div>
         </ng-container>
@@ -127,7 +147,7 @@
       <button
         type="button"
         (click)="insertarRemuneracionesMasivas()"
-        [disabled]="!previsualizacionMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
+        [disabled]="!filasCorrectas || cargandoArchivoMasivo || filasConErrores"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
         <span>Subir importes</span>
@@ -154,7 +174,7 @@
       </button>
     </div>
 
-    <p class="carga-masiva__helper" *ngIf="erroresPrevisualizacion.length" role="note">
+    <p class="carga-masiva__helper" *ngIf="filasConErrores" role="note">
       Corregí los errores señalados en el archivo antes de continuar con la carga masiva.
     </p>
   </section>
