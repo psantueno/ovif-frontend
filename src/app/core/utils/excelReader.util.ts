@@ -249,10 +249,12 @@ const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata
       obj[header] = row[colIndex] ?? null;
     });
 
-    acc.push({
-      row: obj as T,
-      filaExcel: headerIndex + index + 2
-    });
+    if(Object.values(obj).every(value => value !== null)){
+      acc.push({
+        row: obj as T,
+        filaExcel: headerIndex + index + 2
+      });
+    }
 
     return acc;
   }, []);

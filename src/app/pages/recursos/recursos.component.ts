@@ -84,6 +84,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
   erroresPrevisualizacion: ParseError<Recursos>[] = [];
+  erroresCodigosPartidas: ParseError<RecursosParseados>[] = [];
   cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
@@ -247,7 +248,8 @@ export class RecursosComponent implements OnInit, OnDestroy {
         this.archivoMasivoSeleccionado = file
 
         const { rows: importesParseados, errors: errores } = parseRecursos(rows)
-        const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesParseados, errores)
+              const importesValidos: RecursosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
+              const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
         const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
 
         if(importesFiltrado.length === 0){
@@ -630,6 +632,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.previsualizacionMasiva = [];
     this.erroresCargaMasiva = [];
     this.erroresPrevisualizacion = [];
+    this.erroresCodigosPartidas = [];
     this.cargandoArchivoMasivo = false;
   }
 
@@ -941,6 +944,20 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     return null;
   }
+
+    private filtrarCodigosInvalidos (rows: RecursosParseados[]): RecursosParseados[] {
+      const filasInvalidas = rows.filter(r => !this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+
+      filasInvalidas.forEach((fi) => {
+        this.erroresCodigosPartidas.push({
+          row: fi,
+          error: 'No existe el código de partida indicado, por lo que no puede ser procesado.'
+        })
+      })
+
+      const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+      return filasFiltradas
+    }
 
   private armarPrevisualizacionMasiva(rows: RecursosParseados[], errors: ParseError<Recursos>[]): PartidaDisplay[] {
         // 1. Mapa para acceso rápido por código

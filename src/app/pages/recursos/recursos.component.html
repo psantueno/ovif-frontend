@@ -78,6 +78,7 @@
         <table class="recursos-tabla">
           <thead>
             <tr>
+              <th>Código</th>
               <th>Partida</th>
               <th [style.textAlign]="'center'">Importe Percibido</th>
             </tr>
@@ -105,6 +106,9 @@
                   [class.grupo]="!partida.node.carga"
                   [class.tiene-error]="partida.node.errorImporte"
                 >
+                  <td>
+                    {{ partida.node.codigo }}
+                  </td>
                   <td
                     [attr.colspan]="partida.node.carga ? null : 4"
                     [style.padding-left.px]="partida.nivel * 20 + 4"
@@ -138,7 +142,7 @@
           </tbody>
           <tfoot>
             <tr>
-              <td class="total-label">TOTAL</td>
+              <td class="total-label" colspan="2">TOTAL</td>
               <td class="total-valor">
                 <strong>{{ formatearImporte(totalImportes) }}</strong>
               </td>
@@ -204,14 +208,8 @@
 
     <div class="carga-masiva__layout">
       <section class="import-info-card" aria-label="Instrucciones para preparar el archivo">
-        <h3>Plantilla</h3>
-        <p>Descargá la plantilla de ejemplo para ver como deberían completarse los importes de tu municipio.</p>
-        <a class="plantilla-link" [href]="plantillaRecursosExcelUrl" download>
-          <mat-icon aria-hidden="true">download</mat-icon>
-          <span>Descargar plantilla Excel</span>
-        </a>
         <h3 [style.marginTop.px]="16">Manual para el usuario</h3>
-        <p>Consultá el manual para conocer los pasos para preparar y subir el archivo correctamente.</p>
+        <p>Aquí encontrarás el instructivo para elaborar el diseño de registro.</p>
         <a class="plantilla-link" [href]="plantillaRecursosManualUrl" download>
           <mat-icon aria-hidden="true">download</mat-icon>
           <span>Descargar manual</span>
@@ -261,11 +259,11 @@
       <header class="carga-masiva__preview-header">
         <div>
           <h3>Previsualización</h3>
-          <p>Confirmá que los datos coinciden con lo que querés enviar.</p>
+          <p>Confirmá que los datos coinciden con lo que querés enviar. Recordá hacer click en el botón “Subir archivo” para procesar el excel y guardar los datos.</p>
         </div>
         <div class="carga-masiva__preview-meta">
           <span>{{ obtenerTotalFilasMasivas }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length">Hay filas con errores</span>
+          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length || erroresCodigosPartidas.length">Hay filas con errores</span>
         </div>
       </header>
 
@@ -346,20 +344,33 @@
       </div>
     </section>
 
+    <div class="preview-errors" *ngIf="erroresCodigosPartidas.length">
+        <h3 class="preview-errors-title">Códigos de partidas inválidos</h3>
+        <ng-container *ngFor="let error of erroresCodigosPartidas">
+          <div class="preview-errors-item">
+            <p class="preview-errors-item-bold">
+              Error al procesar el código de partida {{ error.row.codigo_partida }}
+            </p>
+            <p>{{ error.error }}</p>
+          </div>
+        </ng-container>
+      </div>
+
     <div class="carga-masiva__acciones acciones acciones--masiva">
       <button
         type="button"
         (click)="insertarRecursosMasivos()"
-        [disabled]="erroresCargaMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length"
+        [disabled]="erroresCargaMasiva.length || cargandoArchivoMasivo || erroresPrevisualizacion.length || erroresCodigosPartidas.length"
       >
         <mat-icon aria-hidden="true">cloud_done</mat-icon>
-        <span>Subir importe</span>
+        <span>Subir archivo</span>
       </button>
       <button
         type="button"
         (click)="limpiarArchivoMasiva(archivoCsv)"
         [disabled]="!archivoMasivoSeleccionado"
       >
+        <mat-icon aria-hidden="true">close</mat-icon>
         Limpiar selección
       </button>
     </div>

@@ -83,6 +83,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
   erroresPrevisualizacion: ParseError<Gastos>[] = [];
+  erroresCodigosPartidas: ParseError<GastosParseados>[] = [];
   cargandoArchivoMasivo = false;
 
   cargandoPartidas = false;
@@ -244,9 +245,10 @@ export class GastosComponent implements OnInit, OnDestroy {
       }
 
       this.archivoMasivoSeleccionado = file
-
+//
       const { rows: importesParseados, errors: errores } = parseGastos(rows)
-      const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesParseados, errores)
+      const importesValidos: GastosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
+      const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
       const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
 
       if(importesFiltrado.length === 0){
@@ -764,6 +766,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.cargandoArchivoMasivo = false;
     this.erroresPrevisualizacion = [];
     this.erroresCargaMasiva = [];
+    this.erroresCodigosPartidas = [];
     this.previsualizacionMasiva = [];
   }
 
@@ -924,6 +927,20 @@ export class GastosComponent implements OnInit, OnDestroy {
     if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row.codigo_partida === String(codigo))?.error
 
     return null;
+  }
+
+  private filtrarCodigosInvalidos (rows: GastosParseados[]): GastosParseados[] {
+    const filasInvalidas = rows.filter(r => !this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+
+    filasInvalidas.forEach((fi) => {
+      this.erroresCodigosPartidas.push({
+        row: fi,
+        error: 'No existe el código de partida indicado, por lo que no puede ser procesado.'
+      })
+    })
+
+    const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+    return filasFiltradas
   }
 
   private armarPrevisualizacionMasiva(rows: GastosParseados[], errors: ParseError<Gastos>[]): PartidaDisplay[] {

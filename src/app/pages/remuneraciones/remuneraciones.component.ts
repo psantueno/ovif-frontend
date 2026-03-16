@@ -200,6 +200,8 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     try{
       const { rows, file } = await onFileChangeWithMetadata<Remuneraciones>(event);
 
+      console.log("Rows ", rows)
+
       if (!file) {
         this.archivoMasivoSeleccionado = null;
         this.erroresCargaMasiva.push('No se detectó ningún archivo para procesar.');
