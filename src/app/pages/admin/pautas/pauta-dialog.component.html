@@ -82,7 +82,7 @@
     <mat-form-field appearance="fill">
       <mat-label>Plazo de vencimiento</mat-label>
       <mat-hint>Cantidad en meses</mat-hint>
-      <input matInput type="number" formControlName="plazo_vto" min="0" />
+      <input matInput type="number" formControlName="plazo_vto" />
       <mat-error *ngIf="form.get('plazo_vto')?.hasError('required') && form.get('plazo_vto')?.touched">
         El plazo de vencimiento es obligatorio
       </mat-error>
