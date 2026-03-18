@@ -77,7 +77,6 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaGastosExcelUrl = 'assets/plantillas/plantilla_gastos.xlsx';
   readonly plantillaGastosManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
@@ -85,6 +84,10 @@ export class GastosComponent implements OnInit, OnDestroy {
   erroresPrevisualizacion: ParseError<Gastos>[] = [];
   erroresCodigosPartidas: ParseError<GastosParseados>[] = [];
   cargandoArchivoMasivo = false;
+
+  filasLeidas: number = 0;
+  filasCorrectas: number = 0;
+  filasConErrores: number = 0;
 
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
@@ -233,6 +236,8 @@ export class GastosComponent implements OnInit, OnDestroy {
   async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
     try{
       const { rows, file } = await onFileChange<Gastos>(event)
+      this.filasLeidas = rows.length;
+      console.log("leidas ", rows)
 
       this.resetEstadoCargaMasiva();
       this.archivoMasivoSeleccionado = null;
@@ -245,19 +250,20 @@ export class GastosComponent implements OnInit, OnDestroy {
       }
 
       this.archivoMasivoSeleccionado = file
-//
       const { rows: importesParseados, errors: errores } = parseGastos(rows)
       const importesValidos: GastosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
       const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
       const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
 
       if(importesFiltrado.length === 0){
-          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
-          return;
-        }
+        this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+        return;
+      }
 
       this.previsualizacionMasiva = importesFiltrado;
       this.erroresPrevisualizacion = errores;
+
+      this.armarResumen();
     }catch (error) {
       this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
       console.error('Error al procesar CSV:', error);
@@ -889,10 +895,6 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.cambiosPendientes = false;
   }
 
-  get obtenerTotalFilasMasivas(): number {
-    return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
-  }
-
   public obtenerTotalImportesMasivos(): number {
     return this.previsualizacionMasiva.reduce((total, partida) => {
       if (!partida.node.carga) {
@@ -940,7 +942,18 @@ export class GastosComponent implements OnInit, OnDestroy {
     })
 
     const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
-    return filasFiltradas
+
+    const noAdmiteCarga = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && !pp.node.carga))
+    noAdmiteCarga.forEach((fi) => {
+      this.erroresCodigosPartidas.push({
+        row: fi,
+        error: 'La partida indicada no admite carga de importes.'
+      })
+    })
+
+    const filasValidas = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && pp.node.carga))
+
+    return filasValidas
   }
 
   private armarPrevisualizacionMasiva(rows: GastosParseados[], errors: ParseError<Gastos>[]): PartidaDisplay[] {
@@ -1007,5 +1020,22 @@ export class GastosComponent implements OnInit, OnDestroy {
           }
         }
       });
+  }
+
+  private armarResumen(){
+    this.filasCorrectas = this.previsualizacionMasiva.filter(partida => partida.node.carga && !partida.node.tieneError && partida.node.importe).length;
+    this.filasConErrores = this.erroresPrevisualizacion.length + this.erroresCodigosPartidas.length;
+  }
+
+  get totalFilasLeidas() {
+    return this.filasLeidas
+  }
+
+  get totalFilasCorrectas() {
+    return this.filasCorrectas
+  }
+
+  get totalFilasConErrores() {
+    return this.filasConErrores
   }
 }

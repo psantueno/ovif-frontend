@@ -234,7 +234,7 @@
             <mat-icon aria-hidden="true">description</mat-icon>
             <div>
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
-              <small *ngIf="previsualizacionMasiva.length">{{ obtenerTotalFilasMasivas }} filas detectadas</small>
+              <small *ngIf="previsualizacionMasiva.length">{{ totalFilasLeidas }} filas detectadas</small>
             </div>
             <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
               Reemplazar archivo
@@ -263,10 +263,23 @@
           <p>Confirmá que los datos coinciden con lo que querés enviar. Recordá hacer click en el botón “Subir archivo” para procesar el excel y guardar los datos.</p>
         </div>
         <div class="carga-masiva__preview-meta">
-          <span>{{ obtenerTotalFilasMasivas }} filas</span>
-          <span class="preview-flag preview-flag--error" *ngIf="erroresPrevisualizacion.length || erroresCodigosPartidas.length">Hay filas con errores</span>
+          <span>{{ totalFilasLeidas }} filas</span>
         </div>
       </header>
+      <div class="preview-summary">
+        <article class="preview-summary-card">
+          <p class="preview-summary-card__label">Filas leídas</p>
+          <p class="preview-summary-card__value">{{ totalFilasLeidas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--ok">
+          <p class="preview-summary-card__label">Filas válidas</p>
+          <p class="preview-summary-card__value">{{ totalFilasCorrectas }}</p>
+        </article>
+        <article class="preview-summary-card preview-summary-card--error">
+          <p class="preview-summary-card__label">Filas con error</p>
+          <p class="preview-summary-card__value">{{ totalFilasConErrores }}</p>
+        </article>
+      </div>
       <table class="gastos-tabla">
           <thead>
             <tr>
