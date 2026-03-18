@@ -149,7 +149,10 @@ export interface PeriodoSeleccionadoMunicipio {
   modulos?: ModuloPauta[] | null;
   fecha_inicio?: string | null;
   fecha_fin?: string | null;
+  fecha_inicio_rectificacion?: string | null;
   fecha_cierre?: string | null;
+  cant_dias_rectifica?: number | null;
+  plazo_mes_rectifica?: number | null;
 }
 
 export interface UpsertResponse {
@@ -810,7 +813,11 @@ export class MunicipioService {
       requiere_periodo_rectificar: (periodo as any).requiere_periodo_rectificar ?? null,
       modulos: Array.isArray(periodo.modulos) ? periodo.modulos : null,
       fecha_inicio: periodo.fecha_inicio ?? null,
-      fecha_fin: periodo.fecha_fin ?? null
+      fecha_fin: periodo.fecha_fin ?? null,
+      fecha_inicio_rectificacion: (periodo as any).fecha_inicio_rectificacion ?? null,
+      fecha_cierre: periodo.fecha_cierre ?? null,
+      cant_dias_rectifica: this.toOptionalNumber((periodo as any).cant_dias_rectifica),
+      plazo_mes_rectifica: this.toOptionalNumber((periodo as any).plazo_mes_rectifica)
     };
 
     if ((!base.pauta_id || !base.tipo_pauta_codigo) && base.valor) {
@@ -833,6 +840,15 @@ export class MunicipioService {
     }
 
     return base;
+  }
+
+  private toOptionalNumber(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+
+    const num = Number(value);
+    return Number.isNaN(num) ? null : num;
   }
 
   private blurActiveElement(): void {

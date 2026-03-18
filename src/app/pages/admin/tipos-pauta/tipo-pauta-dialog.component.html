@@ -1,12 +1,19 @@
 <h2 mat-dialog-title class="dialog-title">
-  <mat-icon class="dialog-title-icon">{{ data?.tipo_pauta_id ? 'edit' : 'add' }}</mat-icon>
-  {{ data?.tipo_pauta_id ? 'Editar tipo de pauta' : 'Nuevo tipo de pauta' }}
+  <mat-icon class="dialog-title-icon">{{ icon }}</mat-icon>
+  {{ title }}
 </h2>
 
 <mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="detalle-grid" *ngIf="isViewMode && tipoPauta">
+    <div class="detalle-item">
+      <span class="detalle-label">ID</span>
+      <span class="detalle-value">{{ tipoPauta.tipo_pauta_id || '—' }}</span>
+    </div>
+  </div>
+
   <mat-form-field class="full-width" appearance="fill">
     <mat-label>Código</mat-label>
-    <input matInput formControlName="codigo" placeholder="Ejemplo: gastos_recursos" />
+    <input matInput formControlName="codigo" placeholder="Ejemplo: gastos_recursos" [readonly]="isViewMode" />
     <mat-hint>Usá minúsculas, números y guion bajo.</mat-hint>
     <mat-error *ngIf="form.get('codigo')?.hasError('required') && form.get('codigo')?.touched">
       El código es obligatorio
@@ -21,7 +28,7 @@
 
   <mat-form-field class="full-width" appearance="fill">
     <mat-label>Nombre visible</mat-label>
-    <input matInput formControlName="nombre" placeholder="Ejemplo: Gastos y Recursos" />
+    <input matInput formControlName="nombre" placeholder="Ejemplo: Gastos y Recursos" [readonly]="isViewMode" />
     <mat-error *ngIf="form.get('nombre')?.hasError('required') && form.get('nombre')?.touched">
       El nombre visible es obligatorio
     </mat-error>
@@ -33,22 +40,23 @@
   <mat-form-field class="full-width" appearance="fill">
     <mat-label>Descripción</mat-label>
     <textarea matInput rows="4" formControlName="descripcion"
-      placeholder="Texto visible para el usuario"></textarea>
+      placeholder="Texto visible para el usuario" [readonly]="isViewMode"></textarea>
     <mat-error *ngIf="form.get('descripcion')?.hasError('maxlength') && form.get('descripcion')?.touched">
       La descripción no puede superar los 1000 caracteres
     </mat-error>
   </mat-form-field>
 
-  <mat-slide-toggle formControlName="requiere_periodo_rectificar">
+  <mat-slide-toggle formControlName="requiere_periodo_rectificar" [disabled]="isViewMode">
     Requiere período de rectificación
   </mat-slide-toggle>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end" class="dialog-actions">
   <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
-    Cancelar
+    {{ isViewMode ? 'Cerrar' : 'Cancelar' }}
   </button>
   <button
+    *ngIf="!isViewMode"
     mat-raised-button
     color="primary"
     class="btn-guardar"
@@ -58,6 +66,6 @@
   >
     <mat-icon *ngIf="!enviando">save</mat-icon>
     <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
-    {{ data?.tipo_pauta_id ? 'Actualizar' : 'Guardar' }}
+    {{ mode === 'edit' ? 'Actualizar' : 'Guardar' }}
   </button>
 </mat-dialog-actions>

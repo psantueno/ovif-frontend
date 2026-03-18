@@ -12,6 +12,13 @@ import Swal from 'sweetalert2';
 
 import { TipoPauta, TipoPautaPayload, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
 
+export type TipoPautaDialogMode = 'create' | 'edit' | 'view';
+
+export interface TipoPautaDialogData {
+  mode: TipoPautaDialogMode;
+  tipoPauta: TipoPauta | null;
+}
+
 @Component({
   selector: 'app-tipo-pauta-dialog',
   standalone: true,
@@ -36,23 +43,32 @@ export class TipoPautaDialogComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly tiposPautaAdminService: TiposPautaAdminService,
     private readonly dialogRef: MatDialogRef<TipoPautaDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public readonly data: TipoPauta | null
+    @Inject(MAT_DIALOG_DATA) public readonly data: TipoPautaDialogData
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      codigo: new FormControl(this.data?.codigo ?? '', [
+      codigo: new FormControl(this.tipoPauta?.codigo ?? '', [
         Validators.required,
         Validators.maxLength(100),
         Validators.pattern(/^[a-z0-9_]+$/)
       ]),
-      nombre: new FormControl(this.data?.nombre ?? '', [Validators.required, Validators.maxLength(150)]),
-      descripcion: new FormControl(this.data?.descripcion ?? '', [Validators.maxLength(1000)]),
-      requiere_periodo_rectificar: new FormControl(this.data?.requiere_periodo_rectificar ?? false),
+      nombre: new FormControl(this.tipoPauta?.nombre ?? '', [Validators.required, Validators.maxLength(150)]),
+      descripcion: new FormControl(this.tipoPauta?.descripcion ?? '', [Validators.maxLength(1000)]),
+      requiere_periodo_rectificar: new FormControl(this.tipoPauta?.requiere_periodo_rectificar ?? false),
     });
+
+    if (this.isViewMode) {
+      this.form.disable({ emitEvent: false });
+    }
   }
 
   guardar(): void {
+    if (this.isViewMode) {
+      this.dialogRef.close();
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       Swal.fire({
@@ -69,8 +85,8 @@ export class TipoPautaDialogComponent implements OnInit {
     const payload = this.buildPayload(this.form.getRawValue());
     this.enviando = true;
 
-    const request$ = this.data?.tipo_pauta_id
-      ? this.tiposPautaAdminService.actualizarTipoPauta(this.data.tipo_pauta_id, payload)
+    const request$ = this.mode === 'edit' && this.tipoPauta?.tipo_pauta_id
+      ? this.tiposPautaAdminService.actualizarTipoPauta(this.tipoPauta!.tipo_pauta_id, payload)
       : this.tiposPautaAdminService.crearTipoPauta(payload);
 
     request$
@@ -81,7 +97,7 @@ export class TipoPautaDialogComponent implements OnInit {
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: this.data?.tipo_pauta_id ? 'Tipo de pauta actualizado' : 'Tipo de pauta creado',
+            title: this.mode === 'edit' ? 'Tipo de pauta actualizado' : 'Tipo de pauta creado',
             showConfirmButton: false,
             timer: 2200,
             timerProgressBar: true,
@@ -115,6 +131,30 @@ export class TipoPautaDialogComponent implements OnInit {
       descripcion: descripcion.length > 0 ? descripcion : null,
       requiere_periodo_rectificar: Boolean(formValue.requiere_periodo_rectificar),
     };
+  }
+
+  get mode(): TipoPautaDialogMode {
+    return this.data?.mode ?? 'create';
+  }
+
+  get tipoPauta(): TipoPauta | null {
+    return this.data?.tipoPauta ?? null;
+  }
+
+  get isViewMode(): boolean {
+    return this.mode === 'view';
+  }
+
+  get title(): string {
+    if (this.mode === 'create') return 'Nuevo tipo de pauta';
+    if (this.mode === 'edit') return 'Editar tipo de pauta';
+    return 'Detalle del tipo de pauta';
+  }
+
+  get icon(): string {
+    if (this.mode === 'create') return 'add';
+    if (this.mode === 'edit') return 'edit';
+    return 'visibility';
   }
 
   private resolveErrorMessage(error: any, fallback: string): string {

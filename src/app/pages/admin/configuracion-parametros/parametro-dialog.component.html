@@ -51,10 +51,10 @@
 </mat-dialog-content>
 
 <mat-dialog-actions align="end" class="dialog-actions">
-  <button mat-stroked-button mat-dialog-close [disabled]="enviando">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
     {{ isViewMode ? 'Cerrar' : 'Cancelar' }}
   </button>
-  <button mat-raised-button color="primary" type="button" (click)="guardar()" [disabled]="enviando" *ngIf="!isViewMode">
+  <button mat-raised-button color="primary" class="btn-guardar" type="button" (click)="guardar()" [disabled]="enviando" *ngIf="!isViewMode">
     <mat-icon *ngIf="!enviando">save</mat-icon>
     <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
     {{ data.mode === 'edit' ? 'Actualizar' : 'Guardar' }}

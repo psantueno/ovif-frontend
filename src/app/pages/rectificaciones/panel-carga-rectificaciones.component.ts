@@ -68,6 +68,18 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
       }
 
       this.sinMunicipioAlertado = false;
+      this.periodoPersistido = this.municipioService.getPeriodoSeleccionado(municipio.municipio_id);
+      if (this.periodoPersistido) {
+        this.aplicarPeriodoSeleccionado(this.periodoPersistido);
+        this.ejercicioMes =
+          this.periodoPersistido.valor ??
+          this.municipioService.buildPeriodoValor(this.periodoPersistido) ??
+          '';
+      } else {
+        this.periodoActivo = null;
+        this.modulosHabilitados = [];
+        this.ejercicioMes = '';
+      }
       this.cargarEjerciciosDisponibles(municipio.municipio_id);
     });
   }
@@ -86,50 +98,47 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
         next: (ejercicios) => {
           this.ejerciciosMeses = ejercicios.map((item: any) => this.mapPeriodoOption(item));
 
-          if (periodoGuardado) {
-            const valorPersistido =
-              periodoGuardado.valor ??
-              this.municipioService.buildPeriodoValor(periodoGuardado) ??
-              '';
-            const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valorPersistido);
-            if (seleccionado) {
-              this.ejercicioMes = valorPersistido;
-              this.periodoPersistido = { ...seleccionado.metadata };
-              this.periodoActivo = { ...seleccionado.metadata };
-              this.modulosHabilitados =
-                this.periodoActivo.modulos ??
-                this.obtenerModulosPermitidos(this.periodoActivo.tipo_pauta_codigo);
-            } else {
-              this.ejercicioMes = '';
-              this.periodoPersistido = null;
-              this.periodoActivo = null;
-              this.modulosHabilitados = [];
-              if (this.municipioSeleccionado?.municipio_id) {
-                this.municipioService.clearPeriodoSeleccionado(this.municipioSeleccionado.municipio_id);
-              }
-            }
-          } else if(this.ejerciciosMeses.length === 1) {
-            const unico = this.ejerciciosMeses[0];
-            this.ejercicioMes = unico.valor;
-            this.periodoPersistido = { ...unico.metadata };
-            this.periodoActivo = { ...unico.metadata };
-            this.modulosHabilitados = unico.metadata.modulos ?? this.obtenerModulosPermitidos(unico.metadata.tipo_pauta_codigo);
-            this.persistirPeriodoActual();
-          } else {
-            this.ejercicioMes = '';
-            this.periodoPersistido = null;
-            this.periodoActivo = null;
-            this.modulosHabilitados = [];
-          }
-
           if (this.ejerciciosMeses.length === 0) {
-            Swal.fire({
+            this.limpiarPeriodoSeleccionadoActual();
+            if (this.municipioSeleccionado?.municipio_id) {
+              this.municipioService.clearPeriodoSeleccionado(this.municipioSeleccionado.municipio_id);
+            }
+            void Swal.fire({
               icon: 'info',
-              title: 'Sin ejercicios disponibles',
-              text: 'No hay ejercicios abiertos para este municipio en este momento.',
+              title: 'Sin períodos rectificables',
+              text: 'No hay períodos de rectificación habilitados para este municipio en este momento.',
               confirmButtonText: 'Aceptar',
               confirmButtonColor: '#3085d6',
+            }).then(() => {
+              this.router.navigate(['/home']);
             });
+            return;
+          }
+
+          const valorPersistido =
+            periodoGuardado?.valor ??
+            this.municipioService.buildPeriodoValor(periodoGuardado) ??
+            '';
+          const seleccionadoPersistido = valorPersistido
+            ? this.ejerciciosMeses.find((item) => item.valor === valorPersistido)
+            : undefined;
+
+          if (seleccionadoPersistido) {
+            this.ejercicioMes = seleccionadoPersistido.valor;
+            this.aplicarPeriodoSeleccionado(seleccionadoPersistido.metadata);
+          } else if (periodoGuardado && this.municipioSeleccionado?.municipio_id) {
+            this.municipioService.clearPeriodoSeleccionado(this.municipioSeleccionado.municipio_id);
+            this.limpiarPeriodoSeleccionadoActual();
+          }
+
+          if (!this.periodoActivo && this.ejerciciosMeses.length === 1) {
+            const unico = this.ejerciciosMeses[0];
+            this.ejercicioMes = unico.valor;
+            this.aplicarPeriodoSeleccionado(unico.metadata);
+            this.persistirPeriodoActual();
+          } else if (!this.periodoActivo) {
+            this.ejercicioMes = '';
+            this.aplicarPeriodoSeleccionado(null);
           }
         },
         error: () => {
@@ -168,6 +177,31 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.municipioSub?.unsubscribe();
+  }
+
+  onPeriodoChange(valor: string): void {
+    this.ejercicioMes = valor;
+
+    const municipioId = this.municipioSeleccionado?.municipio_id;
+    if (!municipioId) {
+      return;
+    }
+
+    if (!valor) {
+      this.aplicarPeriodoSeleccionado(null);
+      this.municipioService.clearPeriodoSeleccionado(municipioId);
+      return;
+    }
+
+    const seleccionado = this.ejerciciosMeses.find((item) => item.valor === valor);
+    if (!seleccionado) {
+      this.aplicarPeriodoSeleccionado(null);
+      this.municipioService.clearPeriodoSeleccionado(municipioId);
+      return;
+    }
+
+    this.aplicarPeriodoSeleccionado(seleccionado.metadata);
+    this.persistirPeriodoActual();
   }
 
   private persistirPeriodoActual(): void {
@@ -233,6 +267,48 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
 
   get pautaActivaLabel(): string | null {
     return this.periodoActivo?.tipo_pauta_label ?? this.periodoActivo?.pauta_descripcion ?? null;
+  }
+
+  get periodoRectificacionLabel(): string {
+    const mes = this.periodoActivo?.mes;
+    if (!mes) {
+      return '';
+    }
+
+    return this.obtenerNombreMes(mes).toUpperCase();
+  }
+
+  get sinPeriodosRectificables(): boolean {
+    return !this.cargando && this.ejerciciosMeses.length === 0;
+  }
+
+  get helperRectificacionPrincipal(): string {
+    if (this.sinPeriodosRectificables) {
+      return 'No existen periodos para rectificar.';
+    }
+
+    const periodo = this.periodoActivo;
+    if (
+      periodo?.pauta_descripcion &&
+      periodo?.convenio_nombre &&
+      periodo?.fecha_inicio_rectificacion &&
+      periodo?.fecha_cierre
+    ) {
+      return `El período de rectificación de ${periodo.pauta_descripcion} correspondiente al convenio ${periodo.convenio_nombre} está habilitado del ${this.formatearFecha(periodo.fecha_inicio_rectificacion)} al ${this.formatearFecha(periodo.fecha_cierre)}.`;
+    }
+
+    return 'Seleccioná un período para ver su ventana de rectificación.';
+  }
+
+  get mostrarHelperRectificacionSecundario(): boolean {
+    if (this.sinPeriodosRectificables) {
+      return false;
+    }
+
+    return Boolean(
+      this.periodoActivo?.fecha_inicio_rectificacion &&
+      this.periodoActivo?.fecha_cierre
+    );
   }
 
   get modulosHabilitadosLabel(): string {
@@ -334,7 +410,10 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
           : Boolean(requierePeriodoRectificar),
       fecha_inicio: item?.fecha_inicio ?? item?.fecha_inicio_oficial ?? null,
       fecha_fin: item?.fecha_fin ?? item?.fecha_fin_oficial ?? null,
+      fecha_inicio_rectificacion: item?.fecha_inicio_rectificacion ?? null,
       fecha_cierre: item?.fecha_cierre ?? null,
+      cant_dias_rectifica: this.toOptionalNumber(item?.cant_dias_rectifica),
+      plazo_mes_rectifica: this.toOptionalNumber(item?.plazo_mes_rectifica),
       modulos: tipoPautaCodigo ? this.obtenerModulosPermitidos(tipoPautaCodigo) : null
     };
 
@@ -356,6 +435,32 @@ export class PanelCargaRectificacionesComponent implements OnInit, OnDestroy {
     }
     const num = Number(value);
     return Number.isNaN(num) ? null : num;
+  }
+
+  private aplicarPeriodoSeleccionado(periodo: PeriodoSeleccionadoMunicipio | null): void {
+    this.periodoPersistido = periodo ? { ...periodo } : null;
+    this.periodoActivo = periodo ? { ...periodo } : null;
+    this.modulosHabilitados = periodo
+      ? periodo.modulos ?? this.obtenerModulosPermitidos(periodo.tipo_pauta_codigo)
+      : [];
+  }
+
+  private limpiarPeriodoSeleccionadoActual(): void {
+    this.ejercicioMes = '';
+    this.aplicarPeriodoSeleccionado(null);
+  }
+
+  private formatearFecha(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = value.split('-');
+    if (!year || !month || !day) {
+      return value;
+    }
+
+    return `${day}/${month}/${year}`;
   }
 
   private formatearNombreModulo(modulo: ModuloPauta): string {

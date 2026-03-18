@@ -21,6 +21,7 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   municipioActual: any;
   cargandoMunicipios = true;
   cerrandoSesion = false;
+  colapsado = false;
   private sub?: Subscription;
   private logoutSub?: Subscription;
   private usuarioSub?: Subscription;
@@ -32,6 +33,8 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit() {
+    this.colapsado = false;
+
     this.usuarioSub = this.authService.user$.subscribe((user) => {
       this.usuarioNombre = this.buildUsuarioNombre(user);
     });
@@ -46,15 +49,13 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
         this.municipios = Array.isArray(data) ? data : [];
 
         if (this.municipios.length > 0) {
-          // Si hay municipios, aseguramos selección válida
           if (!this.municipioActual) {
             this.municipioService.setMunicipio(this.municipios[0], { silent: true });
             this.municipioActual = this.municipios[0];
           }
         } else {
-          // 🔹 Si no tiene municipios asociados
           this.municipioActual = null;
-          this.municipioService.clear(); // 👈 limpia storage y BehaviorSubject
+          this.municipioService.clear();
         }
 
         this.cargandoMunicipios = false;
@@ -118,6 +119,10 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
         this.cerrandoSesion = false;
       }
     });
+  }
+
+  toggleColapsado() {
+    this.colapsado = !this.colapsado;
   }
 
   ngOnDestroy() {

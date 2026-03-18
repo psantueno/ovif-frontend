@@ -60,7 +60,6 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: string = 'masiva';
-  readonly plantillaRecaudacionesExcelUrl = 'assets/plantillas/plantilla_remuneraciones.xlsx';
   readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: Remuneraciones[] = [];
@@ -124,11 +123,12 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
+      this.sincronizarPeriodoSeleccionado(ejercicio, mes, parsedValor ?? undefined);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
           'Pauta no habilitada',
-          'El período seleccionado no permite cargar Recaudaciones. Elegí otra opción desde el inicio.',
+          'El período seleccionado no permite cargar Remuneraciones. Elegí otra opción desde el inicio.',
           'info'
         );
         this.router.navigate(['/panel-carga-mensual']);
@@ -255,14 +255,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     console.log("Remuneraciones payload: ", remuneracionesPayload)
 
     if(this.esRectificacion){
-      Swal.fire({
-        title: '¿Confirma que desea guardar los importes de rectificación?',
-        text: 'No se volverá a habilitar un período de rectificación para este ejercicio y mes. Asegurate de que los datos ingresados sean correctos antes de confirmar.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'No, revisar',
-      }).then((result) => {
+      this.confirmarGuardadoRectificacion().then((result) => {
         if(result.isConfirmed) {
           this.guardando = true;
           this.municipioService
@@ -284,7 +277,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error al guardar las remuneraciones:', error);
-              this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+              const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+                error,
+                'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+              );
+              this.mostrarError(mensaje, titulo);
             },
           });
         }
@@ -310,7 +307,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error al guardar las remuneraciones:', error);
-            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+            const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+              error,
+              'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+            );
+            this.mostrarError(mensaje, titulo);
           },
         });
     }
@@ -382,7 +383,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error al generar el informe de recaudaciones:', error);
-            this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+            const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+              error,
+              'No pudimos generar el informe. Intentá nuevamente más tarde.'
+            );
+            this.mostrarError(mensaje, titulo);
           },
         });
       } else {
@@ -410,7 +415,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error al generar el informe de recaudaciones:', error);
-              this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+              const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+                error,
+                'No pudimos generar el informe. Intentá nuevamente más tarde.'
+              );
+              this.mostrarError(mensaje, titulo);
             },
           });
       }
@@ -473,6 +482,75 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       allowOutsideClick: false,
       allowEscapeKey: false,
     });
+  }
+
+  private resolverMensajeErrorBackend(
+    error: any,
+    fallback: string,
+    tituloPorDefecto = 'Ocurrió un problema'
+  ): { titulo: string; mensaje: string } {
+    const payload = error?.error;
+
+    if (payload && typeof payload === 'object') {
+      if (payload.error === 'El período indicado no está habilitado para rectificación.') {
+        const partes = [payload.detalle ?? payload.error];
+
+        if (payload.fecha_limite_original) {
+          partes.push(`Plazo original de carga: ${this.formatearFechaCorta(payload.fecha_limite_original)}.`);
+        }
+
+        if (payload.puede_solicitar_prorroga) {
+          partes.push(
+            payload.sugerencia ??
+            'Si necesitás cargar fuera de término, podés solicitar una prórroga.'
+          );
+        }
+
+        return {
+          titulo: 'Rectificación no disponible',
+          mensaje: partes.join(' '),
+        };
+      }
+
+      if (typeof payload.error === 'string' && typeof payload.detalle === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: `${payload.error} ${payload.detalle}`,
+        };
+      }
+
+      if (typeof payload.error === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: payload.error,
+        };
+      }
+    }
+
+    if (typeof payload === 'string') {
+      return {
+        titulo: tituloPorDefecto,
+        mensaje: payload,
+      };
+    }
+
+    return {
+      titulo: tituloPorDefecto,
+      mensaje: fallback,
+    };
+  }
+
+  private formatearFechaCorta(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = String(value).split('-');
+    if (!year || !month || !day) {
+      return String(value);
+    }
+
+    return `${day}/${month}/${year}`;
   }
 
   private mostrarToastExito(mensaje: string): Promise<void> {
@@ -579,7 +657,57 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       return true;
     }
 
-    return modulos.includes('recaudaciones');
+    return modulos.includes('remuneraciones');
+  }
+
+  private confirmarGuardadoRectificacion() {
+    return Swal.fire({
+      title: '¿Confirma que desea guardar los importes de rectificación?',
+      text: 'Asegurate de que los datos ingresados sean correctos antes de confirmar.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'No, revisar',
+    });
+  }
+
+  private sincronizarPeriodoSeleccionado(
+    ejercicio: number,
+    mes: number,
+    extra?: Partial<PeriodoSeleccionadoMunicipio>
+  ): PeriodoSeleccionadoMunicipio {
+    const previo = this.periodoSeleccionado ?? {};
+    const combinado: PeriodoSeleccionadoMunicipio = {
+      ...previo,
+      ...extra,
+      ejercicio,
+      mes,
+    };
+
+    const tipo = combinado.tipo_pauta_codigo ?? null;
+    if (tipo) {
+      let modulos = combinado.modulos ?? null;
+      if (!modulos || modulos.length === 0) {
+        modulos = this.ejerciciosService.mapTipoPautaToModulos(tipo);
+      }
+      combinado.modulos = modulos && modulos.length ? modulos : null;
+      combinado.tipo_pauta_label =
+        combinado.tipo_pauta_label ?? this.ejerciciosService.obtenerEtiquetaTipoPauta(tipo);
+    }
+
+    const valorPreferido = extra?.valor ?? combinado.valor;
+    combinado.valor =
+      valorPreferido ??
+      this.municipioService.buildPeriodoValor({
+        ejercicio,
+        mes,
+        pauta_id: combinado.pauta_id ?? undefined,
+        tipo_pauta_codigo: tipo ?? undefined,
+      }) ??
+      `${ejercicio}_${mes}`;
+
+    this.periodoSeleccionado = combinado;
+    return combinado;
   }
 
   private armarPayload(remuneracion: Remuneraciones): RemuneracionUpsertPayload{

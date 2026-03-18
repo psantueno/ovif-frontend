@@ -18,7 +18,7 @@ import { finalize } from 'rxjs/operators';
 
 import { AdminBreadcrumb, AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { TipoPauta, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
-import { TipoPautaDialogComponent } from './tipo-pauta-dialog.component';
+import { TipoPautaDialogComponent, TipoPautaDialogData } from './tipo-pauta-dialog.component';
 
 @Component({
   selector: 'app-tipos-pauta',
@@ -49,7 +49,7 @@ export class TiposPautaComponent implements OnInit {
     { label: 'Tipos de pauta' }
   ];
 
-  readonly displayedColumns = ['tipo_pauta_id', 'codigo', 'nombre', 'descripcion', 'requiere_periodo_rectificar', 'acciones'];
+  readonly displayedColumns = ['tipo_pauta_id', 'codigo', 'nombre', 'requiere_periodo_rectificar', 'acciones'];
   readonly dataSource = new MatTableDataSource<TipoPauta>([]);
 
   totalRegistros = 0;
@@ -89,9 +89,12 @@ export class TiposPautaComponent implements OnInit {
   }
 
   abrirDialogCrear(): void {
-    const dialogRef = this.dialog.open(TipoPautaDialogComponent, {
+    const dialogRef = this.dialog.open<TipoPautaDialogComponent, TipoPautaDialogData>(TipoPautaDialogComponent, {
       width: '560px',
-      data: null
+      data: {
+        mode: 'create',
+        tipoPauta: null
+      }
     });
 
     dialogRef.afterClosed().subscribe((updated) => {
@@ -100,13 +103,26 @@ export class TiposPautaComponent implements OnInit {
   }
 
   abrirDialogEditar(tipoPauta: TipoPauta): void {
-    const dialogRef = this.dialog.open(TipoPautaDialogComponent, {
+    const dialogRef = this.dialog.open<TipoPautaDialogComponent, TipoPautaDialogData>(TipoPautaDialogComponent, {
       width: '560px',
-      data: tipoPauta
+      data: {
+        mode: 'edit',
+        tipoPauta
+      }
     });
 
     dialogRef.afterClosed().subscribe((updated) => {
       if (updated) this.cargarTiposPauta();
+    });
+  }
+
+  abrirDialogVer(tipoPauta: TipoPauta): void {
+    this.dialog.open<TipoPautaDialogComponent, TipoPautaDialogData>(TipoPautaDialogComponent, {
+      width: '560px',
+      data: {
+        mode: 'view',
+        tipoPauta
+      }
     });
   }
 

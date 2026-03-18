@@ -22,7 +22,7 @@ import Swal from 'sweetalert2';
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { ConveniosAdminService, Convenio } from '../../../services/convenios-admin.service';
 import { ConvenioService, ConvenioSelectOption } from '../../../services/convenio.service';
-import { ConvenioDialogComponent } from './convenio-dialog.component';
+import { ConvenioDialogComponent, ConvenioDialogData } from './convenio-dialog.component';
 
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 
@@ -65,7 +65,6 @@ export class ConveniosComponent implements OnInit {
   readonly displayedColumns = [
     'convenio_id',
     'nombre',
-    'descripcion',
     'fecha_inicio',
     'fecha_fin',
     'acciones'
@@ -158,9 +157,12 @@ export class ConveniosComponent implements OnInit {
   }
 
   abrirDialogCrear(): void {
-    const dialogRef = this.dialog.open(ConvenioDialogComponent, {
+    const dialogRef = this.dialog.open<ConvenioDialogComponent, ConvenioDialogData>(ConvenioDialogComponent, {
       width: '520px',
-      data: null
+      data: {
+        mode: 'create',
+        convenio: null
+      }
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
@@ -171,14 +173,27 @@ export class ConveniosComponent implements OnInit {
   }
 
   abrirDialogEditar(convenio: Convenio): void {
-    const dialogRef = this.dialog.open(ConvenioDialogComponent, {
+    const dialogRef = this.dialog.open<ConvenioDialogComponent, ConvenioDialogData>(ConvenioDialogComponent, {
       width: '520px',
-      data: convenio
+      data: {
+        mode: 'edit',
+        convenio
+      }
     });
 
     dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
         this.cargarConvenios();
+      }
+    });
+  }
+
+  abrirDialogVer(convenio: Convenio): void {
+    this.dialog.open<ConvenioDialogComponent, ConvenioDialogData>(ConvenioDialogComponent, {
+      width: '520px',
+      data: {
+        mode: 'view',
+        convenio
       }
     });
   }
