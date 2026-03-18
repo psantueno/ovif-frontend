@@ -58,9 +58,9 @@ export class PautaDialogComponent implements OnInit {
       convenio_id: new FormControl({ value: this.data?.convenio_id || '', disabled: !this.pautaModificable }, [Validators.required]),
       descripcion: new FormControl({ value: this.data?.descripcion || '', disabled: !this.pautaModificable }, [Validators.required, Validators.minLength(3), Validators.maxLength(255)]),
       dia_vto: new FormControl({ value: this.data?.dia_vto || '', disabled: !this.pautaModificable }, [Validators.required, Validators.min(1), Validators.max(31)]),
-      plazo_vto: new FormControl({ value: this.data?.plazo_vto || '', disabled: !this.pautaModificable }, [Validators.required, Validators.min(0)]),
+      plazo_vto: new FormControl({ value: this.data?.plazo_vto ?? '', disabled: !this.pautaModificable }, [Validators.required, Validators.min(0)]),
       cant_dias_rectifica: new FormControl({ value: this.data?.cant_dias_rectifica ?? null, disabled: !this.pautaModificable }),
-      plazo_mes_rectifica: new FormControl({ value: this.data?.plazo_mes_rectifica ?? null, disabled: !this.pautaModificable }),
+      plazo_mes_rectifica: new FormControl({ value: this.data?.plazo_mes_rectifica ?? '', disabled: !this.pautaModificable }),
       tipo_pauta_id: new FormControl({ value: this.data?.tipo_pauta_id || '', disabled: !this.pautaModificable }, [Validators.required]),
     });
 

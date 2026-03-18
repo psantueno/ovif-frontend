@@ -78,13 +78,17 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: 'manual' | 'masiva' = 'manual';
-  readonly plantillaRecursosExcelUrl = 'assets/plantillas/plantilla_recursos.xlsx';
   readonly plantillaRecursosManualUrl = 'assets/plantillas/manual.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: PartidaDisplay[] = [];
   erroresCargaMasiva: string[] = [];
   erroresPrevisualizacion: ParseError<Recursos>[] = [];
+  erroresCodigosPartidas: ParseError<RecursosParseados>[] = [];
   cargandoArchivoMasivo = false;
+
+  filasLeidas: number = 0;
+  filasCorrectas: number = 0;
+  filasConErrores: number = 0;
 
   cargandoPartidas = false;
   errorAlCargarPartidas = false;
@@ -233,6 +237,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
       try{
         const { rows, file } = await onFileChange<Recursos>(event)
+        this.filasLeidas = rows.length;
 
         this.resetEstadoCargaMasiva();
         this.archivoMasivoSeleccionado = null;
@@ -245,18 +250,20 @@ export class RecursosComponent implements OnInit, OnDestroy {
         }
 
         this.archivoMasivoSeleccionado = file
-
         const { rows: importesParseados, errors: errores } = parseRecursos(rows)
-        const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesParseados, errores)
+        const importesValidos: RecursosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
+        const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
         const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
 
         if(importesFiltrado.length === 0){
-            this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
-            return;
-          }
+          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
+          return;
+        }
 
         this.previsualizacionMasiva = importesFiltrado;
         this.erroresPrevisualizacion = errores;
+
+        this.armarResumen();
       }catch (error) {
         this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
         console.error('Error al procesar CSV:', error);
@@ -630,6 +637,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.previsualizacionMasiva = [];
     this.erroresCargaMasiva = [];
     this.erroresPrevisualizacion = [];
+    this.erroresCodigosPartidas = [];
     this.cargandoArchivoMasivo = false;
   }
 
@@ -903,20 +911,16 @@ export class RecursosComponent implements OnInit, OnDestroy {
     })
   }
 
-  get obtenerTotalFilasMasivas(): number {
-    return this.previsualizacionMasiva.filter(partida => partida.node.carga).length;
-  }
-
   get obtenerTotalImportesMasivos(): number {
-  const total = this.previsualizacionMasiva.reduce((total, partida) => {
-    if (!partida.node.carga) return total;
-    if (partida.node.errorImporte || partida.node.importePercibido === null) return total;
+    const total = this.previsualizacionMasiva.reduce((total, partida) => {
+      if (!partida.node.carga) return total;
+      if (partida.node.errorImporte || partida.node.importePercibido === null) return total;
 
-    return total + Number(partida.node.importePercibido);
-  }, 0);
+      return total + Number(partida.node.importePercibido);
+    }, 0);
 
-  return Number(total.toFixed(2));
-}
+    return Number(total.toFixed(2));
+  }
 
   public formatearImporte(valor: number | null | undefined): string {
     if (valor === null || valor === undefined) {
@@ -941,6 +945,31 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     return null;
   }
+
+    private filtrarCodigosInvalidos (rows: RecursosParseados[]): RecursosParseados[] {
+      const filasInvalidas = rows.filter(r => !this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+
+      filasInvalidas.forEach((fi) => {
+        this.erroresCodigosPartidas.push({
+          row: fi,
+          error: 'No existe el código de partida indicado, por lo que no puede ser procesado.'
+        })
+      })
+
+      const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
+
+      const noAdmiteCarga = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && !pp.node.carga))
+      noAdmiteCarga.forEach((fi) => {
+        this.erroresCodigosPartidas.push({
+          row: fi,
+          error: 'La partida indicada no admite carga de importes.'
+        })
+      })
+
+      const filasValidas = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && pp.node.carga))
+
+      return filasValidas
+    }
 
   private armarPrevisualizacionMasiva(rows: RecursosParseados[], errors: ParseError<Recursos>[]): PartidaDisplay[] {
         // 1. Mapa para acceso rápido por código
@@ -1007,4 +1036,21 @@ export class RecursosComponent implements OnInit, OnDestroy {
           }
         });
     }
+
+  private armarResumen(){
+    this.filasCorrectas = this.previsualizacionMasiva.filter(partida => partida.node.carga && !partida.node.errorImporte && partida.node.importePercibido).length;
+    this.filasConErrores = this.erroresPrevisualizacion.length + this.erroresCodigosPartidas.length;
+  }
+
+  get totalFilasLeidas() {
+    return this.filasLeidas
+  }
+
+  get totalFilasCorrectas() {
+    return this.filasCorrectas
+  }
+
+  get totalFilasConErrores() {
+    return this.filasConErrores
+  }
 }
