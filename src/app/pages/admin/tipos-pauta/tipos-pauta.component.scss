@@ -134,20 +134,22 @@
 .tabla-wrapper {
   overflow-x: auto;
   margin-top: 1rem;
+  padding-bottom: 0.35rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tipos-pauta-table {
-  width: 100%;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
 
   th,
   td {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     padding: 0.75rem;
     text-align: left;
+    vertical-align: middle;
   }
 
   th {
@@ -165,6 +167,32 @@
   tr.mat-row,
   tr.mat-header-row {
     height: 56px;
+  }
+
+  th.mat-column-tipo_pauta_id,
+  td.mat-column-tipo_pauta_id {
+    min-width: 88px;
+  }
+
+  th.mat-column-codigo,
+  td.mat-column-codigo {
+    min-width: 180px;
+  }
+
+  th.mat-column-nombre,
+  td.mat-column-nombre {
+    min-width: 260px;
+  }
+
+  th.mat-column-requiere_periodo_rectificar,
+  td.mat-column-requiere_periodo_rectificar {
+    min-width: 190px;
+  }
+
+  th.mat-column-acciones,
+  td.mat-column-acciones {
+    min-width: 140px;
+    text-align: center;
   }
 
   .mat-mdc-row:hover {

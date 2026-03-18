@@ -7,30 +7,56 @@
       <span>Municipio:</span>
       <strong>{{ municipioSeleccionado?.municipio_nombre || 'No asignado' }}</strong>
     </p>
-    <mat-card class="container-helper ">
-      <p class="selector-helper">
-        <mat-icon>info</mat-icon>
-        <span>
-          La rectificación de importes está habilitada del 1 al 10 del mes siguiente al período informado.
-        </span>
-      </p>
-      <p class="selector-helper">
-        <mat-icon>info</mat-icon>
-        <span>
-          Finalizado dicho plazo, el sistema no permitirá nuevos cambios.
-        </span>
-        </p>
+    <mat-card class="container-helper" [class.container-helper--active]="mostrarHelperRectificacionSecundario">
+      <div class="helper-card">
+        <div class="helper-icon">
+          <mat-icon>info</mat-icon>
+        </div>
+
+        <div class="helper-content" *ngIf="mostrarHelperRectificacionSecundario; else helperPendiente">
+          <span class="helper-eyebrow">Rectificación habilitada</span>
+          <p class="helper-main">
+            <!-- <strong>{{ periodoActivo?.pauta_descripcion }}</strong> -->
+            <span>Convenio: </span>
+            <strong>{{ periodoActivo?.convenio_nombre }}</strong>
+          </p>
+          <p class="helper-period" *ngIf="periodoRectificacionLabel">
+            <span>Período: </span>
+            <strong>{{ periodoRectificacionLabel }}</strong>
+          </p>
+          <p class="helper-dates">
+            Plazo de carga:
+            <strong>{{ periodoActivo?.fecha_inicio_rectificacion | date: 'dd/MM/yyyy' }}</strong>
+            al
+            <strong>{{ periodoActivo?.fecha_cierre | date: 'dd/MM/yyyy' }}</strong>
+          </p>
+          <p class="helper-note">
+            Después de esa fecha, el sistema bloqueará nuevas rectificaciones.
+          </p>
+        </div>
+
+        <ng-template #helperPendiente>
+          <div class="helper-content" [class.helper-content--empty]="sinPeriodosRectificables">
+            <span class="helper-eyebrow">{{ sinPeriodosRectificables ? 'Sin periodos disponibles' : 'Rectificaciones' }}</span>
+            <p class="helper-main">{{ helperRectificacionPrincipal }}</p>
+            <p class="helper-note" *ngIf="sinPeriodosRectificables">
+              No hay ventanas de rectificación habilitadas para este municipio en este momento.
+            </p>
+          </div>
+        </ng-template>
+      </div>
     </mat-card>
   </div>
 
   <!-- Selector de Ejercicio/Mes -->
-  <div class="ejercicio-selector">
+  <div class="ejercicio-selector" *ngIf="ejerciciosMeses.length > 0">
     <div class="selector-row">
       <label for="ejercicioMes" class="selector-label">
         <mat-icon>event</mat-icon>
         <span>Ejercicio y Mes Habilitado:</span>
       </label>
-      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" readonly>
+      <select id="ejercicioMes" [(ngModel)]="ejercicioMes" (ngModelChange)="onPeriodoChange($event)">
+        <option value="">Seleccione el ejercicio fiscal, convenio y pauta que desea rectificar</option>
         <option *ngFor="let em of ejerciciosMeses" [value]="em.valor">
           {{ em.texto }}
         </option>

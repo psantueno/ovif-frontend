@@ -410,7 +410,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
           },
         error: (error) => {
           console.error('Error al guardar las partidas de recursos:', error);
-          this.mostrarError('No pudimos guardar los datos. Intentá nuevamente más tarde.');
+          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+            error,
+            'No pudimos guardar los datos. Intentá nuevamente más tarde.',
+            'Carga no disponible'
+          );
+          this.mostrarError(mensaje, titulo);
         },
       });
   }
@@ -483,7 +488,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al generar el informe de recursos:', error);
-          this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+            error,
+            'No pudimos generar el informe. Intentá nuevamente más tarde.',
+            'Informe no disponible'
+          );
+          this.mostrarError(mensaje, titulo);
         },
       });
   }
@@ -713,6 +723,92 @@ export class RecursosComponent implements OnInit, OnDestroy {
       allowOutsideClick: false,
       allowEscapeKey: false,
     });
+  }
+
+  private resolverMensajeErrorBackend(
+    error: any,
+    fallback: string,
+    tituloPorDefecto = 'Ocurrió un problema'
+  ): { titulo: string; mensaje: string } {
+    const payload = error?.error;
+
+    if (payload && typeof payload === 'object') {
+      if (payload.error === 'El período indicado ya no está habilitado para carga.') {
+        const partes = [payload.detalle ?? payload.error];
+
+        if (payload.fecha_limite_original) {
+          partes.push(`Plazo original de carga: ${this.formatearFechaCorta(payload.fecha_limite_original)}.`);
+        }
+
+        if (payload.fecha_limite_prorroga) {
+          partes.push(`Prórroga vigente hasta: ${this.formatearFechaCorta(payload.fecha_limite_prorroga)}.`);
+        }
+
+        if (payload.puede_solicitar_prorroga) {
+          partes.push(
+            payload.sugerencia ??
+            'Si necesitás cargar fuera de término, podés solicitar una prórroga.'
+          );
+        }
+
+        return {
+          titulo: 'Carga no disponible',
+          mensaje: partes.join(' '),
+        };
+      }
+
+      if (payload.error === 'El período indicado aún no está habilitado para carga.') {
+        const partes = [payload.detalle ?? payload.error];
+
+        if (payload.fecha_inicio) {
+          partes.push(`Fecha de inicio de carga: ${this.formatearFechaCorta(payload.fecha_inicio)}.`);
+        }
+
+        return {
+          titulo: 'Carga todavía no habilitada',
+          mensaje: partes.join(' '),
+        };
+      }
+
+      if (typeof payload.error === 'string' && typeof payload.detalle === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: `${payload.error} ${payload.detalle}`,
+        };
+      }
+
+      if (typeof payload.error === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: payload.error,
+        };
+      }
+    }
+
+    if (typeof payload === 'string') {
+      return {
+        titulo: tituloPorDefecto,
+        mensaje: payload,
+      };
+    }
+
+    return {
+      titulo: tituloPorDefecto,
+      mensaje: fallback,
+    };
+  }
+
+  private formatearFechaCorta(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = String(value).split('-');
+    if (!year || !month || !day) {
+      return String(value);
+    }
+
+    return `${day}/${month}/${year}`;
   }
 
   private mostrarToastExito(mensaje: string): Promise<void> {

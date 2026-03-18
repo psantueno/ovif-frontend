@@ -78,13 +78,6 @@
             <td mat-cell *matCellDef="let tipoPauta">{{ tipoPauta.nombre || '—' }}</td>
           </ng-container>
 
-          <ng-container matColumnDef="descripcion">
-            <th mat-header-cell *matHeaderCellDef>Descripción</th>
-            <td mat-cell *matCellDef="let tipoPauta" [matTooltip]="tipoPauta.descripcion || 'Sin descripción'">
-              {{ tipoPauta.descripcion || 'Sin descripción' }}
-            </td>
-          </ng-container>
-
           <ng-container matColumnDef="requiere_periodo_rectificar">
             <th mat-header-cell *matHeaderCellDef>Rectificación</th>
             <td mat-cell *matCellDef="let tipoPauta">
@@ -100,6 +93,10 @@
             <th mat-header-cell *matHeaderCellDef class="acciones-header">Acciones</th>
             <td mat-cell *matCellDef="let tipoPauta">
               <div class="acciones">
+                <button mat-icon-button color="primary" matTooltip="Ver tipo de pauta"
+                  (click)="abrirDialogVer(tipoPauta)" aria-label="Ver tipo de pauta">
+                  <mat-icon>visibility</mat-icon>
+                </button>
                 <button mat-icon-button color="primary" matTooltip="Editar tipo de pauta"
                   (click)="abrirDialogEditar(tipoPauta)" aria-label="Editar tipo de pauta">
                   <mat-icon>edit</mat-icon>

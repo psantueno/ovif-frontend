@@ -1,38 +1,46 @@
-<div class="usuario-card">
-  <!-- Usuario -->
-  <div class="info" *ngIf="usuarioNombre; else usuarioSkeleton">
+<div class="usuario-shell">
+  <button *ngIf="colapsado" type="button" class="usuario-launcher" (click)="toggleColapsado()"
+    aria-label="Expandir panel de usuario">
     <mat-icon>account_circle</mat-icon>
-    <span class="texto">{{ usuarioNombre }}</span>
-  </div>
+  </button>
 
-  <!-- Municipio -->
-  <div class="info municipio" *ngIf="!cargandoMunicipios; else municipioSkeleton">
-    <mat-icon>account_balance</mat-icon>
-
-    <ng-container *ngIf="municipios.length > 0 && municipioActual; else sinMunicipio">
-      <mat-select [value]="municipioActual?.municipio_id" (selectionChange)="onMunicipioChange($event.value)"
-        class="texto">
-        <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
-          {{ m.municipio_nombre }}
-        </mat-option>
-      </mat-select>
-    </ng-container>
-  </div>
-
-  <ng-template #sinMunicipio>
-    <span class="texto sin-asignar">sin asignar</span>
-  </ng-template>
-
-  <!-- Acciones -->
-  <div class="acciones">
-    <button mat-stroked-button color="primary" (click)="onLogout()" [disabled]="cerrandoSesion">
-      <mat-icon>logout</mat-icon>
-      <span>{{ cerrandoSesion ? 'Cerrando...' : 'Cerrar sesión' }}</span>
+  <div *ngIf="!colapsado" class="usuario-card">
+    <button type="button" class="usuario-collapse" (click)="toggleColapsado()"
+      aria-label="Colapsar panel de usuario">
+      <mat-icon>chevron_right</mat-icon>
     </button>
+
+    <div class="info" *ngIf="usuarioNombre; else usuarioSkeleton">
+      <mat-icon>account_circle</mat-icon>
+      <span class="texto">{{ usuarioNombre }}</span>
+    </div>
+
+    <div class="info municipio" *ngIf="!cargandoMunicipios; else municipioSkeleton">
+      <mat-icon>account_balance</mat-icon>
+
+      <ng-container *ngIf="municipios.length > 0 && municipioActual; else sinMunicipio">
+        <mat-select [value]="municipioActual?.municipio_id" (selectionChange)="onMunicipioChange($event.value)"
+          class="texto">
+          <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
+            {{ m.municipio_nombre }}
+          </mat-option>
+        </mat-select>
+      </ng-container>
+    </div>
+
+    <ng-template #sinMunicipio>
+      <span class="texto sin-asignar">sin asignar</span>
+    </ng-template>
+
+    <div class="acciones">
+      <button mat-stroked-button color="primary" (click)="onLogout()" [disabled]="cerrandoSesion">
+        <mat-icon>logout</mat-icon>
+        <span>{{ cerrandoSesion ? 'Cerrando...' : 'Cerrar sesión' }}</span>
+      </button>
+    </div>
   </div>
 </div>
 
-<!-- Skeletons -->
 <ng-template #usuarioSkeleton>
   <div class="info">
     <div class="skeleton icon"></div>

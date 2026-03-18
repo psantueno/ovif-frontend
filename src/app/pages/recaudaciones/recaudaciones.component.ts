@@ -60,7 +60,6 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly plantillaRecaudacionesExcelUrl = 'assets/plantillas/plantilla_recaudaciones.xlsx';
   readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
@@ -332,20 +331,17 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
           },
           error: (error) => {
             console.error('Error al guardar recaudaciones:', error);
-            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
+            const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+              error,
+              'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+            );
+            this.mostrarError(mensaje, titulo);
           },
         });
     };
 
     if (this.esRectificacion) {
-      Swal.fire({
-        title: '¿Confirma que desea guardar los importes de rectificación?',
-        text: 'No se volverá a habilitar un período de rectificación para este ejercicio y mes. Asegurate de que los datos ingresados sean correctos antes de confirmar.',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, guardar',
-        cancelButtonText: 'No, revisar',
-      }).then((result) => {
+      this.confirmarGuardadoRectificacion().then((result) => {
         if (result.isConfirmed) {
           ejecutarGuardado();
         }
@@ -424,7 +420,11 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al generar el informe de recaudaciones:', error);
-          this.mostrarError('No pudimos generar el informe. Intentá nuevamente más tarde.');
+          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+            error,
+            'No pudimos generar el informe. Intentá nuevamente más tarde.'
+          );
+          this.mostrarError(mensaje, titulo);
         },
       });
   }
@@ -474,6 +474,75 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       allowOutsideClick: false,
       allowEscapeKey: false,
     });
+  }
+
+  private resolverMensajeErrorBackend(
+    error: any,
+    fallback: string,
+    tituloPorDefecto = 'Ocurrió un problema'
+  ): { titulo: string; mensaje: string } {
+    const payload = error?.error;
+
+    if (payload && typeof payload === 'object') {
+      if (payload.error === 'El período indicado no está habilitado para rectificación.') {
+        const partes = [payload.detalle ?? payload.error];
+
+        if (payload.fecha_limite_original) {
+          partes.push(`Plazo original de carga: ${this.formatearFechaCorta(payload.fecha_limite_original)}.`);
+        }
+
+        if (payload.puede_solicitar_prorroga) {
+          partes.push(
+            payload.sugerencia ??
+            'Si necesitás cargar fuera de término, podés solicitar una prórroga.'
+          );
+        }
+
+        return {
+          titulo: 'Rectificación no disponible',
+          mensaje: partes.join(' '),
+        };
+      }
+
+      if (typeof payload.error === 'string' && typeof payload.detalle === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: `${payload.error} ${payload.detalle}`,
+        };
+      }
+
+      if (typeof payload.error === 'string') {
+        return {
+          titulo: tituloPorDefecto,
+          mensaje: payload.error,
+        };
+      }
+    }
+
+    if (typeof payload === 'string') {
+      return {
+        titulo: tituloPorDefecto,
+        mensaje: payload,
+      };
+    }
+
+    return {
+      titulo: tituloPorDefecto,
+      mensaje: fallback,
+    };
+  }
+
+  private formatearFechaCorta(value: string | null | undefined): string {
+    if (!value) {
+      return '';
+    }
+
+    const [year, month, day] = String(value).split('-');
+    if (!year || !month || !day) {
+      return String(value);
+    }
+
+    return `${day}/${month}/${year}`;
   }
 
   private mostrarToastExito(mensaje: string): Promise<void> {
@@ -623,5 +692,16 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     this.periodoSeleccionado = combinado;
     return combinado;
+  }
+
+  private confirmarGuardadoRectificacion() {
+    return Swal.fire({
+      title: '¿Confirma que desea guardar los importes de rectificación?',
+      text: 'Asegurate de que los datos ingresados sean correctos antes de confirmar.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Confirmar',
+      cancelButtonText: 'No, revisar',
+    });
   }
 }

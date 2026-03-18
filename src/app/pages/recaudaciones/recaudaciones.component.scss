@@ -145,21 +145,26 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  width: fit-content;
+  padding: 0.9rem 1.6rem;
+  border-radius: 999px;
+  background: var(--color-primary);
   color: #ffffff;
   font-weight: 700;
   text-decoration: none;
 
   &:hover {
     text-decoration: none;
-    color: #000000;
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
   }
 
   &:hover mat-icon {
-    color: #000000;
+    color: inherit;
   }
 
   mat-icon {
-    color: #ffffff;
+    color: inherit;
   }
 }
 

@@ -99,15 +99,6 @@
             </td>
           </ng-container>
 
-          <ng-container matColumnDef="descripcion">
-            <th mat-header-cell *matHeaderCellDef>Descripcion</th>
-            <td mat-cell *matCellDef="let convenio">
-              <div class="nombre-cell">
-                <span class="nombre">{{ convenio.descripcion }}</span>
-              </div>
-            </td>
-          </ng-container>
-
           <ng-container matColumnDef="fecha_inicio">
             <th mat-header-cell *matHeaderCellDef>Fecha de inicio</th>
             <td mat-cell *matCellDef="let convenio">
@@ -126,6 +117,10 @@
             <th mat-header-cell *matHeaderCellDef class="acciones-header">Acciones</th>
             <td mat-cell *matCellDef="let convenio">
               <div class="acciones">
+                <button mat-icon-button color="primary" matTooltip="Ver convenio"
+                  (click)="abrirDialogVer(convenio)" aria-label="Ver convenio">
+                  <mat-icon>visibility</mat-icon>
+                </button>
                 <button mat-icon-button color="primary" matTooltip="Editar convenio"
                   (click)="abrirDialogEditar(convenio)" aria-label="Editar convenio">
                   <mat-icon>edit</mat-icon>

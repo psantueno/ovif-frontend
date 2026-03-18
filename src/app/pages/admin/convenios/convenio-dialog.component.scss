@@ -23,6 +23,33 @@ h2[mat-dialog-title] {
   min-width: 340px;
 }
 
+.detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.detalle-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  background: rgba(43, 62, 76, 0.06);
+}
+
+.detalle-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #4b5563;
+  text-transform: uppercase;
+}
+
+.detalle-value {
+  color: #111827;
+  font-weight: 600;
+}
+
 .full-width {
   width: 100%;
 }

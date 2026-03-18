@@ -166,20 +166,22 @@
 .tabla-wrapper {
   overflow-x: auto;
   margin-top: 1rem;
+  padding-bottom: 0.35rem;
+  -webkit-overflow-scrolling: touch;
 }
 
 .convenios-table {
-  width: 100%;
-  table-layout: fixed;
+  width: max-content;
+  min-width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
 
   th,
   td {
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     padding: 0.75rem;
     text-align: left;
+    vertical-align: middle;
   }
 
   th {
@@ -201,37 +203,24 @@
 
   th.mat-column-convenio_id,
   td.mat-column-convenio_id {
-    width: 6%;
+    min-width: 88px;
   }
 
-  th.mat-column-convenio_nombre,
-  td.mat-column-convenio_nombre {
-    width: 18%;
+  th.mat-column-nombre,
+  td.mat-column-nombre {
+    min-width: 280px;
   }
 
-  th.mat-column-convenio_spar,
-  td.mat-column-convenio_spar,
-  th.mat-column-convenio_ubge,
-  td.mat-column-convenio_ubge {
-    width: 12%;
-    text-align: center;
-  }
-
-  th.mat-column-convenio_subir_archivos,
-  td.mat-column-convenio_subir_archivos {
-    width: 12%;
-    text-align: center;
-  }
-
-  th.mat-column-convenio_poblacion,
-  td.mat-column-convenio_poblacion {
-    width: 15%;
-    text-align: center;
+  th.mat-column-fecha_inicio,
+  td.mat-column-fecha_inicio,
+  th.mat-column-fecha_fin,
+  td.mat-column-fecha_fin {
+    min-width: 150px;
   }
 
   th.mat-column-acciones,
   td.mat-column-acciones {
-    width: 12%;
+    min-width: 140px;
     text-align: center;
   }
 

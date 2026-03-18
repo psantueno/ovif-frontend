@@ -21,6 +21,14 @@ import Swal from 'sweetalert2';
 import { Convenio, ConvenioPayload, ConveniosAdminService } from '../../../services/convenios-admin.service';
 
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
+
+export type ConvenioDialogMode = 'create' | 'edit' | 'view';
+
+export interface ConvenioDialogData {
+  mode: ConvenioDialogMode;
+  convenio: Convenio | null;
+}
+
 @Component({
   selector: 'app-pauta-dialog',
   standalone: true,
@@ -53,22 +61,31 @@ export class ConvenioDialogComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly convenioService: ConveniosAdminService,
     private readonly dialogRef: MatDialogRef<ConvenioDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public readonly data: Convenio | null
+    @Inject(MAT_DIALOG_DATA) public readonly data: ConvenioDialogData
   ) {}
 
   ngOnInit(): void {
     this.form = this.fb.group({
-      nombre: new FormControl({ value: this.data?.nombre || '', disabled: !this.convenioModificable}, [Validators.required, Validators.minLength(3), Validators.maxLength(150)]),
-      descripcion: new FormControl({ value: this.data?.descripcion || '', disabled: !this.convenioModificable }, [Validators.required, Validators.minLength(3)]),
-      fecha_inicio: new FormControl({ value: this.obtenerFecha(this.data?.fecha_inicio || ''), disabled: !this.convenioModificable }, [Validators.required]),
-      fecha_fin: new FormControl({ value: this.obtenerFecha(this.data?.fecha_fin || ''), disabled: !this.convenioModificable }, [Validators.required]),
+      nombre: new FormControl({ value: this.convenio?.nombre || '', disabled: !this.convenioModificable }, [Validators.required, Validators.minLength(3), Validators.maxLength(150)]),
+      descripcion: new FormControl({ value: this.convenio?.descripcion || '', disabled: !this.convenioModificable }, [Validators.required, Validators.minLength(3)]),
+      fecha_inicio: new FormControl({ value: this.obtenerFecha(this.convenio?.fecha_inicio || ''), disabled: !this.convenioModificable }, [Validators.required]),
+      fecha_fin: new FormControl({ value: this.obtenerFecha(this.convenio?.fecha_fin || ''), disabled: !this.convenioModificable }, [Validators.required]),
     },
     {
       validators: this.rangoFechasValidator
     });
+
+    if (this.isViewMode) {
+      this.form.disable({ emitEvent: false });
+    }
   }
 
   guardar(): void {
+    if (this.isViewMode) {
+      this.dialogRef.close();
+      return;
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       Swal.fire({
@@ -84,8 +101,8 @@ export class ConvenioDialogComponent implements OnInit {
 
     const payload = this.construirPayload(this.form.value);
     this.enviando = true;
-    const request$ = this.data?.convenio_id
-      ? this.convenioService.actualizarConvenio(this.data.convenio_id, payload)
+    const request$ = this.mode === 'edit' && this.convenio?.convenio_id
+      ? this.convenioService.actualizarConvenio(this.convenio.convenio_id, payload)
       : this.convenioService.crearConvenio(payload);
 
     request$
@@ -96,7 +113,7 @@ export class ConvenioDialogComponent implements OnInit {
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: this.data?.convenio_id ? 'Convenio actualizado' : 'Convenio creado',
+            title: this.mode === 'edit' ? 'Convenio actualizado' : 'Convenio creado',
             showConfirmButton: false,
             timer: 2000,
             timerProgressBar: true,
@@ -143,11 +160,45 @@ export class ConvenioDialogComponent implements OnInit {
   }
 
   get convenioModificable(){
-    if(this.data?.modificable !== undefined && this.data?.modificable !== null){
-      return this.data?.modificable
+    if (this.isViewMode) {
+      return false;
     }
 
-    return true;
+    if (this.convenio?.modificable !== undefined && this.convenio?.modificable !== null) {
+      return this.convenio.modificable;
+    }
+
+    return this.mode === 'create';
+  }
+
+  get mode(): ConvenioDialogMode {
+    return this.data?.mode ?? 'create';
+  }
+
+  get convenio(): Convenio | null {
+    return this.data?.convenio ?? null;
+  }
+
+  get isViewMode(): boolean {
+    return this.mode === 'view';
+  }
+
+  get title(): string {
+    if (this.mode === 'create') return 'Nuevo convenio';
+    if (this.mode === 'edit') return 'Editar convenio';
+    return 'Detalle del convenio';
+  }
+
+  get icon(): string {
+    if (this.mode === 'create') return 'add_location_alt';
+    if (this.mode === 'edit') return 'edit_location_alt';
+    return 'visibility';
+  }
+
+  get modificableLabel(): string {
+    if (this.convenio?.modificable === true) return 'Sí';
+    if (this.convenio?.modificable === false) return 'No';
+    return 'Sin datos';
   }
 
   private construirPayload(formValue: any): ConvenioPayload {
