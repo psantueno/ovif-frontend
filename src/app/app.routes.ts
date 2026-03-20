@@ -28,6 +28,7 @@ import { ConceptosComponent } from './pages/admin/conceptos/conceptos.component'
 import { LogsComponent } from './pages/admin/logs/logs.component';
 import { ConfiguracionParametrosComponent } from './pages/admin/configuracion-parametros/configuracion-parametros.component';
 import { TiposPautaComponent } from './pages/admin/tipos-pauta/tipos-pauta.component';
+import { MunicipioMailsComponent } from './pages/admin/municipios-mails/municipios-mails.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -92,7 +93,8 @@ export const routes: Routes = [
       { path: 'admin/conceptos-recaudacion', component: ConceptosComponent, canActivate: [AdminGuard] },
       { path: 'admin/tipos-pauta', component: TiposPautaComponent, canActivate: [AdminGuard] },
       { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] },
-      { path: 'admin/parametros', component: ConfiguracionParametrosComponent, canActivate: [AdminGuard] }
+      { path: 'admin/parametros', component: ConfiguracionParametrosComponent, canActivate: [AdminGuard] },
+      { path: 'admin/municipios-mails', component: MunicipioMailsComponent, canActivate: [AdminGuard] }
     ]
   },
   { path: '**', redirectTo: '' }
