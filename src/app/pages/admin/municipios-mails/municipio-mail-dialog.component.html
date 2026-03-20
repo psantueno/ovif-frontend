@@ -1,0 +1,64 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">
+    {{ data?.municipio_id ? 'edit_location_alt' : 'add_location_alt' }}
+  </mat-icon>
+  {{ data?.municipio_id ? 'Editar mail' : 'Nuevo mail' }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <mat-form-field>
+    <mat-label>Municipio</mat-label>
+    <mat-select formControlName="municipio_id">
+      <mat-option [value]="null">Sin asignar</mat-option>
+      <mat-option *ngFor="let municipio of municipios" [value]="municipio.municipio_id">{{ municipio.municipio_nombre }}</mat-option>
+    </mat-select>
+    <mat-error *ngIf="form.get('municipio_id')?.hasError('required') && form.get('municipio_id')?.touched">
+      El municipio es obligatorio
+    </mat-error>
+    <mat-hint>
+      No se puede modificar una vez creado
+    </mat-hint>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Email</mat-label>
+    <input matInput formControlName="email"/>
+    <mat-error *ngIf="form.get('email')?.hasError('required') && form.get('email')?.touched">
+      El email es obligatorio
+    </mat-error>
+    <mat-hint>
+      No se puede modificar una vez creado
+    </mat-hint>
+  </mat-form-field>
+
+  <mat-form-field class="full-width" appearance="fill">
+    <mat-label>Nombre</mat-label>
+    <input matInput formControlName="nombre" placeholder="Nombre del destinatario"/>
+    <mat-error *ngIf="form.get('nombre')?.hasError('required') && form.get('nombre')?.touched">
+      El nombre es obligatorio
+    </mat-error>
+    <mat-error *ngIf="form.get('nombre')?.hasError('maxlength') && form.get('nombre')?.touched">
+      Debe tener menos de 255 caracteres
+    </mat-error>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-stroked-button class="btn-cancelar" mat-dialog-close [disabled]="enviando">
+    Cancelar
+  </button>
+  <button
+    mat-raised-button
+    color="primary"
+    class="btn-guardar"
+    type="button"
+    (click)="guardar()"
+    [disabled]="enviando"
+  >
+    <mat-icon *ngIf="!enviando">save</mat-icon>
+    <mat-icon class="girando" *ngIf="enviando">hourglass_top</mat-icon>
+    {{ data?.municipio_id ? 'Actualizar' : 'Guardar' }}
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="enviando"></app-loading-overlay>
