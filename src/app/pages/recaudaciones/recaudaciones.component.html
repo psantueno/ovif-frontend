@@ -148,7 +148,7 @@
               <th>Fila</th>
               <th>Código Tributo</th>
               <th>Descripción</th>
-              <th [style.textAlign]="'right'">Importe Recaudación</th>
+              <th>Importe Recaudación</th>
               <th>Ente Recaudador</th>
               <th>Estado</th>
             </tr>
@@ -158,7 +158,7 @@
               <td>{{ fila.filaExcel }}</td>
               <td>{{ fila.codigo_tributo ?? '-' }}</td>
               <td>{{ fila.descripcion || '-' }}</td>
-              <td [style.textAlign]="'right'">{{ fila.importe_recaudacion ?? '-' }}</td>
+              <td>{{ fila.importe_recaudacion ?? '-' }}</td>
               <td>{{ fila.ente_recaudador || '-' }}</td>
               <td>
                 <ng-container *ngIf="fila.tieneError; else estadoOk">

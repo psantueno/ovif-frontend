@@ -1,29 +1,5 @@
 import * as XLSX from 'xlsx';
 
-export interface Gastos {
-  codigo_partida: string,
-  descripcion: string,
-  importe_devengado: string
-}
-
-export interface GastosParseados {
-  codigo_partida: number,
-  descripcion: string,
-  importe_devengado: number
-}
-
-export interface Recursos {
-  codigo_partida: string,
-  descripcion: string,
-  importe: string
-}
-
-export interface RecursosParseados {
-  codigo_partida: number,
-  descripcion: string,
-  importe: number
-}
-
 export interface Remuneraciones {
   legajo: number,
   cuil: string,

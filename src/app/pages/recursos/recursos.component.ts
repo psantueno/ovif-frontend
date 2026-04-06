@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,36 +8,18 @@ import Swal from 'sweetalert2';
 
 import {
   MunicipioService,
-  PartidaRecursoResponse,
   PartidaRecursoUpsertPayload,
   PeriodoSeleccionadoMunicipio
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
-import { onFileChange, Recursos, RecursosParseados } from '../../core/utils/excelReader.util';
-import { parseRecursos, ParseError } from '../../core/utils/cargaTypesParser';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
+import {
+  parseRecursosExcelFile,
+  RecursoPreviewRow,
+} from '../../core/utils/recursosExcelParser.util';
 
 type MensajeTipo = 'info' | 'error';
-type CampoEditable = 'importe' | 'contribuyentes' | 'pagaron';
-
-interface PartidaNode {
-  codigo: number;
-  descripcion: string;
-  carga: boolean;
-  soloImporte: boolean;
-  importePercibido: number | null;
-  importePercibidoOriginal: number | null;
-  importePercibidoTexto: string;
-  importePercibidoOriginalTexto: string;
-  errorImporte: boolean;
-  hijos?: PartidaNode[];
-}
-
-interface PartidaDisplay {
-  node: PartidaNode;
-  nivel: number;
-}
 
 @Component({
   selector: 'app-recursos',
@@ -77,27 +59,20 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  vistaActual: 'manual' | 'masiva' = 'manual';
   readonly plantillaRecursosManualUrl = 'assets/plantillas/manual.pdf';
+
   archivoMasivoSeleccionado: File | null = null;
-  previsualizacionMasiva: PartidaDisplay[] = [];
+  previsualizacionMasiva: RecursoPreviewRow[] = [];
+
+  totalFilasLeidas = 0;
+  filasValidas = 0;
+  filasConErrores = 0;
+
   erroresCargaMasiva: string[] = [];
-  erroresPrevisualizacion: ParseError<Recursos>[] = [];
-  erroresCodigosPartidas: ParseError<RecursosParseados>[] = [];
   cargandoArchivoMasivo = false;
 
-  filasLeidas: number = 0;
-  filasCorrectas: number = 0;
-  filasConErrores: number = 0;
-
-  cargandoPartidas = false;
-  errorAlCargarPartidas = false;
   guardando = false;
   descargandoInforme = false;
-
-  partidas: PartidaNode[] = [];
-  partidasPlanas: PartidaDisplay[] = [];
-  private cambiosPendientes = false;
 
   ngOnInit(): void {
     this.municipioActual = this.municipioService.getMunicipioActual();
@@ -132,7 +107,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
       const ejercicio = parsedValor?.ejercicio ?? Number(partes[0]);
       const mes = parsedValor?.mes ?? Number(partes[1]);
 
-      if (!Number.isInteger(ejercicio) || !Number.isInteger(mes) || mes < 1 || mes > 12) {
+      if (
+        !Number.isInteger(ejercicio) ||
+        !Number.isInteger(mes) ||
+        mes < 1 ||
+        mes > 12
+      ) {
         this.mostrarAlerta(
           'Datos inválidos',
           'Los datos recibidos no son válidos. Probá nuevamente.',
@@ -144,6 +124,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
+      this.sincronizarPeriodoSeleccionado(ejercicio, mes, parsedValor ?? undefined);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -152,10 +133,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
           'info'
         );
         this.router.navigate(['/panel-carga-mensual']);
-        return;
       }
-
-      this.cargarPartidas();
     });
   }
 
@@ -165,42 +143,8 @@ export class RecursosComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('window:beforeunload', ['$event'])
-  onBeforeUnload(event: BeforeUnloadEvent): void {
-    if (this.tieneCambiosPendientes()) {
-      event.preventDefault();
-      event.returnValue = '';
-    }
-  }
-
   tieneCambiosPendientes(): boolean {
-    return this.cambiosPendientes;
-  }
-
-  private actualizarEstadoCambios(): void {
-    this.cambiosPendientes = this.partidasPlanas.some(({ node }) => {
-      if (!node.carga) {
-        return false;
-      }
-      if (node.errorImporte) {
-        return true;
-      }
-      if (node.importePercibidoOriginal !== node.importePercibido) {
-        return true;
-      }
-      if (node.soloImporte) {
-        return false;
-      }
-      return false
-    });
-  }
-
-  private actualizarBaseCambios(): void {
-    this.partidasPlanas.forEach(({ node }) => {
-      node.importePercibidoOriginal = node.importePercibido;
-      node.importePercibidoOriginalTexto = node.importePercibidoTexto;
-    });
-    this.cambiosPendientes = false;
+    return this.archivoMasivoSeleccionado !== null && this.previsualizacionMasiva.length > 0;
   }
 
   get mesActualLabel(): string {
@@ -214,122 +158,157 @@ export class RecursosComponent implements OnInit, OnDestroy {
     return nombreMes ? `${nombreMes} ${periodo.ejercicio}` : '';
   }
 
-  get totalImportes(): number {
-    return this.partidasPlanas.reduce((total, partida) => {
-      if (!partida.node.carga) {
-        return total;
-      }
-      if (partida.node.errorImporte || partida.node.importePercibido === null) {
-        return total;
-      }
-      return total + Number(partida.node.importePercibido);
-    }, 0);
+  get obtenerTotalFilasMasivas(): number {
+    return this.totalFilasLeidas;
   }
 
-  cambiarVista(vista: 'manual' | 'masiva'): void {
-    if (this.vistaActual === vista) {
-      return;
+  get puedeSubirMasiva(): boolean {
+    if (this.cargandoArchivoMasivo) {
+      return false;
     }
 
-    this.vistaActual = vista;
+    if (this.guardando) {
+      return false;
+    }
+
+    if (!this.previsualizacionMasiva.length) {
+      return false;
+    }
+
+    if (this.erroresCargaMasiva.length > 0) {
+      return false;
+    }
+
+    return this.filasConErrores === 0;
+  }
+
+  get tieneErroresPrevisualizacion(): boolean {
+    return this.filasConErrores > 0;
   }
 
   async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
-      try{
-        const { rows, file } = await onFileChange<Recursos>(event)
-        this.filasLeidas = rows.length;
+    const target = event.target as HTMLInputElement | null;
+    const archivo = target?.files?.[0] ?? null;
 
-        this.resetEstadoCargaMasiva();
-        this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+    this.archivoMasivoSeleccionado = null;
 
-        if (!file) {
-          if (input) {
-            input.value = '';
-          }
-          return;
-        }
-
-        this.archivoMasivoSeleccionado = file
-        const { rows: importesParseados, errors: errores } = parseRecursos(rows)
-        const importesValidos: RecursosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
-        const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
-        const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
-
-        if(importesFiltrado.length === 0){
-          this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
-          return;
-        }
-
-        this.previsualizacionMasiva = importesFiltrado;
-        this.erroresPrevisualizacion = errores;
-
-        this.armarResumen();
-      }catch (error) {
-        this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
-        console.error('Error al procesar CSV:', error);
+    if (!archivo) {
+      if (input) {
+        input.value = '';
       }
+      return;
     }
 
-    async insertarRecursosMasivos(): Promise<void> {
-      const municipioId = this.municipioActual?.municipio_id ?? null;
-      if(!municipioId){
-        this.mostrarError('No pudimos identificar el municipio seleccionado.');
-        return;
+    const archivoNombre = archivo.name.toLowerCase();
+    if (!archivoNombre.endsWith('.xlsx') && !archivoNombre.endsWith('.xls')) {
+      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .xlsx o .xls.');
+      return;
+    }
+
+    this.archivoMasivoSeleccionado = archivo;
+    this.cargandoArchivoMasivo = true;
+
+    try {
+      const resultado = await parseRecursosExcelFile(archivo);
+
+      this.previsualizacionMasiva = resultado.rows;
+      this.totalFilasLeidas = resultado.totalRowsRead;
+      this.filasValidas = resultado.validRows;
+      this.filasConErrores = resultado.invalidRows;
+      this.erroresCargaMasiva = [...resultado.globalErrors];
+
+      if (resultado.totalRowsRead === 0 && this.erroresCargaMasiva.length === 0) {
+        this.erroresCargaMasiva.push('El archivo no contiene datos de recursos para importar.');
       }
-      if(this.erroresCargaMasiva.length > 0){
-        this.mostrarError('El archivo contiene errores. No se pueden insertar los datos.');
-        return;
-      }
+    } catch (error) {
+      console.error('Error al procesar archivo de recursos:', error);
+      this.erroresCargaMasiva.push('No se pudo procesar el archivo. Verificá que sea una planilla Excel válida.');
+    } finally {
+      this.cargandoArchivoMasivo = false;
+    }
+  }
 
-      const periodo = this.periodoSeleccionado;
+  async insertarRecursosMasivos(): Promise<void> {
+    const municipioId = this.municipioActual?.municipio_id ?? null;
+    if (!municipioId) {
+      this.mostrarError('No pudimos identificar el municipio seleccionado.');
+      return;
+    }
 
-      const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
-      if(!ejercicio){
-        this.mostrarError('No pudimos identificar el ejercicio seleccionado.');
-        return;
-      }
+    if (!this.previsualizacionMasiva.length) {
+      this.mostrarError('No hay datos cargados para enviar.');
+      return;
+    }
 
-      const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
-      if(!mes){
-        this.mostrarError('No pudimos identificar el mes seleccionado.');
-        return;
-      }
+    if (this.erroresCargaMasiva.length > 0) {
+      this.mostrarError('La planilla contiene errores de estructura. Corregila y volvé a intentar.');
+      return;
+    }
 
-      const loadablePartidas = this.previsualizacionMasiva.filter(fila => fila.node.carga && fila.node.importePercibido !== null && !isNaN(fila.node.importePercibido));
+    if (this.filasConErrores > 0) {
+      this.mostrarError(`No se puede guardar: hay ${this.filasConErrores} fila(s) con errores.`);
+      return;
+    }
 
-      const recursosPayload: PartidaRecursoUpsertPayload[] = loadablePartidas.map((fila) => ({
-        partidas_recursos_codigo: fila.node.codigo,
-        recursos_importe_percibido: Number(fila.node.importePercibido),
+    const periodo = this.periodoSeleccionado;
+    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
+    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
+
+    if (!ejercicio || !mes) {
+      this.mostrarError('No pudimos identificar el período seleccionado.');
+      return;
+    }
+
+    const recursosPayload: PartidaRecursoUpsertPayload[] = this.previsualizacionMasiva
+      .filter((fila) => !fila.tieneError)
+      .map((fila) => ({
+        codigo_recurso: fila.cod_recurso as number,
+        descripcion: fila.descripcion,
+        codigo_fuente_financiera: fila.cod_fuente_financiera as number,
+        descripcion_fuente: fila.descripcion_fuente,
+        vigente: fila.vigente as number,
+        percibido: fila.percibido as number,
       }));
 
-      console.log("Recursos payload ", recursosPayload)
-
-      this.guardando = true;
-
-      this.municipioService
-        .guardarPartidasRecursos({ municipioId, ejercicio, mes, partidas: recursosPayload })
-        .pipe(
-          take(1),
-          finalize(() => {
-            this.guardando = false;
-          })
-        )
-        .subscribe({
-          next: (response) => {
-            if(response.resumen.errores?.length){
-              const erroresConcatenados = response.resumen.errores.join('\n');
-              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-            }else{
-              this.mostrarToastExito('Los importes fueron guardados correctamente.');
-              this.actualizarImportePartidas();
-            }
-          },
-          error: (error) => {
-            console.error('Error al guardar las partidas de gastos:', error);
-            this.mostrarError('No pudimos guardar los importes. Intentá nuevamente más tarde.');
-          },
-        });
+    if (!recursosPayload.length) {
+      this.mostrarError('No hay filas válidas para guardar.');
+      return;
     }
+
+    this.guardando = true;
+
+    this.municipioService
+      .guardarPartidasRecursos({ municipioId, ejercicio, mes, partidas: recursosPayload })
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.guardando = false;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.resumen.errores?.length) {
+            const erroresConcatenados = response.resumen.errores.join('\n');
+            this.mostrarToastAviso('La carga se completó con observaciones.', erroresConcatenados);
+          } else {
+            this.mostrarToastExito('Los importes fueron guardados correctamente.');
+          }
+
+          this.archivoMasivoSeleccionado = null;
+          this.resetEstadoCargaMasiva();
+        },
+        error: (error) => {
+          console.error('Error al guardar las partidas de recursos:', error);
+          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
+            error,
+            'No pudimos guardar los importes. Intentá nuevamente más tarde.',
+            'Carga no disponible'
+          );
+          this.mostrarError(mensaje, titulo);
+        },
+      });
+  }
 
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
@@ -340,112 +319,12 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.resetEstadoCargaMasiva();
   }
 
-  onSubmitGuardar(): void {
-    if (this.mesCerrado) {
-      return;
-    }
-    if (this.cargandoPartidas) {
-      this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
-      return;
-    }
-    if (this.guardando) {
-      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
-      return;
-    }
-    if (this.errorAlCargarPartidas) {
-      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
-      return;
-    }
-    if (!this.partidasPlanas.length) {
-      this.mostrarMensaje('info', 'No hay partidas disponibles para guardar.');
-      return;
-    }
-    if (!this.validarPartidas()) {
-      this.mostrarError('Ingrese solo valores válidos');
-      return;
-    }
-
-    const municipioId = this.municipioActual?.municipio_id ?? null;
-    const periodo = this.periodoSeleccionado;
-    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
-    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
-
-    if (!municipioId || !ejercicio || !mes) {
-      this.mostrarError('No pudimos identificar el municipio o período seleccionado.');
-      return;
-    }
-
-    const partidasPayload: PartidaRecursoUpsertPayload[] = this.partidasPlanas
-      .map((partida) => partida.node)
-      .filter((node) => node.carga && Number(node.importePercibido) !== null && Number(node.importePercibido) !== 0)
-      .map((node) => ({
-        partidas_recursos_codigo: node.codigo,
-        recursos_importe_percibido: Number(node.importePercibido),
-      }));
-
-    if (!partidasPayload.length) {
-      this.mostrarMensaje('info', 'No hay partidas editables para guardar en este período.');
-      return;
-    }
-
-    this.guardando = true;
-
-    this.municipioService
-      .guardarPartidasRecursos({ municipioId, ejercicio, mes, partidas: partidasPayload })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.guardando = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-            if(response.resumen.errores?.length){
-              const erroresConcatenados = response.resumen.errores.join('\n');
-              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-            }else{
-              this.mostrarToastExito('Los importes fueron guardados correctamente.');
-              this.actualizarBaseCambios();
-            }
-          },
-        error: (error) => {
-          console.error('Error al guardar las partidas de recursos:', error);
-          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
-            error,
-            'No pudimos guardar los datos. Intentá nuevamente más tarde.',
-            'Carga no disponible'
-          );
-          this.mostrarError(mensaje, titulo);
-        },
-      });
-  }
-
   generarInforme(): void {
     if (this.mesCerrado) {
       return;
     }
-    if (this.cargandoPartidas) {
-      this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
-      return;
-    }
     if (this.guardando) {
       this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
-      return;
-    }
-    if (this.errorAlCargarPartidas) {
-      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
-      return;
-    }
-    if (!this.partidasPlanas.length) {
-      this.mostrarMensaje('info', 'No hay partidas disponibles para generar el informe.');
-      return;
-    }
-    if (!this.validarPartidas()) {
-      this.mostrarError('Ingrese solo valores válidos');
-      return;
-    }
-    if (this.tieneCambiosPendientes()) {
-      this.mostrarError('Guardá los cambios antes de generar el informe para visualizarlo actualizado.');
       return;
     }
     if (this.descargandoInforme) {
@@ -498,184 +377,20 @@ export class RecursosComponent implements OnInit, OnDestroy {
       });
   }
 
-  permitirSoloNumeros(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey) {
-      return;
+  public formatearImporte(valor: number | null | undefined): string {
+    if (valor === null || valor === undefined) {
+      return '-';
     }
 
-    const allowedKeys = ['Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'];
-    if (allowedKeys.includes(event.key)) {
-      return;
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) {
+      return '-';
     }
 
-    if (!/[0-9.,]/.test(event.key)) {
-      event.preventDefault();
-    }
-  }
-
-  sanearPegado(event: ClipboardEvent, partida: PartidaNode, campo: CampoEditable): void {
-    const data = event.clipboardData?.getData('text') ?? '';
-    if (!data) {
-      return;
-    }
-
-    const sanitized = data.replace(/[^0-9.,]/g, '');
-    if (sanitized === data) {
-      return;
-    }
-
-    event.preventDefault();
-    const input = event.target as HTMLInputElement;
-    const value = input.value ?? '';
-    const selectionStart = input.selectionStart ?? value.length;
-    const selectionEnd = input.selectionEnd ?? value.length;
-    const nuevoValor = value.slice(0, selectionStart) + sanitized + value.slice(selectionEnd);
-    this.updateCampo(partida, nuevoValor);
-  }
-
-  updateCampo(partida: PartidaNode, rawValue: string): void {
-    const sanitized = rawValue.replace(',', '.').trim();
-    if (sanitized === '') {
-      partida.importePercibido = null;
-      partida.importePercibidoTexto = '';
-      partida.errorImporte = false;
-      this.actualizarEstadoCambios();
-      return;
-    }
-
-    const numericValue = Number(sanitized);
-
-    if (Number.isFinite(numericValue)) {
-      partida.importePercibido = numericValue;
-      partida.importePercibidoTexto = sanitized;
-      partida.errorImporte = false;
-    } else {
-      partida.importePercibidoTexto = rawValue;
-      partida.errorImporte = true;
-    }
-
-    this.actualizarEstadoCambios();
-  }
-
-  private cargarPartidas(): void {
-    this.cargandoPartidas = true;
-    this.errorAlCargarPartidas = false;
-
-    const municipioId = this.municipioActual?.municipio_id ?? null;
-    let periodo = this.periodoSeleccionado;
-
-    if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
-      periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
-    }
-
-    const ejercicio = periodo?.ejercicio ?? null;
-    const mes = periodo?.mes ?? null;
-
-    if (!municipioId || !ejercicio || !mes) {
-      this.partidas = [];
-      this.partidasPlanas = [];
-      this.cargandoPartidas = false;
-      this.errorAlCargarPartidas = true;
-      this.cambiosPendientes = false;
-      this.mostrarError('No pudimos obtener las partidas de recursos. Verificá el municipio o período seleccionado.');
-      return;
-    }
-
-    this.municipioService
-      .obtenerPartidasRecursos({ municipioId, ejercicio, mes })
-      .pipe(take(1))
-      .subscribe({
-        next: (response) => {
-          this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
-          this.partidasPlanas = this.flattenPartidas(this.partidas);
-          this.actualizarBaseCambios();
-          this.cargandoPartidas = false;
-
-          this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
-        },
-        error: () => {
-          this.partidas = [];
-          this.partidasPlanas = [];
-          this.cargandoPartidas = false;
-          this.errorAlCargarPartidas = true;
-          this.cambiosPendientes = false;
-          this.mostrarError('No pudimos obtener las partidas de recursos. Intentá nuevamente más tarde.');
-        },
-      });
-  }
-
-  private transformarPartida(partida: PartidaRecursoResponse): PartidaNode {
-    const importePercibido = this.parseNumero(partida.recursos_importe_percibido);
-
-    const hijos = Array.isArray(partida.children)
-      ? partida.children.map((child) => this.transformarPartida(child))
-      : [];
-
-    const node: PartidaNode = {
-      codigo: Number(partida.partidas_recursos_codigo),
-      descripcion: partida.partidas_recursos_descripcion ?? 'Partida sin nombre',
-      carga: Boolean(partida.partidas_recursos_carga ?? partida.puede_cargar),
-      soloImporte: Boolean(partida.partidas_recursos_sl),
-      importePercibido,
-      importePercibidoOriginal: importePercibido,
-      importePercibidoTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
-      importePercibidoOriginalTexto: importePercibido !== null ? String(importePercibido.toFixed(2)) : '',
-      errorImporte: false,
-    };
-
-    if (hijos.length) {
-      node.hijos = hijos;
-    }
-
-    return node;
-  }
-
-  private parseNumero(valor: unknown): number | null {
-    if (valor === null || valor === undefined || valor === '') {
-      return null;
-    }
-    if (typeof valor === 'number') {
-      return Number.isFinite(valor) ? valor : null;
-    }
-
-    const normalizado = String(valor).replace(',', '.');
-    const numero = Number(normalizado);
-    return Number.isFinite(numero) ? numero : null;
-  }
-
-  private resetEstadoCargaMasiva(): void {
-    this.previsualizacionMasiva = [];
-    this.erroresCargaMasiva = [];
-    this.erroresPrevisualizacion = [];
-    this.erroresCodigosPartidas = [];
-    this.cargandoArchivoMasivo = false;
-  }
-
-  private validarPartidas(): boolean {
-    let valido = true;
-
-    this.partidasPlanas.forEach(({ node }) => {
-      if (!node.carga) {
-        return;
-      }
-
-      if (node.errorImporte) {
-        valido = false;
-        return;
-      }
-
-      if(node.importePercibido !== null && node.importePercibidoOriginal !== null && node.importePercibido !== node.importePercibidoOriginal && node.importePercibido <=0) {
-        node.errorImporte = true;
-        valido = false;
-        return;
-      }
+    return numero.toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
-
-    if (!valido) {
-      this.actualizarEstadoCambios();
-    }
-
-    return valido;
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {
@@ -823,7 +538,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     }).then(() => undefined);
   }
 
-  private mostrarToastAviso(title:string, mensaje: string): Promise<void>{
+  private mostrarToastAviso(title: string, mensaje: string): Promise<void> {
     return Swal.fire({
       toast: true,
       icon: 'info',
@@ -888,6 +603,15 @@ export class RecursosComponent implements OnInit, OnDestroy {
       .replace(/^_+|_+$/g, '') || 'municipio';
   }
 
+  private resetEstadoCargaMasiva(): void {
+    this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+    this.cargandoArchivoMasivo = false;
+    this.totalFilasLeidas = 0;
+    this.filasValidas = 0;
+    this.filasConErrores = 0;
+  }
+
   private esModuloPermitido(): boolean {
     const tipo = this.periodoSeleccionado?.tipo_pauta_codigo ?? null;
     if (!tipo) {
@@ -944,209 +668,5 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     this.periodoSeleccionado = combinado;
     return combinado;
-  }
-
-  private flattenPartidas(
-    partidas: PartidaNode[],
-    nivel = 0,
-    acumulado: PartidaDisplay[] = []
-  ): PartidaDisplay[] {
-    partidas.forEach((partida) => {
-      acumulado.push({ node: partida, nivel });
-      if (partida.hijos?.length) {
-        this.flattenPartidas(partida.hijos, nivel + 1, acumulado);
-      }
-    });
-    return acumulado;
-  }
-
-  private filtrarImportesPlanos(
-    partidas: PartidaDisplay[]
-  ): PartidaDisplay[] {
-    const codigosAConservar = new Set<number>();
-
-    for (let i = 0; i < partidas.length; i++) {
-      const actual = partidas[i];
-
-      if (actual.node.importePercibido !== null && actual.node.carga) {
-        // Conservar el nodo actual
-        codigosAConservar.add(actual.node.codigo);
-
-        // Subir hacia los padres
-        let nivelActual = actual.nivel;
-
-        for (let j = i - 1; j >= 0; j--) {
-          const posiblePadre = partidas[j];
-
-          if (posiblePadre.nivel < nivelActual) {
-            codigosAConservar.add(posiblePadre.node.codigo);
-            nivelActual = posiblePadre.nivel;
-          }
-
-          if (nivelActual === 0) break;
-        }
-      }
-    }
-    // Filtrado final
-    return partidas.filter(p =>
-      codigosAConservar.has(p.node.codigo)
-    );
-  }
-
-  private actualizarImportePartidas(): void {
-    this.previsualizacionMasiva.forEach(({ node }) => {
-      if (!node.carga) {
-        return;
-      }
-      const partidaOriginal = this.partidasPlanas.find(p => p.node.codigo === node.codigo);
-      if (partidaOriginal) {
-        partidaOriginal.node.importePercibido = Number(node.importePercibido) || null;
-        partidaOriginal.node.importePercibidoTexto = node.importePercibido !== null ? String(node.importePercibido) : '';
-        partidaOriginal.node.errorImporte = node.errorImporte;
-      }
-    })
-  }
-
-  get obtenerTotalImportesMasivos(): number {
-    const total = this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga) return total;
-      if (partida.node.errorImporte || partida.node.importePercibido === null) return total;
-
-      return total + Number(partida.node.importePercibido);
-    }, 0);
-
-    return Number(total.toFixed(2));
-  }
-
-  public formatearImporte(valor: number | null | undefined): string {
-    if (valor === null || valor === undefined) {
-      return '-';
-    }
-
-    const numero = Number(valor);
-    if (!Number.isFinite(numero)) {
-      return '-';
-    }
-
-    return numero.toLocaleString('es-AR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
-  public obtenerErrorPartida(codigo: number): string | undefined | null {
-    const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
-
-    if (fila && fila.node.errorImporte) return this.erroresPrevisualizacion.find(e => e.row.codigo_partida === String(codigo))?.error;
-
-    return null;
-  }
-
-    private filtrarCodigosInvalidos (rows: RecursosParseados[]): RecursosParseados[] {
-      const filasInvalidas = rows.filter(r => !this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
-
-      filasInvalidas.forEach((fi) => {
-        this.erroresCodigosPartidas.push({
-          row: fi,
-          error: 'No existe el código de partida indicado, por lo que no puede ser procesado.'
-        })
-      })
-
-      const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
-
-      const noAdmiteCarga = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && !pp.node.carga))
-      noAdmiteCarga.forEach((fi) => {
-        this.erroresCodigosPartidas.push({
-          row: fi,
-          error: 'La partida indicada no admite carga de importes.'
-        })
-      })
-
-      const filasValidas = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && pp.node.carga))
-
-      return filasValidas
-    }
-
-  private armarPrevisualizacionMasiva(rows: RecursosParseados[], errors: ParseError<Recursos>[]): PartidaDisplay[] {
-        // 1. Mapa para acceso rápido por código
-        const rowsMap = new Map<number, RecursosParseados>(
-          rows.map(row => [row.codigo_partida, row])
-        );
-
-        const errorsMap = new Map<string, ParseError<Recursos>>(
-          errors.map(error => [
-            error.row.codigo_partida,
-            error
-          ])
-        );
-
-        // 2. Copia de partidasPlanas con modificación condicional
-        return this.partidasPlanas.map(({ node, nivel }) => {
-          const row = rowsMap.get(node.codigo);
-          const rowError = errorsMap.get(String(node.codigo))
-
-          if(row){
-            const importeCadena = String(row.importe)
-
-            const nuevoNode: PartidaNode = {
-              ...node,
-              importePercibido: row.importe,
-              importePercibidoOriginal:  row.importe,
-              importePercibidoTexto: importeCadena ?? '',
-              importePercibidoOriginalTexto: importeCadena ?? '',
-              errorImporte: false
-            };
-
-            return {
-              nivel,
-              node: nuevoNode
-            };
-          }else if(rowError){
-            const nuevoNode: PartidaNode = {
-              ...node,
-              importePercibido: 0,
-              importePercibidoOriginal:  0,
-              importePercibidoTexto: rowError.row.importe,
-              importePercibidoOriginalTexto: rowError.row.importe,
-              errorImporte: true
-            };
-
-            return {
-              nivel,
-              node: nuevoNode
-            }
-          } else{
-            const nuevoNode: PartidaNode = {
-              ...node,
-              importePercibido: null,
-              importePercibidoOriginal:  null,
-              importePercibidoTexto: '',
-              importePercibidoOriginalTexto: '',
-              errorImporte: false
-            };
-
-            return {
-              nivel,
-              node: nuevoNode
-            }
-          }
-        });
-    }
-
-  private armarResumen(){
-    this.filasCorrectas = this.previsualizacionMasiva.filter(partida => partida.node.carga && !partida.node.errorImporte && partida.node.importePercibido).length;
-    this.filasConErrores = this.erroresPrevisualizacion.length + this.erroresCodigosPartidas.length;
-  }
-
-  get totalFilasLeidas() {
-    return this.filasLeidas
-  }
-
-  get totalFilasCorrectas() {
-    return this.filasCorrectas
-  }
-
-  get totalFilasConErrores() {
-    return this.filasConErrores
   }
 }

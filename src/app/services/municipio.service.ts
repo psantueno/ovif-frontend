@@ -22,8 +22,14 @@ export interface PartidaGastoResponse {
 }
 
 export interface PartidaGastoUpsertPayload {
-  partidas_gastos_codigo: number;
-  gastos_importe_devengado: number | null;
+  codigo_partida: number;
+  descripcion: string;
+  codigo_fuente_financiera: number;
+  descripcion_fuente: string;
+  formulado: number;
+  modificado: number;
+  devengado: number;
+  vigente: number;
 }
 
 export interface PartidaRecursoResponse {
@@ -40,8 +46,12 @@ export interface PartidaRecursoResponse {
 }
 
 export interface PartidaRecursoUpsertPayload {
-  partidas_recursos_codigo: number;
-  recursos_importe_percibido: number | null;
+  codigo_recurso: number;
+  descripcion: string;
+  codigo_fuente_financiera: number;
+  descripcion_fuente: string;
+  vigente: number;
+  percibido: number;
 }
 
 export interface ConceptoRecaudacion {

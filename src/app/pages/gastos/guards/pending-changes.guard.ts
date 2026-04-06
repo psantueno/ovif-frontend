@@ -13,7 +13,7 @@ export class PendingChangesGuard implements CanDeactivate<GastosComponent> {
     return Swal.fire({
       icon: 'warning',
       title: '¿Salir sin guardar?',
-      text: 'Perderás todos los cambios que no hayan sido guardados. ¿Deseás continuar?',
+      text: 'Tenés un archivo cargado que no fue enviado. ¿Deseás salir de todos modos?',
       showCancelButton: true,
       confirmButtonText: 'Sí, salir',
       cancelButtonText: 'Cancelar',
