@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -8,32 +8,16 @@ import Swal from 'sweetalert2';
 
 import {
   MunicipioService,
-  PartidaGastoResponse,
   PartidaGastoUpsertPayload,
   PeriodoSeleccionadoMunicipio
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
-import { onFileChange, Gastos, GastosParseados } from '../../core/utils/excelReader.util';
-import { parseGastos, ParseError } from '../../core/utils/cargaTypesParser';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
-
-interface PartidaNode {
-  codigo: number;
-  descripcion: string;
-  carga: boolean;
-  importe: number | null;
-  importeOriginal: number | null;
-  importeTexto: string;
-  importeOriginalTexto: string;
-  tieneError: boolean;
-  hijos?: PartidaNode[];
-}
-
-interface PartidaDisplay {
-  node: PartidaNode;
-  nivel: number;
-}
+import {
+  parseGastosExcelFile,
+  GastoPreviewRow,
+} from '../../core/utils/gastosExcelParser.util';
 
 type MensajeTipo = 'info' | 'error';
 
@@ -76,27 +60,20 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  vistaActual: 'manual' | 'masiva' = 'manual';
   readonly plantillaGastosManualUrl = 'assets/plantillas/manual.pdf';
+
   archivoMasivoSeleccionado: File | null = null;
-  previsualizacionMasiva: PartidaDisplay[] = [];
+  previsualizacionMasiva: GastoPreviewRow[] = [];
+
+  totalFilasLeidas = 0;
+  filasValidas = 0;
+  filasConErrores = 0;
+
   erroresCargaMasiva: string[] = [];
-  erroresPrevisualizacion: ParseError<Gastos>[] = [];
-  erroresCodigosPartidas: ParseError<GastosParseados>[] = [];
   cargandoArchivoMasivo = false;
 
-  filasLeidas: number = 0;
-  filasCorrectas: number = 0;
-  filasConErrores: number = 0;
-
-  cargandoPartidas = false;
-  errorAlCargarPartidas = false;
   guardando = false;
   descargandoInforme = false;
-
-  partidas: PartidaNode[] = [];
-  partidasPlanas: PartidaDisplay[] = [];
-  private cambiosPendientes = false;
 
   ngOnInit(): void {
     this.municipioActual = this.municipioService.getMunicipioActual();
@@ -148,6 +125,7 @@ export class GastosComponent implements OnInit, OnDestroy {
 
       this.ejercicioSeleccionado = ejercicio;
       this.mesSeleccionado = mes;
+      this.sincronizarPeriodoSeleccionado(ejercicio, mes, parsedValor ?? undefined);
 
       if (!this.esModuloPermitido()) {
         this.mostrarAlerta(
@@ -156,10 +134,7 @@ export class GastosComponent implements OnInit, OnDestroy {
           'info'
         );
         this.router.navigate(['/panel-carga-mensual']);
-        return;
       }
-
-      this.cargarPartidas();
     });
   }
 
@@ -169,37 +144,8 @@ export class GastosComponent implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('window:beforeunload', ['$event'])
-  onBeforeUnload(event: BeforeUnloadEvent): void {
-    if (this.tieneCambiosPendientes()) {
-      event.preventDefault();
-      event.returnValue = '';
-    }
-  }
-
   tieneCambiosPendientes(): boolean {
-    return this.cambiosPendientes;
-  }
-
-  private actualizarEstadoCambios(): void {
-    this.cambiosPendientes = this.partidasPlanas.some((partida) => {
-      const nodo = partida.node;
-      if (!nodo.carga) {
-        return false;
-      }
-      if (nodo.tieneError) {
-        return true;
-      }
-      return nodo.importeOriginal !== nodo.importe;
-    });
-  }
-
-  private actualizarBaseCambios(): void {
-    this.partidasPlanas.forEach((partida) => {
-      partida.node.importeOriginal = Number(partida.node.importe) !== 0 ? Number(partida.node.importe) : null;
-      partida.node.importeOriginalTexto = partida.node.importeTexto !== null && partida.node.importeTexto !== undefined ? String(partida.node.importeTexto) : '';
-    });
-    this.cambiosPendientes = false;
+    return this.archivoMasivoSeleccionado !== null && this.previsualizacionMasiva.length > 0;
   }
 
   get mesActualLabel(): string {
@@ -213,94 +159,125 @@ export class GastosComponent implements OnInit, OnDestroy {
     return nombreMes ? `${nombreMes} ${periodo.ejercicio}` : '';
   }
 
-  get totalImportes(): number {
-    return this.partidasPlanas.reduce((total, partida) => {
-      if (!partida.node.carga) {
-        return total;
-      }
-      if (partida.node.tieneError || partida.node.importe === null) {
-        return total;
-      }
-      return total + partida.node.importe;
-    }, 0);
+  get obtenerTotalFilasMasivas(): number {
+    return this.totalFilasLeidas;
   }
 
-  cambiarVista(vista: 'manual' | 'masiva'): void {
-    if (this.vistaActual === vista) {
-      return;
+  get puedeSubirMasiva(): boolean {
+    if (this.cargandoArchivoMasivo) {
+      return false;
     }
 
-    this.vistaActual = vista;
+    if (this.guardando) {
+      return false;
+    }
+
+    if (!this.previsualizacionMasiva.length) {
+      return false;
+    }
+
+    if (this.erroresCargaMasiva.length > 0) {
+      return false;
+    }
+
+    return this.filasConErrores === 0;
+  }
+
+  get tieneErroresPrevisualizacion(): boolean {
+    return this.filasConErrores > 0;
   }
 
   async onArchivoSeleccionado(event: Event, input?: HTMLInputElement): Promise<void> {
-    try{
-      const { rows, file } = await onFileChange<Gastos>(event)
-      this.filasLeidas = rows.length;
-      console.log("leidas ", rows)
+    const target = event.target as HTMLInputElement | null;
+    const archivo = target?.files?.[0] ?? null;
 
-      this.resetEstadoCargaMasiva();
-      this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+    this.archivoMasivoSeleccionado = null;
 
-      if (!file) {
-        if (input) {
-          input.value = '';
-        }
-        return;
+    if (!archivo) {
+      if (input) {
+        input.value = '';
       }
+      return;
+    }
 
-      this.archivoMasivoSeleccionado = file
-      const { rows: importesParseados, errors: errores } = parseGastos(rows)
-      const importesValidos: GastosParseados[] = this.filtrarCodigosInvalidos(importesParseados)
-      const importesPrevisualizacion: PartidaDisplay[] = this.armarPrevisualizacionMasiva(importesValidos, errores)
-      const importesFiltrado: PartidaDisplay[] = this.filtrarImportesPlanos(importesPrevisualizacion)
+    const archivoNombre = archivo.name.toLowerCase();
+    if (!archivoNombre.endsWith('.xlsx') && !archivoNombre.endsWith('.xls')) {
+      this.erroresCargaMasiva.push('Seleccioná un archivo en formato .xlsx o .xls.');
+      return;
+    }
 
-      if(importesFiltrado.length === 0){
-        this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
-        return;
+    this.archivoMasivoSeleccionado = archivo;
+    this.cargandoArchivoMasivo = true;
+
+    try {
+      const resultado = await parseGastosExcelFile(archivo);
+
+      this.previsualizacionMasiva = resultado.rows;
+      this.totalFilasLeidas = resultado.totalRowsRead;
+      this.filasValidas = resultado.validRows;
+      this.filasConErrores = resultado.invalidRows;
+      this.erroresCargaMasiva = [...resultado.globalErrors];
+
+      if (resultado.totalRowsRead === 0 && this.erroresCargaMasiva.length === 0) {
+        this.erroresCargaMasiva.push('El archivo no contiene datos de gastos para importar.');
       }
-
-      this.previsualizacionMasiva = importesFiltrado;
-      this.erroresPrevisualizacion = errores;
-
-      this.armarResumen();
-    }catch (error) {
-      this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo CSV.');
-      console.error('Error al procesar CSV:', error);
+    } catch (error) {
+      console.error('Error al procesar archivo de gastos:', error);
+      this.erroresCargaMasiva.push('No se pudo procesar el archivo. Verificá que sea una planilla Excel válida.');
+    } finally {
+      this.cargandoArchivoMasivo = false;
     }
   }
 
   async insertarGastosMasivos(): Promise<void> {
     const municipioId = this.municipioActual?.municipio_id ?? null;
-    if(!municipioId){
+    if (!municipioId) {
       this.mostrarError('No pudimos identificar el municipio seleccionado.');
       return;
     }
-    if(this.erroresPrevisualizacion.length > 0){
-      this.mostrarError('El archivo contiene errores. No se pueden insertar los datos.');
+
+    if (!this.previsualizacionMasiva.length) {
+      this.mostrarError('No hay datos cargados para enviar.');
+      return;
+    }
+
+    if (this.erroresCargaMasiva.length > 0) {
+      this.mostrarError('La planilla contiene errores de estructura. Corregila y volvé a intentar.');
+      return;
+    }
+
+    if (this.filasConErrores > 0) {
+      this.mostrarError(`No se puede guardar: hay ${this.filasConErrores} fila(s) con errores.`);
       return;
     }
 
     const periodo = this.periodoSeleccionado;
-
     const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
-    if(!ejercicio){
-      this.mostrarError('No pudimos identificar el ejercicio seleccionado.');
-      return;
-    }
-
     const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
-    if(!mes){
-      this.mostrarError('No pudimos identificar el mes seleccionado.');
+
+    if (!ejercicio || !mes) {
+      this.mostrarError('No pudimos identificar el período seleccionado.');
       return;
     }
 
-    const loadablePartidas = this.previsualizacionMasiva.filter((fila) => fila.node.carga && fila.node.importe !== null && !isNaN(fila.node.importe));
+    const gastosPayload: PartidaGastoUpsertPayload[] = this.previsualizacionMasiva
+      .filter((fila) => !fila.tieneError)
+      .map((fila) => ({
+        codigo_partida: fila.codigo_partida as number,
+        descripcion: fila.descripcion,
+        codigo_fuente_financiera: fila.cod_fuente_financiera as number,
+        descripcion_fuente: fila.descripcion_fuente,
+        formulado: fila.formulado as number,
+        modificado: fila.modificado as number,
+        devengado: fila.devengado as number,
+        vigente: fila.vigente as number,
+      }));
 
-    const gastosPayload: PartidaGastoUpsertPayload[] = loadablePartidas.map((fila) => ({
-      partidas_gastos_codigo: fila.node.codigo,
-      gastos_importe_devengado: fila.node.importe,
-    }));
+    if (!gastosPayload.length) {
+      this.mostrarError('No hay filas válidas para guardar.');
+      return;
+    }
 
     this.guardando = true;
 
@@ -314,13 +291,15 @@ export class GastosComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          if(response.resumen.errores?.length){
+          if (response.resumen.errores?.length) {
             const erroresConcatenados = response.resumen.errores.join('\n');
-            this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-          }else{
+            this.mostrarToastAviso('La carga se completó con observaciones.', erroresConcatenados);
+          } else {
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarImportesPartidas();
           }
+
+          this.archivoMasivoSeleccionado = null;
+          this.resetEstadoCargaMasiva();
         },
         error: (error) => {
           console.error('Error al guardar las partidas de gastos:', error);
@@ -343,108 +322,12 @@ export class GastosComponent implements OnInit, OnDestroy {
     this.resetEstadoCargaMasiva();
   }
 
-  onSubmitGuardar(): void {
-    if (this.mesCerrado) {
-      return;
-    }
-    if (this.cargandoPartidas) {
-      this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
-      return;
-    }
-    if (this.guardando) {
-      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
-      return;
-    }
-    if (this.errorAlCargarPartidas) {
-      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
-      return;
-    }
-    if (!this.partidasPlanas.length) {
-      this.mostrarMensaje('info', 'No hay partidas disponibles para guardar.');
-      return;
-    }
-    if (!this.validarImportes()) {
-      this.mostrarError('Ingrese solo valores válidos');
-      return;
-    }
-
-    const municipioId = this.municipioActual?.municipio_id ?? null;
-    const periodo = this.periodoSeleccionado;
-    const ejercicio = periodo?.ejercicio ?? this.ejercicioSeleccionado ?? null;
-    const mes = periodo?.mes ?? this.mesSeleccionado ?? null;
-
-    if (!municipioId || !ejercicio || !mes) {
-      this.mostrarError('No pudimos identificar el municipio o período seleccionado.');
-      return;
-    }
-
-    const partidasPayload: PartidaGastoUpsertPayload[] = this.partidasPlanas
-      .map((partida) => partida.node)
-      .filter((node) => node.carga && Number(node.importe) !== null && Number(node.importe) !== 0)
-      .map((node) => ({
-        partidas_gastos_codigo: node.codigo,
-        gastos_importe_devengado: Number(node.importe),
-      }));
-
-    if (!partidasPayload.length) {
-      this.mostrarMensaje('info', 'No hay partidas editables para guardar en este período.');
-      return;
-    }
-
-    this.guardando = true;
-
-    this.municipioService
-      .guardarPartidasGastos({ municipioId, ejercicio, mes, partidas: partidasPayload })
-      .pipe(
-        take(1),
-        finalize(() => {
-          this.guardando = false;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if(response.resumen.errores?.length){
-            const erroresConcatenados = response.resumen.errores.join('\n');
-            this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
-          }else{
-            this.mostrarToastExito('Los importes fueron guardados correctamente.');
-            this.actualizarBaseCambios();
-          }
-        },
-        error: (error) => {
-          console.error('Error al guardar las partidas de gastos:', error);
-          const { titulo, mensaje } = this.resolverMensajeErrorBackend(
-            error,
-            'No pudimos guardar los importes. Intentá nuevamente más tarde.',
-            'Carga no disponible'
-          );
-          this.mostrarError(mensaje, titulo);
-        },
-      });
-  }
-
   generarInforme(): void {
     if (this.mesCerrado) {
       return;
     }
-    if (this.cargandoPartidas) {
-      this.mostrarMensaje('info', 'Esperá a que finalice la carga de partidas.');
-      return;
-    }
     if (this.guardando) {
       this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
-      return;
-    }
-    if (this.errorAlCargarPartidas) {
-      this.mostrarError('No pudimos cargar las partidas. Reintentá más tarde.');
-      return;
-    }
-    if (!this.partidasPlanas.length) {
-      this.mostrarMensaje('info', 'No hay partidas disponibles para generar el informe.');
-      return;
-    }
-    if (this.tieneCambiosPendientes()) {
-      this.mostrarError('Guardá los cambios antes de generar el informe para visualizarlo actualizado.');
       return;
     }
     if (this.descargandoInforme) {
@@ -497,166 +380,20 @@ export class GastosComponent implements OnInit, OnDestroy {
       });
   }
 
-  permitirSoloNumeros(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey) {
-      return;
+  public formatearImporte(valor: number | null | undefined): string {
+    if (valor === null || valor === undefined) {
+      return '-';
     }
 
-    const allowedKeys = ['Backspace', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'Delete', 'Home', 'End'];
-    if (allowedKeys.includes(event.key)) {
-      return;
+    const numero = Number(valor);
+    if (!Number.isFinite(numero)) {
+      return '-';
     }
 
-    if (!/[0-9.,]/.test(event.key)) {
-      event.preventDefault();
-    }
-  }
-
-  sanearPegado(event: ClipboardEvent, partida: PartidaNode): void {
-    const data = event.clipboardData?.getData('text') ?? '';
-    if (!data) {
-      return;
-    }
-
-    const sanitized = data.replace(/[^0-9.,]/g, '');
-    if (sanitized === data) {
-      return;
-    }
-
-    event.preventDefault();
-    const input = event.target as HTMLInputElement;
-    const value = input.value ?? '';
-    const selectionStart = input.selectionStart ?? value.length;
-    const selectionEnd = input.selectionEnd ?? value.length;
-    const nuevoValor = value.slice(0, selectionStart) + sanitized + value.slice(selectionEnd);
-    partida.importeTexto = nuevoValor;
-    this.updateImporte(partida, nuevoValor);
-  }
-
-  updateImporte(partida: PartidaNode, rawValue: string): void {
-    const sanitized = rawValue.replace(',', '.').trim();
-    if (sanitized === '') {
-      partida.importeTexto = '';
-      partida.importe = null;
-      partida.tieneError = false;
-      this.actualizarEstadoCambios();
-      return;
-    }
-
-    const numericValue = Number(sanitized);
-
-    if (Number.isFinite(numericValue)) {
-      partida.importe = numericValue;
-      partida.importeTexto = sanitized;
-      partida.tieneError = false;
-    } else {
-      partida.importeTexto = rawValue;
-      partida.tieneError = true;
-    }
-
-    this.actualizarEstadoCambios();
-  }
-
-  private cargarPartidas(): void {
-    this.cargandoPartidas = true;
-    this.errorAlCargarPartidas = false;
-
-    const municipioId = this.municipioActual?.municipio_id ?? null;
-    let periodo = this.periodoSeleccionado;
-
-    if (!periodo && this.ejercicioSeleccionado && this.mesSeleccionado) {
-      periodo = this.sincronizarPeriodoSeleccionado(this.ejercicioSeleccionado, this.mesSeleccionado);
-    }
-
-    const ejercicio = periodo?.ejercicio ?? null;
-    const mes = periodo?.mes ?? null;
-
-    if (!municipioId || !ejercicio || !mes) {
-      this.partidas = [];
-      this.partidasPlanas = [];
-      this.cargandoPartidas = false;
-      this.errorAlCargarPartidas = true;
-      this.cambiosPendientes = false;
-      this.mostrarError('No pudimos obtener las partidas de gastos. Verificá el municipio o período seleccionado.');
-      return;
-    }
-
-    this.municipioService
-      .obtenerPartidasGastos({ municipioId, ejercicio, mes })
-      .pipe(take(1))
-      .subscribe({
-        next: (response) => {
-          this.partidas = (response ?? []).map((partida) => this.transformarPartida(partida));
-          this.partidasPlanas = this.flattenPartidas(this.partidas);
-          this.actualizarBaseCambios();
-          this.cargandoPartidas = false;
-
-          this.periodoSeleccionado = this.sincronizarPeriodoSeleccionado(ejercicio, mes);
-        },
-        error: () => {
-          this.partidas = [];
-          this.partidasPlanas = [];
-          this.cargandoPartidas = false;
-          this.errorAlCargarPartidas = true;
-          this.cambiosPendientes = false;
-          this.mostrarError('No pudimos obtener las partidas de gastos. Intentá nuevamente más tarde.');
-        },
-      });
-  }
-
-  private transformarPartida(partida: PartidaGastoResponse): PartidaNode {
-    const importe = this.parseImporte(partida.importe_devengado ?? partida.gastos_importe_devengado);
-    const hijos = Array.isArray(partida.children)
-      ? partida.children.map((child) => this.transformarPartida(child))
-      : [];
-    const importeTexto = importe !== null ? String(importe.toFixed(2)) : '';
-
-    const node: PartidaNode = {
-      codigo: Number(partida.partidas_gastos_codigo),
-      descripcion: partida.partidas_gastos_descripcion ?? 'Partida sin nombre',
-      carga: Boolean(partida.partidas_gastos_carga ?? partida.puede_cargar),
-      importe,
-      importeOriginal: importe,
-      importeTexto,
-      importeOriginalTexto: importeTexto,
-      tieneError: false,
-    };
-
-    if (hijos.length) {
-      node.hijos = hijos;
-    }
-
-    return node;
-  }
-
-  private parseImporte(valor: unknown): number | null {
-    if (valor === null || valor === undefined || valor === '') {
-      return null;
-    }
-    if (typeof valor === 'number') {
-      return Number.isFinite(valor) ? Number(valor) : null;
-    }
-
-    const normalizado = String(valor).replace(',', '.');
-    const numero = Number(normalizado);
-    return Number.isFinite(numero) ? numero : null;
-  }
-
-  private validarImportes(): boolean {
-    let valido = true;
-    this.partidasPlanas.forEach((partida) => {
-      if (!partida.node.carga) {
-        return;
-      }
-      if (partida.node.tieneError) {
-        valido = false;
-      }
-      if(partida.node.importe !== null && !isNaN(partida.node.importe) && partida.node.importeOriginal !== null && !isNaN(partida.node.importeOriginal) && partida.node.importe !== partida.node.importeOriginal && partida.node.importe <= 0){
-        valido = false;
-        partida.node.tieneError = true;
-      }
+    return numero.toLocaleString('es-AR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
-    return valido;
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {
@@ -804,7 +541,7 @@ export class GastosComponent implements OnInit, OnDestroy {
     }).then(() => undefined);
   }
 
-  private mostrarToastAviso(title:string, mensaje: string): Promise<void>{
+  private mostrarToastAviso(title: string, mensaje: string): Promise<void> {
     return Swal.fire({
       toast: true,
       icon: 'info',
@@ -870,11 +607,12 @@ export class GastosComponent implements OnInit, OnDestroy {
   }
 
   private resetEstadoCargaMasiva(): void {
-    this.cargandoArchivoMasivo = false;
-    this.erroresPrevisualizacion = [];
-    this.erroresCargaMasiva = [];
-    this.erroresCodigosPartidas = [];
     this.previsualizacionMasiva = [];
+    this.erroresCargaMasiva = [];
+    this.cargandoArchivoMasivo = false;
+    this.totalFilasLeidas = 0;
+    this.filasValidas = 0;
+    this.filasConErrores = 0;
   }
 
   private esModuloPermitido(): boolean {
@@ -933,210 +671,5 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     this.periodoSeleccionado = combinado;
     return combinado;
-  }
-
-  private flattenPartidas(
-    partidas: PartidaNode[],
-    nivel = 0,
-    acumulado: PartidaDisplay[] = []
-  ): PartidaDisplay[] {
-    partidas.forEach((partida) => {
-      acumulado.push({ node: partida, nivel });
-      if (partida.hijos?.length) {
-        this.flattenPartidas(partida.hijos, nivel + 1, acumulado);
-      }
-    });
-    return acumulado;
-  }
-
-  private filtrarImportesPlanos(
-    partidas: PartidaDisplay[]
-  ): PartidaDisplay[] {
-    const codigosAConservar = new Set<number>();
-
-    for (let i = 0; i < partidas.length; i++) {
-      const actual = partidas[i];
-
-      const nodoValido = actual.node.importe !== null && actual.node.carga && !isNaN(actual.node.importe)
-
-      if (nodoValido) {
-        // Conservar el nodo actual
-        codigosAConservar.add(actual.node.codigo);
-
-        // Subir hacia los padres
-        let nivelActual = actual.nivel;
-
-        for (let j = i - 1; j >= 0; j--) {
-          const posiblePadre = partidas[j];
-
-          if (posiblePadre.nivel < nivelActual) {
-            codigosAConservar.add(posiblePadre.node.codigo);
-            nivelActual = posiblePadre.nivel;
-          }
-
-          if (nivelActual === 0) break;
-        }
-      }
-    }
-    // Filtrado final
-    return partidas.filter(p =>
-      codigosAConservar.has(p.node.codigo)
-    );
-  }
-
-  private actualizarImportesPartidas(){
-    this.previsualizacionMasiva.forEach(fila => {
-      const partidaPlana = this.partidasPlanas.find(p => p.node.codigo === fila.node.codigo);
-      if(partidaPlana){
-        partidaPlana.node.importe = Number(fila.node.importe) ?? partidaPlana.node.importe;
-        partidaPlana.node.importeTexto = fila.node.importe !== null && fila.node.importe !== undefined ? String(fila.node.importe) : partidaPlana.node.importeTexto;
-        partidaPlana.node.tieneError = fila.node.tieneError;
-      }
-    });
-    this.cambiosPendientes = false;
-  }
-
-  public obtenerTotalImportesMasivos(): number {
-    return this.previsualizacionMasiva.reduce((total, partida) => {
-      if (!partida.node.carga) {
-        return total;
-      }
-      if (partida.node.tieneError || partida.node.importe === null) {
-        return total;
-      }
-      return total + Number(partida.node.importe);
-    }, 0);
-  }
-
-  public formatearImporte(valor: number | null | undefined): string {
-    if (valor === null || valor === undefined) {
-      return '-';
-    }
-
-    const numero = Number(valor);
-    if (!Number.isFinite(numero)) {
-      return '-';
-    }
-
-    return numero.toLocaleString('es-AR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  }
-
-  public obtenerErrorPartida(codigo: number): string | undefined | null {
-    const fila = this.previsualizacionMasiva.find(f => f.node.codigo === codigo);
-
-    if (fila && fila.node.tieneError) return this.erroresPrevisualizacion.find(e => e.row.codigo_partida === String(codigo))?.error
-
-    return null;
-  }
-
-  private filtrarCodigosInvalidos (rows: GastosParseados[]): GastosParseados[] {
-    const filasInvalidas = rows.filter(r => !this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
-
-    filasInvalidas.forEach((fi) => {
-      this.erroresCodigosPartidas.push({
-        row: fi,
-        error: 'No existe el código de partida indicado, por lo que no puede ser procesado.'
-      })
-    })
-
-    const filasFiltradas = rows.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida))
-
-    const noAdmiteCarga = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && !pp.node.carga))
-    noAdmiteCarga.forEach((fi) => {
-      this.erroresCodigosPartidas.push({
-        row: fi,
-        error: 'La partida indicada no admite carga de importes.'
-      })
-    })
-
-    const filasValidas = filasFiltradas.filter(r => this.partidasPlanas.some(pp => pp.node.codigo === r.codigo_partida && pp.node.carga))
-
-    return filasValidas
-  }
-
-  private armarPrevisualizacionMasiva(rows: GastosParseados[], errors: ParseError<Gastos>[]): PartidaDisplay[] {
-      // 1. Mapa para acceso rápido por código
-      const rowsMap = new Map<number, GastosParseados>(
-        rows.map(row => [row.codigo_partida, row])
-      );
-
-      const errorsMap = new Map<string, ParseError<Gastos>>(
-        errors.map(error => [
-          error.row.codigo_partida,
-          error
-        ])
-      );
-
-      // 2. Copia de partidasPlanas con modificación condicional
-      return this.partidasPlanas.map(({ node, nivel }) => {
-        const row = rowsMap.get(node.codigo);
-        const rowError = errorsMap.get(String(node.codigo))
-
-        if(row){
-          const importeCadena = String(row.importe_devengado)
-
-          const nuevoNode: PartidaNode = {
-            ...node,
-            importe: row.importe_devengado,
-            importeOriginal:  row.importe_devengado,
-            importeTexto: importeCadena ?? '',
-            importeOriginalTexto: importeCadena ?? '',
-            tieneError: false
-          };
-
-          return {
-            nivel,
-            node: nuevoNode
-          };
-        }else if(rowError){
-          const nuevoNode: PartidaNode = {
-            ...node,
-            importe: 0,
-            importeOriginal:  0,
-            importeTexto: rowError.row.importe_devengado,
-            importeOriginalTexto: rowError.row.importe_devengado,
-            tieneError: true
-          };
-
-          return {
-            nivel,
-            node: nuevoNode
-          }
-        } else{
-          const nuevoNode: PartidaNode = {
-            ...node,
-            importe: null,
-            importeOriginal:  null,
-            importeTexto: '',
-            importeOriginalTexto: '',
-            tieneError: false
-          };
-
-          return {
-            nivel,
-            node: nuevoNode
-          }
-        }
-      });
-  }
-
-  private armarResumen(){
-    this.filasCorrectas = this.previsualizacionMasiva.filter(partida => partida.node.carga && !partida.node.tieneError && partida.node.importe).length;
-    this.filasConErrores = this.erroresPrevisualizacion.length + this.erroresCodigosPartidas.length;
-  }
-
-  get totalFilasLeidas() {
-    return this.filasLeidas
-  }
-
-  get totalFilasCorrectas() {
-    return this.filasCorrectas
-  }
-
-  get totalFilasConErrores() {
-    return this.filasConErrores
   }
 }

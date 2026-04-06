@@ -78,40 +78,6 @@ const fechaSchema = z
     })
   .nullable();
 
-export const GastosSchema = z.object({
-  codigo_partida: z
-    .transform(v => Number(v))
-    .pipe(
-      z.number('El codigo de partida debe ser un número')
-        .int('El código de partida debe ser un número entero')
-        .min(0, 'El código de partida debe ser un número mayor a 0')
-        .refine(n => isFinite(Number(n)) && !isNaN(n), 'El código de partida debe ser un número entero mayor a 0')
-    ),
-
-  descripcion: z
-    .string()
-    .min(1),
-
-  importe_devengado: decimalSchema('Importe devengado')
-});
-
-export const RecursosSchema = z.object({
-  codigo_partida: z
-    .transform(v => Number(v))
-    .pipe(
-      z.number('El codigo de partida debe ser un número')
-        .int('El código de partida debe ser un número entero')
-        .min(0, 'El código de partida debe ser un número mayor a 0')
-        .refine(n => isFinite(Number(n)) && !isNaN(n), 'El código de partida debe ser un número entero mayor a 0')
-    ),
-
-  descripcion: z
-    .string()
-    .min(1, 'La descripción es obligatoria'),
-
-  importe: decimalSchema('Importe')
-});
-
 export const RemuneracionesSchema = z.object({
   legajo: z
     .number('El legajo debe ser un número')

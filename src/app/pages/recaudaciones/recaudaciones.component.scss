@@ -317,8 +317,9 @@
 }
 
 .preview-totales .recaudaciones-tabla--resumen th {
-  background: rgba(var(--color-primary-rgb), 0.12);
-  color: var(--color-primary);
+  background: rgba(var(--color-primary-rgb));
+  //color: var(--color-primary);
+  color: white;
 }
 
 .preview-totales .recaudaciones-tabla--resumen td {
@@ -343,6 +344,9 @@
 
 .tabla-wrapper {
   overflow-x: auto;
+  overflow-y: auto;
+  height: 500px;
+  padding: 0 20px;
 }
 
 .recaudaciones-tabla {
@@ -356,15 +360,19 @@
   background: var(--color-accent);
   color: var(--color-on-accent);
   padding: 0.75rem;
-  text-align: left;
+  text-align: center;
   font-weight: 700;
   border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.15);
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .recaudaciones-tabla td {
   border-bottom: 1px dashed rgba(var(--color-primary-rgb), 0.2);
   padding: 0.65rem 0.75rem;
   vertical-align: top;
+  text-align: center;
 }
 
 .recaudaciones-tabla tr.tiene-error td {
