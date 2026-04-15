@@ -5,7 +5,14 @@ import { AuthService } from '../../services/auth.service';
 import { MunicipioService } from '../../services/municipio.service';
 import { getUserRoleNames } from '../utils/roles.util';
 
-const RUTAS_RESTRINGIDAS = new Set(['panel-carga-mensual', 'gastos', 'recursos', 'remuneraciones', 'recaudaciones']);
+const RUTAS_RESTRINGIDAS = new Set([
+  'panel-carga-mensual',
+  'gastos',
+  'recursos',
+  'remuneraciones',
+  'recaudaciones',
+  'determinacion-tributaria',
+]);
 
 const redirectToSinAcceso = (router: Router): UrlTree => router.createUrlTree(['/sin-acceso']);
 const redirectToAdmin = (router: Router): UrlTree => router.createUrlTree(['/admin']);

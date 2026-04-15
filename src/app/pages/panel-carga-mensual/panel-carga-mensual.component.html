@@ -62,4 +62,14 @@
       <mat-icon>assessment</mat-icon>
       <span>Recaudaciones</span>
     </button>
+
+    <button
+      type="button"
+      class="home-card"
+      (click)="irA('determinacion-tributaria')"
+      [disabled]="!isModuloHabilitado('determinacion-tributaria')"
+    >
+      <mat-icon>receipt_long</mat-icon>
+      <span>Det. Tributaria</span>
+    </button>
   </div>

@@ -307,7 +307,13 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
   }
 
   private esModuloControlado(modulo: string): modulo is ModuloPauta {
-    return modulo === 'gastos' || modulo === 'recursos' || modulo === 'remuneraciones' || modulo === 'recaudaciones';
+    return (
+      modulo === 'gastos' ||
+      modulo === 'recursos' ||
+      modulo === 'remuneraciones' ||
+      modulo === 'recaudaciones' ||
+      modulo === 'determinacion-tributaria'
+    );
   }
 
   private mapPeriodoOption(item: any): EjercicioPautaOption {
@@ -407,6 +413,8 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
         return 'Recaudaciones';
       case 'remuneraciones':
         return 'Remuneraciones';
+      case 'determinacion-tributaria':
+        return 'Determinacion Tributaria';
       default:
         return modulo;
     }

@@ -57,7 +57,7 @@
         <select id="modulo" formControlName="modulo">
           <option value="">Seleccioná el módulo</option>
           <option *ngFor="let modulo of filtroModulos" [value]="modulo">
-            {{ modulo | titlecase }}
+            {{ formatModulo(modulo) }}
           </option>
         </select>
       </div>

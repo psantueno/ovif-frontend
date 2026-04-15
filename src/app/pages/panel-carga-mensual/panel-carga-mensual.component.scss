@@ -143,11 +143,13 @@
 
 .home-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 1.5rem;
   max-width: 920px;
   margin-bottom: 2rem;
   margin-top: 2rem;
   align-items: stretch;
+  justify-content: center;
 }
 
 .home-card {
