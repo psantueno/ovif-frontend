@@ -88,8 +88,8 @@ export const RemuneracionesSchema = z.object({
     .string('El CUIL debe ser una cadena de carateres')
     .min(1, 'El CUIL es obligatorio'),
   apellido_nombre: z
-    .string('El CUIL debe ser una cadena de carateres')
-    .min(1, 'El CUIL es obligatorio'),
+    .string('El apellido y nombre debe ser una cadena de carateres')
+    .min(1, 'El apellido y nombre es obligatorio'),
   regimen_laboral: z
     .string('El regimen laboral debe ser una cadena de carateres')
     .min(1, 'El regimen laboral es obligatorio'),
@@ -105,18 +105,18 @@ export const RemuneracionesSchema = z.object({
   basico_cargo_salarial: decimalSchema('Básico carga salarial'),
   total_remunerativo: decimalSchema('Total remunerativo'),
   sac: decimalSchema('Sac'),
-  cant_hs_extra_50: z
+  cant_hs_extras_50: z
     .number('La cantidad de horas extra 50% debe ser un número')
     .int('La cantidad de horas extra 50% debe ser un número entero')
     .min(0, 'La cantidad de horas extra 50% debe ser un número mayor a 0')
     .refine(n => isFinite(Number(n)) && !isNaN(n), 'La cantidad de horas extra 50% debe ser un número entero mayor a 0'),
-  importe_hs_extra_50: decimalSchema('Importe hs extras 100%'),
-  cant_hs_extra_100: z
+  importe_hs_extras_50: decimalSchema('Importe hs extras 100%'),
+  cant_hs_extras_100: z
   .number('La cantidad de horas extra 100% debe ser un número')
   .int('La cantidad de horas extra 100% debe ser un número entero')
   .min(0, 'La cantidad de horas extra 100% debe ser un número mayor a 0')
   .refine(n => isFinite(Number(n)) && !isNaN(n), 'La cantidad de horas extra 100% debe ser un número entero mayor a 0'),
-  importe_hs_extra_100: decimalSchema('Importe hs extras 100%'),
+  importe_hs_extras_100: decimalSchema('Importe hs extras 100%'),
   total_no_remunerativo: decimalSchema('Total no remunerativo'),
   total_ropa: decimalSchema('Total ropa'),
   total_bonos: decimalSchema('Total bonos'),

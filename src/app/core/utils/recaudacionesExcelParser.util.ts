@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { normalizarNumeroDecimal, normalizarNumeroEntero } from './normalizadorNumerico';
 
 const EXPECTED_HEADERS = [
   'codigo_tributo',
@@ -46,31 +47,7 @@ const toCellString = (value: unknown): string => {
   return String(value).trim();
 };
 
-const parseImporte = (value: string): { value: number | null; decimalPlaces: number } => {
-  let normalized = value.replace(/\s+/g, '');
 
-  if (normalized.includes(',') && normalized.includes('.')) {
-    if (normalized.lastIndexOf(',') > normalized.lastIndexOf('.')) {
-      normalized = normalized.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = normalized.replace(/,/g, '');
-    }
-  } else {
-    normalized = normalized.replace(',', '.');
-  }
-
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const decimalPart = normalized.split('.')[1] ?? '';
-  return { value: parsed, decimalPlaces: decimalPart.length };
-};
 
 export const parseRecaudacionesExcelFile = async (file: File): Promise<RecaudacionesExcelParseResult> => {
   const globalErrors: string[] = [];
@@ -153,35 +130,13 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
     let codigoTributo: number | null = null;
     let importeRecaudacion: number | null = null;
 
-    if (!codigoRaw) {
-      errores.push('El campo codigo_tributo es obligatorio.');
-    } else {
-      const parsedCodigo = Number(codigoRaw.replace(/\s+/g, ''));
-      if (!Number.isInteger(parsedCodigo) || parsedCodigo < 0) {
-        errores.push('El campo codigo_tributo debe ser un número entero mayor o igual a 0.');
-      } else {
-        codigoTributo = parsedCodigo;
-      }
-    }
+    codigoTributo = normalizarNumeroEntero(codigoRaw, 'codigo_tributo', errores);
 
     if (!descripcion) {
       errores.push('El campo descripcion es obligatorio.');
     }
 
-    if (!importeRaw) {
-      errores.push('El campo importe_recaudacion es obligatorio.');
-    } else {
-      const parsedImporte = parseImporte(importeRaw);
-      if (parsedImporte.value === null) {
-        errores.push('El campo importe_recaudacion debe ser un número válido.');
-      } else if (parsedImporte.value < 0) {
-        errores.push('El campo importe_recaudacion no puede ser negativo.');
-      } else if (parsedImporte.decimalPlaces > 2) {
-        errores.push('El campo importe_recaudacion debe tener como máximo 2 decimales.');
-      } else {
-        importeRecaudacion = parsedImporte.value;
-      }
-    }
+    importeRecaudacion = normalizarNumeroDecimal(importeRaw, 'importe_recaudacion', errores)
 
     if (!enteRecaudador) {
       errores.push('El campo ente_recaudador es obligatorio.');

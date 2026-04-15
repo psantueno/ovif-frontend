@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { normalizarNumeroEntero, normalizarNumeroDecimal } from './normalizadorNumerico';
 
 const EXPECTED_HEADERS = [
   'cod_impuesto',
@@ -57,99 +58,6 @@ const toCellString = (value: unknown): string => {
     return '';
   }
   return String(value).trim();
-};
-
-const parseInteger = (raw: string): number | null => {
-  const normalized = raw.replace(/\s+/g, '');
-  if (!/^\d+$/.test(normalized)) {
-    return null;
-  }
-
-  const parsed = Number(normalized);
-  return Number.isInteger(parsed) ? parsed : null;
-};
-
-const parseDecimal = (raw: string): { value: number | null; decimalPlaces: number } => {
-  let normalized = raw.replace(/\s+/g, '');
-
-  if (normalized.includes(',') && normalized.includes('.')) {
-    if (normalized.lastIndexOf(',') > normalized.lastIndexOf('.')) {
-      normalized = normalized.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = normalized.replace(/,/g, '');
-    }
-  } else {
-    normalized = normalized.replace(',', '.');
-  }
-
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const decimalPart = normalized.split('.')[1] ?? '';
-  return { value: parsed, decimalPlaces: decimalPart.length };
-};
-
-const pushIntegerValidation = (
-  errores: string[],
-  field: string,
-  rawValue: string,
-  options: { allowZero?: boolean } = {}
-): number | null => {
-  if (!rawValue) {
-    errores.push(`El campo ${field} es obligatorio.`);
-    return null;
-  }
-
-  const parsed = parseInteger(rawValue);
-  if (parsed === null) {
-    errores.push(`El campo ${field} debe ser un numero entero mayor o igual a 0.`);
-    return null;
-  }
-
-  if (!options.allowZero && parsed === 0 && (field === 'anio' || field === 'cuota')) {
-    errores.push(`El campo ${field} debe ser mayor a 0.`);
-    return null;
-  }
-
-  return parsed;
-};
-
-const pushDecimalValidation = (errores: string[], field: string, rawValue: string): number | null => {
-  if (!rawValue) {
-    errores.push(`El campo ${field} es obligatorio.`);
-    return null;
-  }
-
-  const parsed = parseDecimal(rawValue);
-  if (parsed.value === null) {
-    errores.push(`El campo ${field} debe ser un numero valido.`);
-    return null;
-  }
-
-  if (parsed.value < 0) {
-    errores.push(`El campo ${field} no puede ser negativo.`);
-    return null;
-  }
-
-  if (parsed.decimalPlaces > 2) {
-    errores.push(`El campo ${field} debe tener como maximo 2 decimales.`);
-    return null;
-  }
-
-  const [integerPart] = rawValue.replace(/\s+/g, '').replace(',', '.').split('.');
-  const integerDigits = integerPart.replace(/^[-+]?0+/, '').length || 1;
-  if (integerDigits > 34) {
-    errores.push(`El campo ${field} debe tener hasta 34 digitos enteros.`);
-    return null;
-  }
-
-  return parsed.value;
 };
 
 export const parseDeterminacionTributariaExcelFile = async (
@@ -227,30 +135,18 @@ export const parseDeterminacionTributariaExcelFile = async (
     const filaExcel = rowIndex + 1;
     const errores: string[] = [];
 
-    const codImpuesto = pushIntegerValidation(errores, 'cod_impuesto', toCellString(row[0]), {
-      allowZero: true,
-    });
+    const codImpuesto = normalizarNumeroEntero(toCellString(row[0]), 'cod_impuesto', errores, true);
     const descripcion = toCellString(row[1]);
-    const anio = pushIntegerValidation(errores, 'anio', toCellString(row[2]));
-    const cuota = pushIntegerValidation(errores, 'cuota', toCellString(row[3]));
-    const liquidadas = pushIntegerValidation(errores, 'liquidadas', toCellString(row[4]), {
-      allowZero: true,
-    });
-    const importeLiquidadas = pushDecimalValidation(errores, 'importe_liquidadas', toCellString(row[5]));
-    const impagas = pushIntegerValidation(errores, 'impagas', toCellString(row[6]), {
-      allowZero: true,
-    });
-    const importeImpagas = pushDecimalValidation(errores, 'importe_impagas', toCellString(row[7]));
-    const pagadas = pushIntegerValidation(errores, 'pagadas', toCellString(row[8]), {
-      allowZero: true,
-    });
-    const importePagadas = pushDecimalValidation(errores, 'importe_pagadas', toCellString(row[9]));
-    const altasPeriodo = pushIntegerValidation(errores, 'altas_periodo', toCellString(row[10]), {
-      allowZero: true,
-    });
-    const bajasPeriodo = pushIntegerValidation(errores, 'bajas_periodo', toCellString(row[11]), {
-      allowZero: true,
-    });
+    const anio = normalizarNumeroEntero(toCellString(row[2]), 'anio', errores);
+    const cuota = normalizarNumeroEntero(toCellString(row[3]), 'cuota', errores);
+    const liquidadas = normalizarNumeroEntero(toCellString(row[4]), 'liquidadas', errores, true);
+    const importeLiquidadas = normalizarNumeroDecimal(toCellString(row[5]), 'importe_liquidadas', errores);
+    const impagas = normalizarNumeroEntero(toCellString(row[6]), 'impagas', errores, true);
+    const importeImpagas = normalizarNumeroDecimal(toCellString(row[7]), 'importe_impagas', errores);
+    const pagadas = normalizarNumeroEntero(toCellString(row[8]), 'pagadas', errores, true);
+    const importePagadas = normalizarNumeroDecimal(toCellString(row[9]), 'importe_pagadas', errores);
+    const altasPeriodo = normalizarNumeroEntero(toCellString(row[10]), 'altas_periodo', errores, true);
+    const bajasPeriodo = normalizarNumeroEntero(toCellString(row[11]), 'bajas_periodo', errores, true);
 
     if (!descripcion) {
       errores.push('El campo descripcion es obligatorio.');

@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { normalizarNumeroEntero, normalizarNumeroDecimal } from './normalizadorNumerico';
 
 const EXPECTED_HEADERS = [
   'codigo_partida',
@@ -54,90 +55,7 @@ const toCellString = (value: unknown): string => {
   return String(value).trim();
 };
 
-const normalizeSingleSeparator = (value: string, sep: string): string => {
-  const escaped = sep === '.' ? '\\.' : sep;
-  const occurrences = (value.match(new RegExp(escaped, 'g')) ?? []).length;
 
-  if (occurrences > 1) {
-    // Multiples ocurrencias: es separador de miles (ej: 1.234.567 o 1,234,567)
-    return value.replace(new RegExp(escaped, 'g'), '');
-  }
-
-  // Una sola ocurrencia: verificar si es miles o decimal
-  const afterSep = value.split(sep).pop() ?? '';
-  if (/^\d{3}$/.test(afterSep)) {
-    // Exactamente 3 digitos despues: es separador de miles (ej: 1.234 o 1,234)
-    return value.replace(sep, '');
-  }
-
-  // 1 o 2 digitos despues: es separador decimal (ej: 1234,56 o 1234.5)
-  return value.replace(sep, '.');
-};
-
-const parseImporte = (value: string): { value: number | null; decimalPlaces: number } => {
-  let normalized = value.replace(/\s+/g, '');
-
-  if (normalized.includes(',') && normalized.includes('.')) {
-    // Ambos separadores: el ultimo es decimal, el otro es miles
-    if (normalized.lastIndexOf(',') > normalized.lastIndexOf('.')) {
-      normalized = normalized.replace(/\./g, '').replace(',', '.');
-    } else {
-      normalized = normalized.replace(/,/g, '');
-    }
-  } else if (normalized.includes(',')) {
-    normalized = normalizeSingleSeparator(normalized, ',');
-  } else if (normalized.includes('.')) {
-    normalized = normalizeSingleSeparator(normalized, '.');
-  }
-
-  if (!/^-?\d+(\.\d+)?$/.test(normalized)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const parsed = Number(normalized);
-  if (!Number.isFinite(parsed)) {
-    return { value: null, decimalPlaces: 0 };
-  }
-
-  const decimalPart = normalized.split('.')[1] ?? '';
-  return { value: parsed, decimalPlaces: decimalPart.length };
-};
-
-const parseCodigoEntero = (raw: string, campo: string, errores: string[]): number | null => {
-  if (!raw) {
-    errores.push(`El campo ${campo} es obligatorio.`);
-    return null;
-  }
-
-  const result = parseImporte(raw);
-
-  if (result.value === null || !Number.isInteger(result.value) || result.value <= 0) {
-    errores.push(`El campo ${campo} debe ser un número entero mayor a 0.`);
-    return null;
-  }
-
-  return result.value;
-};
-
-const parseDecimal = (raw: string, campo: string, errores: string[]): number | null => {
-  if (!raw) {
-    errores.push(`El campo ${campo} es obligatorio.`);
-    return null;
-  }
-
-  const parsedImporte = parseImporte(raw);
-  if (parsedImporte.value === null) {
-    errores.push(`El campo ${campo} debe ser un número válido.`);
-    return null;
-  }
-
-  if (parsedImporte.decimalPlaces > 2) {
-    errores.push(`El campo ${campo} debe tener como máximo 2 decimales.`);
-    return null;
-  }
-
-  return parsedImporte.value;
-};
 
 export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParseResult> => {
   const globalErrors: string[] = [];
@@ -221,22 +139,22 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
     const devengadoRaw = toCellString(row[6]);
     const vigenteRaw = toCellString(row[7]);
 
-    const codigoPartida = parseCodigoEntero(codigoPartidaRaw, 'codigo_partida', errores);
+    const codigoPartida = normalizarNumeroEntero(codigoPartidaRaw, 'codigo_partida', errores);
 
     if (!descripcion) {
       errores.push('El campo descripcion es obligatorio.');
     }
 
-    const codFuenteFinanciera = parseCodigoEntero(codFuenteRaw, 'cod_fuente_financiera', errores);
+    const codFuenteFinanciera = normalizarNumeroEntero(codFuenteRaw, 'cod_fuente_financiera', errores);
 
     if (!descripcionFuente) {
       errores.push('El campo descripcion_fuente es obligatorio.');
     }
 
-    const formulado = parseDecimal(formuladoRaw, 'formulado', errores);
-    const modificado = parseDecimal(modificadoRaw, 'modificado', errores);
-    const devengado = parseDecimal(devengadoRaw, 'devengado', errores);
-    const vigente = parseDecimal(vigenteRaw, 'vigente', errores);
+    const formulado = normalizarNumeroDecimal(formuladoRaw, 'formulado', errores);
+    const modificado = normalizarNumeroDecimal(modificadoRaw, 'modificado', errores);
+    const devengado = normalizarNumeroDecimal(devengadoRaw, 'devengado', errores);
+    const vigente = normalizarNumeroDecimal(vigenteRaw, 'vigente', errores);
 
     rows.push({
       filaExcel,
