@@ -1,5 +1,10 @@
 export type PautaTipoCodigo = 'gastos_recursos' | 'recaudaciones_remuneraciones' | string;
-export type ModuloPauta = 'gastos' | 'recursos' | 'recaudaciones' | 'remuneraciones';
+export type ModuloPauta =
+  | 'gastos'
+  | 'recursos'
+  | 'recaudaciones'
+  | 'remuneraciones'
+  | 'determinacion-tributaria';
 
 export interface PautaTipoMetadata {
   tipo_pauta_id: number | null;
@@ -27,6 +32,10 @@ export function mapTipoPautaToModulos(tipo: PautaTipoCodigo | null | undefined):
 
   if (tipo === 'recaudaciones_remuneraciones') {
     return ['recaudaciones', 'remuneraciones'];
+  }
+
+  if (tipo === 'determinacion_tributaria') {
+    return ['determinacion-tributaria'];
   }
 
   return [];

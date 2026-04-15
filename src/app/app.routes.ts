@@ -71,6 +71,13 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/remuneraciones/remuneraciones.component').then((m) => m.RemuneracionesComponent)
       },
       {
+        path: 'determinacion-tributaria',
+        loadComponent: () =>
+          import('./pages/determinacion-tributaria/determinacion-tributaria.component').then(
+            (m) => m.DeterminacionTributariaComponent
+          )
+      },
+      {
         path: 'historico-ejercicios-cerrados',
         loadComponent: () =>
           import('./pages/historico-ejercicios-cerrados/historico-ejercicios-cerrados.component').then(

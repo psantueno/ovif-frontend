@@ -117,6 +117,17 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     return this.mesesNombres[mes - 1] ?? '';
   }
 
+  formatModulo(modulo: string | null | undefined): string {
+    if (!modulo) {
+      return '';
+    }
+
+    return String(modulo)
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
   cargarFiltros(): void {
     if (!this.municipioActual?.municipio_id) {
       return;

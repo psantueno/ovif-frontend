@@ -61,6 +61,36 @@ export interface ConceptoRecaudacionUpsertPayload {
   ente_recaudador: string;
 }
 
+export interface DeterminacionTributariaResponse {
+  cod_impuesto: number;
+  descripcion: string;
+  anio: number;
+  cuota: number;
+  liquidadas: number;
+  importe_liquidadas: number | string | null;
+  impagas: number;
+  importe_impagas: number | string | null;
+  pagadas: number;
+  importe_pagadas: number | string | null;
+  altas_periodo: number;
+  bajas_periodo: number;
+}
+
+export interface DeterminacionTributariaUpsertPayload {
+  cod_impuesto: number;
+  descripcion: string;
+  anio: number;
+  cuota: number;
+  liquidadas: number;
+  importe_liquidadas: number;
+  impagas: number;
+  importe_impagas: number;
+  pagadas: number;
+  importe_pagadas: number;
+  altas_periodo: number;
+  bajas_periodo: number;
+}
+
 export interface Remuneracion {
   regimen: string;
   cuil: number;
@@ -668,6 +698,50 @@ export class MunicipioService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
+  obtenerDeterminacionesTributarias(params: {
+    municipioId: number;
+    ejercicio: number;
+    mes: number;
+  }): Observable<DeterminacionTributariaResponse[]> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return of([]);
+    }
+
+    return this.http
+      .get<DeterminacionTributariaResponse[] | null | undefined>(
+        `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/determinacion-tributaria`
+      )
+      .pipe(
+        map((response) => {
+          if (!response) {
+            return [];
+          }
+          return Array.isArray(response) ? response : [];
+        }),
+        catchError((error) => throwError(() => error))
+      );
+  }
+
+  guardarDeterminacionesTributarias(params: {
+    municipioId: number;
+    ejercicio: number;
+    mes: number;
+    determinaciones: DeterminacionTributariaUpsertPayload[];
+  }): Observable<UpsertResponse> {
+    const { municipioId, ejercicio, mes, determinaciones } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para guardar la determinacion tributaria.'));
+    }
+
+    return this.http
+      .put<UpsertResponse>(
+        `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/determinacion-tributaria`,
+        { determinaciones }
+      )
+      .pipe(catchError((error) => throwError(() => error)));
+  }
+
   descargarInformeRecaudaciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
@@ -690,6 +764,25 @@ export class MunicipioService {
       responseType: 'blob',
       observe: 'response',
     });
+  }
+
+  descargarInformeDeterminacionTributaria(params: {
+    municipioId: number;
+    ejercicio: number;
+    mes: number;
+  }): Observable<HttpResponse<Blob>> {
+    const { municipioId, ejercicio, mes } = params;
+    if (!municipioId || !ejercicio || !mes) {
+      return throwError(() => new Error('Datos insuficientes para descargar el informe de determinacion tributaria.'));
+    }
+
+    return this.http.get(
+      `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/determinacion-tributaria/informe`,
+      {
+        responseType: 'blob',
+        observe: 'response',
+      }
+    );
   }
 
   guardarRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
