@@ -5,6 +5,7 @@ import { routes } from './app.routes';
 
 // 👉 Interceptor JWT
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { environment } from '../environments/environment';
 
 // 🔹 Token para la URL de la API
 export const API_URL = new InjectionToken<string>('API_URL');
@@ -15,6 +16,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([authInterceptor]) // 👈 token automático en requests
     ),
-    { provide: API_URL, useValue: 'http://localhost:3000/api' } // 👈 Config global de la API
+    { provide: API_URL, useValue: environment.apiUrl }
   ]
 };

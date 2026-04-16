@@ -10,10 +10,6 @@ export const AdminGuard: CanActivateFn = () => {
   const router = inject(Router);
   const authService = inject(AuthService);
 
-  if (!authService.isLoggedIn()) {
-    return redirectTo(router, ['/login']);
-  }
-
   return authService.ensureUser().pipe(
     map((user) => {
       if (!user) {

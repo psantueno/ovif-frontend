@@ -40,10 +40,6 @@ export class AuthService {
       return of(this.user);
     }
 
-    if (!this.isLoggedIn()) {
-      return of(null);
-    }
-
     if (!this.profileRequest$) {
       this.profileRequest$ = this.profile().pipe(
         map((res) => this.normalizeUserPayload(res)),
@@ -72,9 +68,8 @@ export class AuthService {
             // Limpieza previa
             localStorage.removeItem('municipioSeleccionado');
 
-            // Guardar datos del usuario y token
+            // Guardar datos del usuario (cookies se setean automáticamente)
             this.setUser(res.user);
-            localStorage.setItem('token', res.token);
 
             const roleNames = getUserRoleNames(res.user);
             const isAdmin = roleNames.includes('administrador');
@@ -172,11 +167,10 @@ export class AuthService {
 
 
   logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/logout`, {}).pipe(
+    return this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
       tap(() => {
         this.setUser(null);
         this.profileRequest$ = null;
-        localStorage.removeItem('token');
         localStorage.removeItem('municipioSeleccionado');
         this.router.navigate(['/login']);
       })
@@ -196,7 +190,7 @@ export class AuthService {
   }
 
   isLoggedIn(): boolean {
-    return !!localStorage.getItem('token');
+    return !!this.user;
   }
 
   getUser() {
