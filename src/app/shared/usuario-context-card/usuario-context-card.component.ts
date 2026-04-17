@@ -72,13 +72,19 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
       return '';
     }
 
-    const nombreCompleto = [user?.nombre, user?.apellido]
-      .filter((parte) => !!parte)
-      .join(' ')
-      .trim();
+    const nombre = (user?.nombre || '').trim();
+    const apellido = (user?.apellido || '').trim();
 
-    if (nombreCompleto) {
-      return nombreCompleto;
+    if (nombre && apellido) {
+      return `${nombre} ${apellido.charAt(0)}.`;
+    }
+
+    if (nombre) {
+      return nombre;
+    }
+
+    if (apellido) {
+      return apellido;
     }
 
     if (user?.username) {

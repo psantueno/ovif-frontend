@@ -29,10 +29,6 @@ export const MunicipioGuard: CanActivateChildFn = (route, state) => {
     return true;
   }
 
-  if (!authService.isLoggedIn()) {
-    return redirectToLogin(router);
-  }
-
   return authService.ensureUser().pipe(
     switchMap((user) => {
       if (!user) {
