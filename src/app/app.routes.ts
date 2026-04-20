@@ -1,52 +1,48 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './pages/login/login.component';
-import { HomeComponent } from './pages/home/home.component';
-import { PanelCargaMensualComponent } from './pages/panel-carga-mensual/panel-carga-mensual.component';
-import { SeleccionarMunicipioComponent } from './pages/seleccionar-municipio/seleccionar-municipio.component';
 import { AuthGuard } from './core/guards/auth.guard';
 import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard';
 import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
-import { PanelCargaRectificacionesComponent } from './pages/rectificaciones/panel-carga-rectificaciones.component';
-
-// Admin
-import { AdminMenuComponent } from './pages/admin/admin-menu/admin-menu.component';
-import { UsuariosComponent } from './pages/admin/usuarios/usuarios.component';
-import { AsignacionMunicipiosComponent } from './pages/admin/asignacion-municipios/asignacion-municipios.component';
-import { RolesComponent } from './pages/admin/roles/roles.component';
-import { EjerciciosFiscalesComponent } from './pages/admin/ejercicios-fiscales/ejercicios-fiscales.component';
-import { ProrrogaCierreComponent } from './pages/admin/prorroga-cierre/prorroga-cierre.component';
-import { MunicipiosComponent } from './pages/admin/municipios/municipios.component';
 import { MainLayout } from './shared/layouts/main-layout.component';
-import { ForgotPasswordComponent } from './pages/solicitar-blanqueo/forgot-password.component';
-import { ResetPasswordComponent } from './pages/reset-password/reset-password.component';
-import { SinAccesoComponent } from './pages/sin-acceso/sin-acceso.component';
-import { ConveniosComponent } from './pages/admin/convenios/convenios.component';
-import { PautasComponent } from './pages/admin/pautas/pautas.component';
-import { ConceptosComponent } from './pages/admin/conceptos/conceptos.component';
-import { LogsComponent } from './pages/admin/logs/logs.component';
-import { ConfiguracionParametrosComponent } from './pages/admin/configuracion-parametros/configuracion-parametros.component';
-import { TiposPautaComponent } from './pages/admin/tipos-pauta/tipos-pauta.component';
-import { MunicipioMailsComponent } from './pages/admin/municipios-mails/municipios-mails.component';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'forgot-password', component: ForgotPasswordComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent)
+  },
+  {
+    path: 'forgot-password',
+    loadComponent: () => import('./pages/solicitar-blanqueo/forgot-password.component').then((m) => m.ForgotPasswordComponent)
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () => import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
+  },
   // ACCESO DENEGADO SIN MUNICIPIO ASIGNADO
-  { path: 'sin-acceso', component: SinAccesoComponent },
+  {
+    path: 'sin-acceso',
+    loadComponent: () => import('./pages/sin-acceso/sin-acceso.component').then((m) => m.SinAccesoComponent)
+  },
   {
     path: '',
     component: MainLayout,
     canActivate: [AuthGuard],
     canActivateChild: [MunicipioGuard],
     children: [
-      { path: '', component: SeleccionarMunicipioComponent },
-      { path: 'home', component: HomeComponent },
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/seleccionar-municipio/seleccionar-municipio.component').then((m) => m.SeleccionarMunicipioComponent)
+      },
+      {
+        path: 'home',
+        loadComponent: () => import('./pages/home/home.component').then((m) => m.HomeComponent)
+      },
       {
         path: 'panel-carga-mensual',
-        component: PanelCargaMensualComponent
+        loadComponent: () =>
+          import('./pages/panel-carga-mensual/panel-carga-mensual.component').then((m) => m.PanelCargaMensualComponent)
       },
       {
         path: 'subir-archivos',
@@ -86,22 +82,89 @@ export const routes: Routes = [
       },
       {
         path: 'panel-carga-rectificaciones',
-        component: PanelCargaRectificacionesComponent
+        loadComponent: () =>
+          import('./pages/rectificaciones/panel-carga-rectificaciones.component').then((m) => m.PanelCargaRectificacionesComponent)
       },
-      { path: 'admin', component: AdminMenuComponent, canActivate: [AdminGuard] },
-      { path: 'admin/usuarios', component: UsuariosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/municipios', component: MunicipiosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/asignacion-municipios', component: AsignacionMunicipiosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/ejercicios', component: EjerciciosFiscalesComponent, canActivate: [AdminGuard] },
-      { path: 'admin/prorroga-cierre', component: ProrrogaCierreComponent, canActivate: [AdminGuard] },
-      { path: 'admin/roles', component: RolesComponent, canActivate: [AdminGuard] },
-      { path: 'admin/convenios', component: ConveniosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/pautas', component: PautasComponent, canActivate: [AdminGuard] },
-      { path: 'admin/conceptos-recaudacion', component: ConceptosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/tipos-pauta', component: TiposPautaComponent, canActivate: [AdminGuard] },
-      { path: 'admin/logs', component: LogsComponent, canActivate: [AdminGuard] },
-      { path: 'admin/parametros', component: ConfiguracionParametrosComponent, canActivate: [AdminGuard] },
-      { path: 'admin/municipios-mails', component: MunicipioMailsComponent, canActivate: [AdminGuard] }
+      // Admin
+      {
+        path: 'admin',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/admin-menu/admin-menu.component').then((m) => m.AdminMenuComponent)
+      },
+      {
+        path: 'admin/usuarios',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/usuarios/usuarios.component').then((m) => m.UsuariosComponent)
+      },
+      {
+        path: 'admin/municipios',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/municipios/municipios.component').then((m) => m.MunicipiosComponent)
+      },
+      {
+        path: 'admin/asignacion-municipios',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/asignacion-municipios/asignacion-municipios.component').then(
+            (m) => m.AsignacionMunicipiosComponent
+          )
+      },
+      {
+        path: 'admin/ejercicios',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/ejercicios-fiscales/ejercicios-fiscales.component').then((m) => m.EjerciciosFiscalesComponent)
+      },
+      {
+        path: 'admin/prorroga-cierre',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/prorroga-cierre/prorroga-cierre.component').then((m) => m.ProrrogaCierreComponent)
+      },
+      {
+        path: 'admin/roles',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/roles/roles.component').then((m) => m.RolesComponent)
+      },
+      {
+        path: 'admin/convenios',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/convenios/convenios.component').then((m) => m.ConveniosComponent)
+      },
+      {
+        path: 'admin/pautas',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/pautas/pautas.component').then((m) => m.PautasComponent)
+      },
+      {
+        path: 'admin/conceptos-recaudacion',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/conceptos/conceptos.component').then((m) => m.ConceptosComponent)
+      },
+      {
+        path: 'admin/tipos-pauta',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/tipos-pauta/tipos-pauta.component').then((m) => m.TiposPautaComponent)
+      },
+      {
+        path: 'admin/logs',
+        canActivate: [AdminGuard],
+        loadComponent: () => import('./pages/admin/logs/logs.component').then((m) => m.LogsComponent)
+      },
+      {
+        path: 'admin/parametros',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/configuracion-parametros/configuracion-parametros.component').then(
+            (m) => m.ConfiguracionParametrosComponent
+          )
+      },
+      {
+        path: 'admin/municipios-mails',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/municipios-mails/municipios-mails.component').then((m) => m.MunicipioMailsComponent)
+      }
     ]
   },
   { path: '**', redirectTo: '' }
