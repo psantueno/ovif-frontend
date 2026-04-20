@@ -14,9 +14,9 @@ export interface Remuneraciones {
   total_remunerativo: number,
   sac: number,
   cant_hs_extras_50: number,
-  importe_hs_extras_50: number,
+  importe_horas_extras_50: number,
   cant_hs_extras_100: number,
-  importe_hs_extras_100: number,
+  importe_horas_extras_100: number,
   total_no_remunerativo: number,
   total_ropa: number,
   total_bonos: number,
@@ -150,7 +150,8 @@ const normalizeHeader = (header: string) => {
     .replace(/[\u0300-\u036f]/g, "") // quita acentos
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, "_");
+    .replace(/\s+/g, "_")
+    .replace(/[^a-z0-9_]/g, ""); // quita %, $, etc.
 }
 
 const transformRowsToJson = <T>(rows: any[][]): T[] => {

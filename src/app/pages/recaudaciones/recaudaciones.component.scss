@@ -15,73 +15,12 @@
   }
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-
-  .context {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    text-align: right;
-    gap: 0.2rem;
-  }
-
-  h1 {
-    margin: 0;
-    color: var(--color-primary);
-    font-size: 1.85rem;
-  }
-
-  .municipio,
-  .ejercicio {
-    margin: 0;
-    color: rgba(0, 0, 0, 0.6);
-    font-weight: 500;
-  }
-}
-
 .status-card {
-  background: var(--color-surface);
-  border-radius: 16px;
   padding: 1rem 1.25rem;
-  box-shadow: 0 10px 24px rgba(43, 62, 76, 0.08);
-  display: grid;
-  gap: 0.75rem;
 }
 
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  font-weight: 600;
-  background: rgba(var(--color-primary-rgb), 0.08);
-  color: var(--color-primary);
-
-  &::before {
-    content: '•';
-    font-size: 1.3rem;
-  }
-
-  &--success {
-    background: rgba(var(--color-secondary-rgb), 0.18);
-    color: var(--color-secondary-dark);
-  }
-
-  &--error {
-    background: rgba(220, 53, 69, 0.12);
-    color: #b02a37;
-  }
-
-  &--warning {
-    background: rgba(var(--color-accent-rgb), 0.35);
-    color: #8a640c;
-  }
+.alert::before {
+  font-size: 1.3rem;
 }
 
 .recaudaciones-card {
@@ -113,190 +52,6 @@
   }
 }
 
-.carga-masiva__layout {
-  display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-
-.import-info-card {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.15);
-  border-radius: 12px;
-  padding: 1rem;
-  background: rgba(var(--color-primary-rgb), 0.04);
-
-  h3 {
-    margin: 0;
-    color: var(--color-primary);
-    font-size: 1rem;
-  }
-
-  p {
-    margin: 0.45rem 0 0;
-    color: rgba(0, 0, 0, 0.7);
-    font-size: 0.92rem;
-    line-height: 1.35;
-  }
-}
-
-.plantilla-link {
-  margin-top: 0.7rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  width: fit-content;
-  padding: 0.9rem 1.6rem;
-  border-radius: 999px;
-  background: var(--color-primary);
-  color: #ffffff;
-  font-weight: 700;
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: none;
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
-  }
-
-  &:hover mat-icon {
-    color: inherit;
-  }
-
-  mat-icon {
-    color: inherit;
-  }
-}
-
-.upload-dropzone {
-  display: block;
-  border: 2px dashed rgba(var(--color-primary-rgb), 0.35);
-  border-radius: 14px;
-  padding: 1rem;
-  background: rgba(var(--color-primary-rgb), 0.03);
-  cursor: pointer;
-}
-
-.upload-dropzone__input {
-  display: none;
-}
-
-.upload-dropzone__content {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-
-  p,
-  small {
-    margin: 0;
-  }
-
-  span {
-    font-weight: 700;
-  }
-}
-
-.upload-dropzone__content--file {
-  justify-content: space-between;
-}
-
-.upload-dropzone__replace {
-  border: none;
-  border-radius: 999px;
-  padding: 0.45rem 0.9rem;
-  cursor: pointer;
-  background: var(--color-primary);
-  color: var(--color-on-primary);
-}
-
-.upload-status {
-  margin-top: 0.65rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.upload-status__spinner {
-  width: 1rem;
-  height: 1rem;
-  border-radius: 50%;
-  border: 2px solid rgba(var(--color-primary-rgb), 0.2);
-  border-top-color: var(--color-primary);
-  animation: tabla-loader-spin 0.75s linear infinite;
-}
-
-.upload-errores {
-  margin-top: 0.8rem;
-  background: rgba(220, 53, 69, 0.08);
-  border: 1px solid rgba(220, 53, 69, 0.2);
-  border-radius: 10px;
-  padding: 0.75rem;
-
-  h4 {
-    margin: 0;
-    color: #b02a37;
-  }
-
-  ul {
-    margin: 0.6rem 0 0;
-    padding-left: 1rem;
-  }
-}
-
-.carga-masiva__preview {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.carga-masiva__preview-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  align-items: center;
-  flex-wrap: wrap;
-
-  h3 {
-    margin: 0;
-    color: var(--color-primary);
-  }
-
-  p {
-    margin: 0.3rem 0 0;
-    color: rgba(0, 0, 0, 0.6);
-  }
-}
-
-.carga-masiva__preview-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.preview-summary {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 0.75rem;
-}
-
-.preview-summary-card {
-  border: 1px solid rgba(var(--color-primary-rgb), 0.2);
-  border-radius: 10px;
-  padding: 0.7rem;
-  background: rgba(var(--color-primary-rgb), 0.04);
-}
-
-.preview-summary-card--ok {
-  border-color: rgba(var(--color-secondary-rgb), 0.35);
-  background: rgba(var(--color-secondary-rgb), 0.1);
-}
-
-.preview-summary-card--error {
-  border-color: rgba(220, 53, 69, 0.35);
-  background: rgba(220, 53, 69, 0.08);
-}
-
-
 .preview-totales {
   border: 1px solid rgba(var(--color-primary-rgb), 0.2);
   border-radius: 10px;
@@ -324,29 +79,6 @@
 
 .preview-totales .recaudaciones-tabla--resumen td {
   background: rgba(255, 255, 255, 0.75);
-}
-
-.preview-summary-card__label {
-  margin: 0;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: rgba(0, 0, 0, 0.65);
-}
-
-.preview-summary-card__value {
-  margin: 0.35rem 0 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--color-primary);
-}
-
-.tabla-wrapper {
-  overflow-x: auto;
-  overflow-y: auto;
-  height: 500px;
-  padding: 0 20px;
 }
 
 .recaudaciones-tabla {
@@ -379,112 +111,25 @@
   background: rgba(220, 53, 69, 0.08);
 }
 
-.preview-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .preview-error {
-  color: #b02a37;
-  font-weight: 600;
   font-size: 0.86rem;
   margin: 0 0 0.4rem;
   padding: 0.3rem 0.6rem;
-  background: rgba(220, 53, 69, 0.12);
-  border-radius: 6px;
 }
 
 .preview-ok {
-  display: inline-block;
   padding: 0.35rem 0.7rem;
-  border-radius: 6px;
-  background: rgba(var(--color-secondary-rgb), 0.18);
-  color: var(--color-secondary-dark);
-  font-weight: 600;
   font-size: 0.85rem;
 }
 
 .preview-flag {
-  display: inline-block;
   padding: 0.25rem 0.65rem;
-  border-radius: 6px;
   font-size: 0.82rem;
   font-weight: 700;
-
-  &--error {
-    background: rgba(220, 53, 69, 0.12);
-    color: #b02a37;
-  }
-}
-
-.acciones {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.acciones button {
-  border: none;
-  border-radius: 50px;
-  padding: 0.9rem 1.6rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: var(--color-primary);
-  color: var(--color-on-primary);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-
-  &:hover:enabled {
-    box-shadow: 0 10px 18px rgba(var(--color-primary-rgb), 0.2);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.6;
-    box-shadow: none;
-  }
-}
-
-.carga-masiva__helper {
-  margin: 0;
-  font-weight: 600;
-  color: #b02a37;
-}
-
-@media (max-width: 900px) {
-  .carga-masiva__layout {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 768px) {
   .recaudaciones-page {
     padding: 1.5rem;
-  }
-
-  .acciones {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .page-header {
-    align-items: flex-start;
-
-    .context {
-      align-items: flex-start;
-      text-align: left;
-    }
-  }
-}
-
-@keyframes tabla-loader-spin {
-  to {
-    transform: rotate(360deg);
   }
 }

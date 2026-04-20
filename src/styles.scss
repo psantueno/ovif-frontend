@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use 'app/shared/styles/modulo-carga';
 
 // 🎨 Creamos el tema personalizado con Material 3 usando tus colores
 $theme: mat.define-theme((

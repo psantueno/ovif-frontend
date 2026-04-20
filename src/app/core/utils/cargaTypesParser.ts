@@ -25,12 +25,27 @@ const obtenerMensajeError = (error: ZodError): string => {
   return errorMessage
 }
 
+// Mapea aliases de headers del Excel a las keys canónicas del schema.
+// Permite que el Excel use tanto "IMPORTE_HS_EXTRAS_50" como "IMPORTE_HORAS_EXTRAS_50".
+const REMUNERACIONES_HEADER_ALIASES: Record<string, string> = {
+  importe_hs_extras_50: 'importe_horas_extras_50',
+  importe_hs_extras_100: 'importe_horas_extras_100',
+};
+
+const normalizarKeysRemuneracion = (row: Record<string, any>): Record<string, any> => {
+  const normalized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(row)) {
+    normalized[REMUNERACIONES_HEADER_ALIASES[key] ?? key] = value;
+  }
+  return normalized;
+};
+
 export const parseRemuneraciones = (rows: Remuneraciones[]): ParseResponse<Remuneraciones[], Remuneraciones> => {
   const parsedRemuneraciones: Remuneraciones[] = []
   const errors: ParseError<Remuneraciones>[] = []
 
   rows.forEach((row) => {
-    const result = RemuneracionesSchema.safeParse(row);
+    const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = {...result.data}
@@ -60,7 +75,7 @@ export const parseRemuneracionesConMetadata = (
   const errors: ParseError<Remuneraciones>[] = []
 
   rows.forEach(({ row, filaExcel }) => {
-    const result = RemuneracionesSchema.safeParse(row);
+    const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = { ...result.data }
