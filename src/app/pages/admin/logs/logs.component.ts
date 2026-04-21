@@ -132,7 +132,6 @@ export class LogsComponent implements OnInit {
     const filtros = this.filtroForm.value;
     this.logsService.listarLogs({ page: this.pagina, limit: this.limite }, filtros).subscribe({
       next: (response) => {
-        console.log('Logs cargados:', response.data);
         this.dataSource.data = response.data;
         this.totalRegistros = response.total;
         this.logs = response.data;
@@ -152,8 +151,6 @@ export class LogsComponent implements OnInit {
   }
 
   cambiarPagina(event: PageEvent) {
-    console.log("Nueva pagina ", event.pageIndex)
-    console.log("Nuevo size ", event.pageSize)
     this.pagina = event.pageIndex + 1;
     this.limite = event.pageSize;
     this.cargarLogs()
@@ -216,7 +213,6 @@ export class LogsComponent implements OnInit {
     return new Date(anio, mes, dia - 1)
   }
 }
-
 
 
 

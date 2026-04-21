@@ -70,7 +70,6 @@ export class MunicipioMailDialogComponent implements OnInit {
     }
 
     if(!this.data?.municipio_id){
-      console.log(this.form.value)
       const emailValue = this.form.value.email
       const municipioValue = this.municipios.find(m => m.municipio_id === this.form.value.municipio_id)?.municipio_nombre
       Swal.fire({

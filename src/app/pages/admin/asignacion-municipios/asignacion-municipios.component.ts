@@ -201,12 +201,6 @@ export class AsignacionMunicipiosComponent implements OnInit {
     this.guardandoAsignacion = true;
     const municipios = Array.from(this.municipiosAsignados);
 
-    // 🧩 LOG: ver qué se está mandando al backend
-  console.log('📦 Enviando body al backend:', {
-    municipios,
-    usuarioId: this.selectedUsuario.usuario_id
-  });
-
     this.usuariosService.actualizarMunicipiosUsuario(this.selectedUsuario.usuario_id, municipios).subscribe({
       next: () => {
         Swal.fire({

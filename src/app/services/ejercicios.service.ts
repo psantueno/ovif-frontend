@@ -9,6 +9,7 @@ import {
   mapTipoPautaToModulos as mapTipoPautaToModulosUtil,
   obtenerEtiquetaTipoPauta as obtenerEtiquetaTipoPautaUtil
 } from '../models/pauta.model';
+import { normalizeBlobHttpError } from '../core/http/blob-error.util';
 
 export interface EjercicioMes {
   ejercicio: number;
@@ -156,7 +157,7 @@ export class EjerciciosService {
 
     return this.http
       .get(`${this.baseUrl}/informes/download`, { params: httpParams, responseType: 'blob', observe: 'response' })
-      .pipe(catchError((error) => throwError(() => error)));
+      .pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   crearEjercicio(payload: CreateEjercicioPayload): Observable<EjercicioMes> {
@@ -218,7 +219,7 @@ export class EjerciciosService {
     return this.http.get(`${downloadUrl}?municipio_id=${municipioId}`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   listarCatalogoEjercicios(): Observable<EjerciciosSelectOption[]> {
