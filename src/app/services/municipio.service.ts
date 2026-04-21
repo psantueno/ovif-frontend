@@ -9,6 +9,7 @@ import {
   mapTipoPautaToModulos,
   obtenerEtiquetaTipoPauta
 } from '../models/pauta.model';
+import { normalizeBlobHttpError } from '../core/http/blob-error.util';
 
 export interface PartidaGastoResponse {
   partidas_gastos_codigo: number;
@@ -220,7 +221,6 @@ export class MunicipioService {
     try {
       return JSON.parse(guardado);
     } catch {
-      console.warn('No se pudo parsear el municipio guardado');
       return null;
     }
   }
@@ -510,7 +510,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   guardarPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaGastoUpsertPayload[] }): Observable<UpsertResponse> {
@@ -552,7 +552,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   guardarPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaRecursoUpsertPayload[] }): Observable<UpsertResponse> {
@@ -761,7 +761,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   descargarInformeRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
@@ -773,7 +773,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   descargarInformeDeterminacionTributaria(params: {
@@ -792,7 +792,7 @@ export class MunicipioService {
         responseType: 'blob',
         observe: 'response',
       }
-    );
+    ).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   guardarRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
@@ -844,7 +844,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   descargarInformeRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
@@ -856,7 +856,7 @@ export class MunicipioService {
     return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones-rectificadas/informe`, {
       responseType: 'blob',
       observe: 'response',
-    });
+    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
   }
 
   guardarRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
@@ -880,7 +880,6 @@ export class MunicipioService {
       const parsed = JSON.parse(almacenado);
       return typeof parsed === 'object' && parsed !== null ? parsed : {};
     } catch {
-      console.warn('No se pudo parsear los periodos guardados');
       return {};
     }
   }

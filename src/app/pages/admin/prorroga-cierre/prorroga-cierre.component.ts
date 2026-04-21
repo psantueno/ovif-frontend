@@ -259,10 +259,6 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       observaciones: observacionesControl?.value ?? ''
     };
 
-    // 📝 Console.log para visualizar el req.body que se enviará al backend
-    console.log('📤 Request Body enviado al backend:', requestBody);
-    console.table(requestBody); // También en formato tabla para mejor visualización
-
     this.guardandoProrroga = true;
     this.municipioService.actualizarProrrogaMunicipio({
       municipioId: this.selectedMunicipio.municipio_id,

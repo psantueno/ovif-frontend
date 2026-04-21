@@ -254,7 +254,6 @@ export class MunicipioMailsComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (mails) => {
-          console.log("Mails ", mails)
           this.municipiosMailsSubject.next(mails ?? []);
         },
         error: (error) => {

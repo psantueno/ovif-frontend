@@ -340,7 +340,6 @@ export class MunicipiosComponent implements OnInit {
   private resolveErrorMessage(error: any, fallback: string): string {
     if (error?.error) {
       const err = error.error.error;
-      console.log("Err ", err);
       if (typeof err === 'string' && err.trim().length > 0) {
         return err;
       }
