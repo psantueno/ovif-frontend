@@ -2,49 +2,17 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  padding: 2rem;
   padding-bottom: 2rem;
   align-items: center;
+  min-height: calc(100vh - 120px);
+  background-color: var(--color-neutral);
 }
 
 .buscador-card {
   padding: 1.5rem;
-  width: 50%;
-}
-
-.helper-card {
-  width: 50%;
-  padding: 1.5rem;
-}
-
-.helper-icon {
-  font-size: 22px;
-  width: 22px;
-  height: 22px;
-}
-
-.helper-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.helper-content h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2b3e4c;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.helper-content ol {
-  margin: 0;
-  padding-left: 1.25rem;
-  color: #4a5568;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  width: 100%;
+  max-width: 1000px;
 }
 
 .buscador-form {
@@ -60,7 +28,7 @@
 
 .contenido {
   display: grid;
-  grid-template-columns: minmax(280px, 360px) 1fr;
+  grid-template-columns: minmax(280px, calc(360px - 0.75rem)) 1fr;
   gap: 1.5rem;
 }
 
@@ -68,14 +36,13 @@
   min-height: 360px;
 }
 
-// solo card usuarios
+
 .usuarios-card {
-width: 360px;
+  min-width: calc(360px - 0.75rem);
 }
 
-// solo card municipios
-.municipios-card {
-  width: 800px;
+.municipios-card, .placeholder-card {
+  min-width: calc(640px - 0.75rem);
 }
 
 .header-icon {
@@ -169,35 +136,10 @@ mat-nav-list a[mat-list-item].activo {
   gap: 0.75rem;
   color: #6c757d;
   min-height: 220px;
-  min-width: 800px;
 }
 
 mat-card-actions {
   padding: 1rem 1.5rem 1.5rem;
-}
-
-.btn-accion {
-  align-self: baseline;
-  padding: 1.50rem 1.5rem;
-  background-color: #2b3e4c;
-  color: #ffffff;
-  font-weight: 600;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-  transition: background-color 0.25s ease, color 0.25s ease;
-  border: none;
-
-  &:hover {
-    background-color: var(--color-secondary);
-    color: var(--color-on-secondary);
-  }
-
-  mat-icon {
-    font-size: 20px;
-  }
 }
 
 @media (max-width: 960px) {

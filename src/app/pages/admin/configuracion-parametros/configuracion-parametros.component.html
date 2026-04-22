@@ -1,21 +1,22 @@
 <div class="parametros-admin-container">
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
-  <mat-card class="helper-card">
+  <mat-card class="admin-helper-card admin-card">
     <div class="helper-content">
-      <h3>
-        <mat-icon class="helper-icon" color="primary">info</mat-icon>
-        Configuración de parámetros
-      </h3>
-      <ol>
-        <li>Consultá la lista de parámetros generales del sistema.</li>
-        <li>Creá nuevos parámetros o editá los existentes desde acciones.</li>
-        <li>Activá o desactivá parámetros con el switch de estado.</li>
-      </ol>
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Configuración de parámetros</h3>
+        <hr>
+        <ol>
+          <li>Consultá la lista de parámetros generales del sistema.</li>
+          <li>Creá nuevos parámetros o editá los existentes desde acciones.</li>
+          <li>Activá o desactivá parámetros con el switch de estado.</li>
+        </ol>
+      </div>
     </div>
   </mat-card>
 
-  <mat-card class="helper-card--secondary">
+  <mat-card class="admin-helper-card--secondary">
     <div class="helper-content">
       <h3>
         <mat-icon class="helper-icon" color="primary">warning</mat-icon>
@@ -30,7 +31,7 @@
   </mat-card>
 
 
-  <mat-card class="selector-card">
+  <mat-card class="admin-selector-card admin-card selector-card">
     <div class="selector-content">
       <div class="buscador-form">
         <mat-form-field appearance="outline" class="selector-field">
@@ -50,7 +51,7 @@
     </div>
   </mat-card>
 
-  <mat-card class="tabla-card">
+  <mat-card class="admin-tabla-card admin-card">
     <mat-card-header>
       <mat-icon class="header-icon">tune</mat-icon>
       <div class="header-text">
@@ -61,21 +62,19 @@
       </div>
     </mat-card-header>
 
-    <mat-divider></mat-divider>
-
     <mat-card-content>
-      <div class="estado" *ngIf="cargandoLista">
+      <div class="admin-estado" *ngIf="cargandoLista">
         <mat-spinner diameter="36"></mat-spinner>
         <span>Cargando parámetros...</span>
       </div>
 
-      <div class="estado" *ngIf="!cargandoLista && dataSource.data.length === 0">
+      <div class="admin-estado" *ngIf="!cargandoLista && dataSource.data.length === 0">
         <mat-icon>search_off</mat-icon>
         <span>No se encontraron parámetros.</span>
       </div>
 
-      <div class="tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
-        <table mat-table [dataSource]="dataSource" class="parametros-table">
+      <div class="admin-tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
+        <table mat-table [dataSource]="dataSource" class="admin-tabla">
           <ng-container matColumnDef="parametro_id">
             <th mat-header-cell *matHeaderCellDef>ID</th>
             <td mat-cell *matCellDef="let parametro">
@@ -113,7 +112,7 @@
           <ng-container matColumnDef="acciones">
             <th mat-header-cell *matHeaderCellDef>Acciones</th>
             <td mat-cell *matCellDef="let parametro">
-              <div class="acciones">
+              <div class="admin-acciones">
                 <button mat-icon-button color="primary" matTooltip="Ver" (click)="verParametro(parametro)">
                   <mat-icon>visibility</mat-icon>
                 </button>
@@ -134,12 +133,8 @@
           <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
         </table>
       </div>
+      <mat-paginator class="admin-paginator" [length]="totalRegistros" [pageIndex]="pageIndex" [pageSize]="pageSize" [pageSizeOptions]="pageSizeOptions" (page)="cambiarPagina($event)"></mat-paginator>
     </mat-card-content>
-
-    <mat-card-actions align="end" *ngIf="!cargandoLista && totalRegistros > 0">
-      <mat-paginator [length]="totalRegistros" [pageIndex]="pageIndex" [pageSize]="pageSize"
-        [pageSizeOptions]="pageSizeOptions" (page)="cambiarPagina($event)"></mat-paginator>
-    </mat-card-actions>
   </mat-card>
 
   <button mat-fab color="primary" class="fab-add" (click)="abrirDialogCrear()">

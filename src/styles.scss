@@ -17,40 +17,40 @@ $theme: mat.define-theme((
 // ✅ Aplicamos el tema global y definimos variables CSS
 :root {
   @include mat.all-component-themes($theme); // Aplica el tema global a todos los componentes de Angular Material
-  
+
   // 🎨 Variables CSS personalizadas para tus colores específicos
   & {
     --color-primary: #2B3E4C; // Color principal (azul oscuro)
     --color-primary-rgb: 43, 62, 76; // Versión RGB del color principal
     --color-primary-light: #3f6f91; // Versión más clara del color principal
     --color-primary-dark: #1b4062; // Versión más oscura del color principal
-    
+
     --color-secondary: #89B968; // Color secundario (verde)
     --color-secondary-rgb: 137, 185, 104; // Versión RGB del color secundario
     --color-secondary-light: #a7cf89; // Versión más clara del color secundario
     --color-secondary-dark: #689752; // Versión más oscura del color secundario
-    
+
     --color-accent: #F4E0B6; // Color de acento (marrón claro)
     --color-accent-rgb: 244, 224, 182; // Versión RGB del color de acento
     --color-accent-light: #f9e2c6; // Versión más clara del color de acento
     --color-accent-dark: #d4aa70; // Versión más oscura del color de acento
-    
+
     --color-neutral: #FCF2DD; // Color neutro (gris claro)
     --color-neutral-rgb: 252, 242, 221; // Versión RGB del color neutro
     --color-neutral-light: #fefcf7; // Versión más clara del color neutro
     --color-neutral-dark: #f5ecc4; // Versión más oscura del color neutro
-    
+
     // Variables de superficie y fondo
     --color-surface: #ffffff; // Color de superficie (blanco)
     --color-surface-variant: #FCF2DD; // Variante del color de superficie
     --color-background: #fafafa; // Color de fondo (gris muy claro)
-    
+
     // Variables de texto
     --color-on-primary: #ffffff; // Color del texto sobre el color principal
     --color-on-secondary: #000000; // Color del texto sobre el color secundario
     --color-on-accent: #000000; // Color del texto sobre el color de acento
     --color-on-surface: #2B3E4C; // Color del texto sobre la superficie
-    
+
     // Override de variables de Material Design
     --mdc-theme-primary: var(--color-primary); // Sobrescribe el color principal de Material Design
     --mdc-theme-secondary: var(--color-secondary); // Sobrescribe el color secundario de Material Design
@@ -77,84 +77,84 @@ html, body {
 }
 
 // 🎨 Clases utilitarias para usar tus colores
-.bg-primary { 
+.bg-primary {
   & {
     background-color: var(--color-primary) !important; // Fondo con el color principal
     color: var(--color-on-primary) !important; // Texto con el color sobre el color principal
   }
 }
 
-.bg-primary-light { 
+.bg-primary-light {
   & {
     background-color: var(--color-primary-light) !important; // Fondo con el color principal claro
     color: white !important; // Texto blanco
   }
 }
 
-.bg-primary-dark { 
+.bg-primary-dark {
   & {
     background-color: var(--color-primary-dark) !important; // Fondo con el color principal oscuro
     color: white !important; // Texto blanco
   }
 }
 
-.bg-secondary { 
+.bg-secondary {
   & {
     background-color: var(--color-secondary) !important; // Fondo con el color secundario
     color: var(--color-on-secondary) !important; // Texto con el color sobre el color secundario
   }
 }
 
-.bg-secondary-light { 
+.bg-secondary-light {
   & {
     background-color: var(--color-secondary-light) !important; // Fondo con el color secundario claro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
   }
 }
 
-.bg-secondary-dark { 
+.bg-secondary-dark {
   & {
     background-color: var(--color-secondary-dark) !important; // Fondo con el color secundario oscuro
     color: white !important; // Texto blanco
   }
 }
 
-.bg-accent { 
+.bg-accent {
   & {
     background-color: var(--color-accent) !important; // Fondo con el color de acento
     color: var(--color-on-accent) !important; // Texto con el color sobre el color de acento
   }
 }
 
-.bg-accent-light { 
+.bg-accent-light {
   & {
     background-color: var(--color-accent-light) !important; // Fondo con el color de acento claro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
   }
 }
 
-.bg-accent-dark { 
+.bg-accent-dark {
   & {
     background-color: var(--color-accent-dark) !important; // Fondo con el color de acento oscuro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
   }
 }
 
-.bg-neutral { 
+.bg-neutral {
   & {
     background-color: var(--color-neutral) !important; // Fondo con el color neutro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
   }
 }
 
-.bg-neutral-light { 
+.bg-neutral-light {
   & {
     background-color: var(--color-neutral-light) !important; // Fondo con el color neutro claro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
   }
 }
 
-.bg-neutral-dark { 
+.bg-neutral-dark {
   & {
     background-color: var(--color-neutral-dark) !important; // Fondo con el color neutro oscuro
     color: rgba(0, 0, 0, 0.87) !important; // Texto negro con opacidad
@@ -162,74 +162,74 @@ html, body {
 }
 
 // Clases para colores de texto
-.text-primary { 
+.text-primary {
   & {
     color: var(--color-primary) !important; // Texto con el color principal
   }
 }
 
-.text-primary-light { 
+.text-primary-light {
   & {
     color: var(--color-primary-light) !important; // Texto con el color principal claro
   }
 }
 
-.text-primary-dark { 
+.text-primary-dark {
   & {
     color: var(--color-primary-dark) !important; // Texto con el color principal oscuro
   }
 }
 
-.text-secondary { 
+.text-secondary {
   & {
     color: var(--color-secondary) !important; // Texto con el color secundario
   }
 }
 
-.text-secondary-light { 
+.text-secondary-light {
   & {
     color: var(--color-secondary-light) !important; // Texto con el color secundario claro
   }
 }
 
-.text-secondary-dark { 
+.text-secondary-dark {
   & {
     color: var(--color-secondary-dark) !important; // Texto con el color secundario oscuro
   }
 }
 
-.text-accent { 
+.text-accent {
   & {
     color: var(--color-accent-dark) !important; // Texto con el color de acento oscuro
   }
 }
 
-.text-neutral { 
+.text-neutral {
   & {
     color: var(--color-neutral-dark) !important; // Texto con el color neutro oscuro
   }
 }
 
 // Clases para bordes
-.border-primary { 
+.border-primary {
   & {
     border-color: var(--color-primary) !important; // Borde con el color principal
   }
 }
 
-.border-secondary { 
+.border-secondary {
   & {
     border-color: var(--color-secondary) !important; // Borde con el color secundario
   }
 }
 
-.border-accent { 
+.border-accent {
   & {
     border-color: var(--color-accent-dark) !important; // Borde con el color de acento oscuro
   }
 }
 
-.border-neutral { 
+.border-neutral {
   & {
     border-color: var(--color-neutral-dark) !important; // Borde con el color neutro oscuro
   }
@@ -241,15 +241,28 @@ html, body {
     background-color: var(--color-surface);
     border: 1px solid rgba(var(--color-neutral-rgb), 0.3);
   }
-  
+
+  & table {
+    & {
+      background-color: var(--color-surface);
+    }
+  }
+
+  &.admin-helper-card--secondary {
+    & {
+      background-color: #fff8e1;
+      border-color: #f6e05e;
+    }
+  }
+
   &.card-primary {
     border-color: var(--color-primary);
   }
-  
+
   &.card-secondary {
     border-color: var(--color-secondary);
   }
-  
+
   &.card-accent {
     & {
       background-color: var(--color-neutral);
@@ -264,17 +277,17 @@ html, body {
     & {
       --mdc-text-button-label-text-color: var(--color-primary);
     }
-    
+
     &:hover {
       background-color: rgba(var(--color-primary-rgb), 0.04);
     }
   }
-  
+
   &.button-secondary {
     & {
       --mdc-text-button-label-text-color: var(--color-secondary);
     }
-    
+
     &:hover {
       background-color: rgba(var(--color-secondary-rgb), 0.04);
     }
@@ -287,29 +300,29 @@ html, body {
       --mdc-filled-button-container-color: var(--color-primary);
       --mdc-filled-button-label-text-color: white;
     }
-    
+
     &:hover {
       --mdc-filled-button-container-color: var(--color-primary-light);
     }
   }
-  
+
   &.button-secondary {
     & {
       --mdc-filled-button-container-color: var(--color-secondary);
       --mdc-filled-button-label-text-color: black;
     }
-    
+
     &:hover {
       --mdc-filled-button-container-color: var(--color-secondary-light);
     }
   }
-  
+
   &.button-accent {
     & {
       --mdc-filled-button-container-color: var(--color-accent);
       --mdc-filled-button-label-text-color: black;
     }
-    
+
     &:hover {
       --mdc-filled-button-container-color: var(--color-accent-light);
     }
@@ -323,7 +336,7 @@ html, body {
       --mdc-fab-label-text-color: white;
     }
   }
-  
+
   &.fab-secondary {
     & {
       --mdc-fab-container-color: var(--color-secondary);
@@ -340,7 +353,7 @@ html, body {
     --mdc-filled-text-field-label-text-color: rgba(var(--color-primary-rgb), 0.6); // Cambia el color del label
     --mdc-filled-text-field-focus-label-text-color: var(--color-secondary); // Cambia el color del label al enfocar
   }
-  
+
   &.field-accent {
     & {
       --mdc-filled-text-field-container-color: var(--color-neutral);
@@ -358,21 +371,21 @@ html, body {
       --mdc-chip-label-text-color: white;
     }
   }
-  
+
   &.chip-secondary {
     & {
       --mdc-chip-elevated-container-color: var(--color-secondary);
       --mdc-chip-label-text-color: black;
     }
   }
-  
+
   &.chip-accent {
     & {
       --mdc-chip-elevated-container-color: var(--color-accent);
       --mdc-chip-label-text-color: black;
     }
   }
-  
+
   &.chip-neutral {
     & {
       --mdc-chip-elevated-container-color: var(--color-neutral);
@@ -395,21 +408,21 @@ html, body {
 }
 
 // 🎯 Utilidades adicionales
-.elevation-1 { 
+.elevation-1 {
   & {
-    box-shadow: 0 2px 4px rgba(var(--color-primary-rgb), 0.1); 
+    box-shadow: 0 2px 4px rgba(var(--color-primary-rgb), 0.1);
   }
 }
 
-.elevation-2 { 
+.elevation-2 {
   & {
-    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.15); 
+    box-shadow: 0 4px 8px rgba(var(--color-primary-rgb), 0.15);
   }
 }
 
-.elevation-3 { 
+.elevation-3 {
   & {
-    box-shadow: 0 8px 16px rgba(var(--color-primary-rgb), 0.2); 
+    box-shadow: 0 8px 16px rgba(var(--color-primary-rgb), 0.2);
   }
 }
 
@@ -419,21 +432,21 @@ html, body {
   }
 }
 
-.rounded { 
+.rounded {
   & {
-    border-radius: 8px; 
+    border-radius: 8px;
   }
 }
 
-.rounded-lg { 
+.rounded-lg {
   & {
-    border-radius: 12px; 
+    border-radius: 12px;
   }
 }
 
-.rounded-xl { 
+.rounded-xl {
   & {
-    border-radius: 16px; 
+    border-radius: 16px;
   }
 }
 
@@ -850,5 +863,490 @@ html, body {
     box-shadow: none;
     background: rgba(var(--color-primary-rgb), 0.18);
     color: var(--color-primary);
+  }
+}
+
+// === ADMIN GLOBAL STYLES ===
+
+.admin-helper-card {
+  background-color: var(--color-surface);
+  width: max-content;
+
+  .helper-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    mat-icon {
+      font-size: 34px;
+      height: 34px;
+      min-width: 34px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid rgba(var(--color-primary-rgb), 0.15);
+      margin: 0.5rem 0;
+      width: 100%;
+    }
+
+    p, ol, ul {
+      margin: 0;
+      color: #546e7a;
+      line-height: 1.45;
+    }
+
+    ol, ul {
+      padding-left: 1.25rem;
+    }
+
+    .helper-text-container {
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .helper-content {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+}
+
+.list-card {
+  .list-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #607d8b;
+    min-height: 120px;
+    justify-content: center;
+
+    mat-icon {
+      font-size: 38px;
+      height: 38px;
+      width: 38px;
+      color: #90a4ae;
+    }
+  }
+
+  .filters {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+
+    mat-form-field {
+      width: 200px;
+    }
+
+    mat-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filter-label-icon {
+      font-size: 18px;
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  .tabla-wrapper {
+    overflow: auto;
+    margin-top: 1.5rem;
+    padding: 0;
+  }
+
+  mat-paginator {
+    margin-top: 1rem;
+  }
+}
+
+.admin-card {
+  width: 100%;
+  max-width: 1000px;
+  padding: 1.75rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-surface);
+}
+
+.admin-helper-card--secondary {
+  padding: 1.5rem;
+  background-color: #fff8e1;
+  border: 1px solid #f6e05e;
+  border-radius: 0.75rem;
+  max-width: 1000px;
+
+  .helper-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+
+    h3 {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+      color: #b7791f;
+      font-weight: 600;
+
+      .helper-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    ol, ul {
+      margin: 0;
+      padding-left: 1.25rem;
+      color: #744210;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+  }
+}
+
+.admin-tabla-wrapper {
+  overflow: auto;
+  width: 100%;
+  padding: 0;
+  max-height: 500px;
+}
+
+.admin-tabla {
+  width: 100%;
+  min-width: 600px;
+  table-layout: auto;
+  border-collapse: collapse;
+
+  th, td {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  th {
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    border-bottom: 2px solid rgba(var(--color-primary-rgb), 0.2);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 8px 10px;
+    position: sticky;
+    top: 0;
+    background-color: var(--color-surface);
+    z-index: 10;
+  }
+
+  td {
+    font-size: 0.95rem;
+    color: var(--color-on-surface);
+    text-align: center;
+    padding: 8px 10px;
+  }
+
+  button[mat-icon-button] {
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 8px;
+    color: var(--color-primary);
+
+    mat-icon { font-size: 20px; }
+
+    &:hover {
+      background-color: rgba(var(--color-secondary-rgb), 0.12);
+    }
+  }
+
+  button[mat-icon-button][color='warn'] {
+    color: #d32f2f;
+
+    &:hover {
+      background-color: rgba(211, 47, 47, 0.12);
+    }
+  }
+}
+
+.admin-btn-accion {
+  --mdc-filled-button-container-color: #2b3e4c;
+  --mdc-filled-button-label-text-color: #ffffff;
+  --mdc-protected-button-container-color: #2b3e4c;
+  --mdc-protected-button-label-text-color: #ffffff;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.9rem 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+
+  mat-icon { font-size: 20px; }
+
+  &:hover {
+    --mdc-filled-button-container-color: var(--color-secondary);
+    --mdc-protected-button-container-color: var(--color-secondary);
+    --mdc-filled-button-label-text-color: var(--color-on-secondary);
+    --mdc-protected-button-label-text-color: var(--color-on-secondary);
+  }
+}
+
+// --- Selector / Buscador card ---
+.admin-selector-card {
+  padding: 1.5rem;
+
+  .selector-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .buscador-form {
+    display: grid;
+    grid-template-columns: minmax(240px, 1fr) auto auto;
+    gap: 0.75rem;
+    align-items: center;
+
+    .selector-field { width: 100%; }
+  }
+
+  .selector-helper,
+  .selector-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+
+  .selector-loading mat-spinner {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+// --- Tabla card ---
+.admin-tabla-card {
+  mat-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0 1.5rem;
+
+    .header-icon {
+      font-size: 30px;
+      min-width: 30px;
+      height: 30px;
+      color: var(--color-secondary);
+    }
+
+    mat-card-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--color-primary);
+    }
+
+    mat-card-subtitle {
+      color: #667a8a;
+    }
+  }
+
+  mat-card-content {
+    padding: 1.5rem 1.5rem;
+  }
+
+  mat-card-actions {
+    padding: 1.5rem;
+  }
+
+  mat-paginator {
+    margin-top: 1rem;
+  }
+}
+
+// --- Estado (loading / vacío) ---
+.admin-estado {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #6c757d;
+  min-height: 160px;
+
+  mat-icon {
+    font-size: 30px;
+  }
+}
+
+// --- Acciones en filas de tabla ---
+.admin-acciones {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+// --- Chips de estado (mat-primary / mat-warn) ---
+mat-chip {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  border-radius: 50px;
+  --mdc-chip-outline-color: transparent !important;
+
+  &.mat-primary {
+    background-color: #C6EFCE !important;
+    color: #006100 !important;
+  }
+
+  &.mat-warn {
+    background-color: #F8D7DA !important;
+    color: #721C24 !important;
+  }
+}
+
+::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__text-label {
+  font-size: 0.7rem !important;
+}
+
+::ng-deep .mat-mdc-standard-chip.mat-primary:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label {
+  color: #006100 !important;
+}
+
+::ng-deep .mat-mdc-standard-chip.mat-warn:not(.mdc-evolution-chip--disabled) .mdc-evolution-chip__text-label {
+  color: #721C24 !important;
+}
+
+// --- Paginador global admin ---
+.admin-paginator {
+  width: 100%;
+  background-color: #fff !important;
+
+  ::ng-deep .mat-mdc-paginator-container {
+    justify-content: flex-end;
+    padding: 0.5rem 1rem;
+  }
+
+  ::ng-deep .mat-mdc-paginator-page-size {
+    font-weight: 500;
+  }
+
+  ::ng-deep .mat-mdc-paginator-range-actions button:hover {
+    background-color: var(--color-secondary);
+    color: #fff;
+  }
+}
+
+// --- FAB flotante admin ---
+.fab-add {
+  position: fixed !important;
+  bottom: 32px !important;
+  right: 32px !important;
+  z-index: 1000 !important;
+  box-shadow: 0 8px 24px rgba(43, 62, 76, 0.25) !important;
+}
+
+// --- Animación girando ---
+.girando {
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+// --- Sin resultados ---
+.sin-resultados-card {
+  text-align: center;
+
+  .sin-resultados {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 0;
+    color: #777;
+
+    mat-icon {
+      font-size: 48px;
+      min-width: 48px;
+      height: 48px;
+      color: #999;
+    }
+
+    p {
+      font-size: 1rem;
+      font-weight: 500;
+      margin: 0;
+    }
+  }
+}
+
+// --- Botón buscar ---
+.btn-buscar {
+  --mdc-filled-button-container-color: #2b3e4c;
+  --mdc-filled-button-label-text-color: #ffffff;
+  --mdc-protected-button-container-color: #2b3e4c;
+  --mdc-protected-button-label-text-color: #ffffff;
+  align-self: baseline;
+  padding: 1.75rem 1.5rem;
+  font-weight: 600;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+  border: none;
+
+  mat-icon { font-size: 20px; }
+
+  &:hover {
+    --mdc-filled-button-container-color: var(--color-secondary);
+    --mdc-protected-button-container-color: var(--color-secondary);
+    --mdc-filled-button-label-text-color: var(--color-on-secondary);
+    --mdc-protected-button-label-text-color: var(--color-on-secondary);
+  }
+}
+
+// --- Filtros card (usuarios, logs) ---
+.admin-filtros-card {
+  padding: 1.5rem 2rem;
+
+  .filtro-form {
+    display: grid;
+    gap: 1rem;
+    align-items: flex-end;
+
+    mat-form-field { width: 100%; }
+  }
+}
+
+@media (max-width: 480px) {
+  .fab-add {
+    bottom: 20px !important;
+    right: 20px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-selector-card .buscador-form {
+    grid-template-columns: 1fr;
+
+    button { width: 100%; }
+  };
+
+  .admin-filtros-card .filtro-form {
+    grid-template-columns: 1fr;
   }
 }
