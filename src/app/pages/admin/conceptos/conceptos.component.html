@@ -1,17 +1,18 @@
 <div class="conceptos-admin-container">
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
-  <mat-card class="helper-card">
+  <mat-card class="admin-helper-card admin-card">
     <div class="helper-content">
-      <h3>
-        <mat-icon class="helper-icon" color="primary">info</mat-icon>
-        Administración de conceptos
-      </h3>
-      <ol>
-        <li>Consultá la lista completa paginada o filtrá por descripción.</li>
-        <li>Utilizá el buscador con autocompletado para ubicar un concepto específico.</li>
-        <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
-      </ol>
+      <mat-icon color="primary">info</mat-icon>
+      <div>
+        <h3>Administración de conceptos</h3>
+        <hr>
+        <ol>
+          <li>Consultá la lista completa paginada o filtrá por descripción.</li>
+          <li>Utilizá el buscador con autocompletado para ubicar un concepto específico.</li>
+          <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
+        </ol>
+      </div>
     </div>
   </mat-card>
 
@@ -81,8 +82,8 @@
         <span>No se encontraron conceptos.</span>
       </div>
 
-      <div class="tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
-        <table mat-table [dataSource]="dataSource" class="conceptos-table">
+      <div class="tabla-wrapper admin-tabla-wrapper" *ngIf="!cargandoLista && dataSource.data.length > 0">
+        <table mat-table [dataSource]="dataSource" class="conceptos-table admin-tabla">
           <ng-container matColumnDef="cod_concepto">
             <th mat-header-cell *matHeaderCellDef>Cod. Concepto</th>
             <td mat-cell *matCellDef="let concepto">

@@ -2,22 +2,23 @@
 
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
-  <mat-card class="helper-card">
+  <mat-card class="admin-helper-card admin-card">
     <div class="helper-content">
-      <h3>
-        <mat-icon class="helper-icon" color="primary">info</mat-icon>
-        Listado de logs
-      </h3>
-      <ol>
-        <li>Consultá la lista completa paginada o utiliza algunos de los filtros disponibles</li>
-        <li>Los Resumenes Generales muestran el detalle diario de modulos cerrados y errores obtenidos totales</li>
-        <li>Los Resumenes por Municipio muestran el modulo, ejercicio y mes cerrado para el municipio correspondiente</li>
-      </ol>
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Listado de logs</h3>
+        <hr>
+        <ol>
+          <li>Consultá la lista completa paginada o utiliza algunos de los filtros disponibles</li>
+          <li>Los Resumenes Generales muestran el detalle diario de modulos cerrados y errores obtenidos totales</li>
+          <li>Los Resumenes por Municipio muestran el modulo, ejercicio y mes cerrado para el municipio correspondiente</li>
+        </ol>
+      </div>
     </div>
   </mat-card>
 
   <!-- 🔍 Filtros -->
-  <mat-card class="filtros-card">
+  <mat-card class="admin-selector-card admin-filtros-card admin-card filtros-card">
     <form [formGroup]="filtroForm" (ngSubmit)="cargarLogs()" class="filtro-form">
 
       <!-- Ejercicio -->
@@ -113,14 +114,20 @@
 
   <!-- 📋 Resultados -->
   <ng-container *ngIf="dataSource.data.length > 0; else sinResultados">
-    <mat-card class="logs-card">
+    <mat-card class="admin-tabla-card admin-card">
       <mat-card-header>
         <mat-icon class="header-icon">description</mat-icon>
-        <mat-card-title>Logs del Sistema</mat-card-title>
+        <div class="header-text">
+          <mat-card-title>Logs del Sistema</mat-card-title>
+          <mat-card-subtitle>
+            {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrado{{ totalRegistros === 1 ? '' : 's' }}
+          </mat-card-subtitle>
+        </div>
       </mat-card-header>
 
       <mat-card-content>
-        <table mat-table [dataSource]="dataSource" class="logs-table">
+        <div class="admin-tabla-wrapper">
+        <table mat-table [dataSource]="dataSource" class="logs-table admin-tabla">
 
           <!-- ID Log -->
           <ng-container matColumnDef="id_log">
@@ -190,7 +197,8 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
-        <mat-paginator [length]="totalRegistros" [pageSize]="limite" [pageSizeOptions]="[5, 10, 20]"
+        </div>
+        <mat-paginator class="admin-paginator" [length]="totalRegistros" [pageSize]="limite" [pageSizeOptions]="[5, 10, 20]"
           (page)="cambiarPagina($event)">
         </mat-paginator>
       </mat-card-content>
@@ -199,7 +207,7 @@
 
   <!-- ❌ Sin resultados -->
   <ng-template #sinResultados>
-    <mat-card class="logs-card sin-resultados-card">
+    <mat-card class="admin-tabla-card admin-card sin-resultados-card">
       <mat-card-content>
         <div class="sin-resultados">
           <mat-icon>search_off</mat-icon>

@@ -1,19 +1,23 @@
 <div class="asignacion-container">
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
-  <mat-card class="helper-card">
+  <mat-card class="admin-helper-card admin-card">
     <div class="helper-content">
-      <h3><mat-icon class="helper-icon" color="primary">info</mat-icon> Asignar municipios a un usuario</h3>
-      <ol>
-        <li>Busca al usuario por nombre, usuario o correo.</li>
-        <li>Selecciona al usuario para cargar sus municipios actuales.</li>
-        <li>Marca o desmarca los municipios que desees asignar.</li>
-        <li>Presiona "Guardar cambios" para confirmar la asignación.</li>
-      </ol>
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Asignar municipios a un usuario</h3>
+        <hr>
+        <ol>
+          <li>Busca al usuario por nombre, usuario o correo.</li>
+          <li>Selecciona al usuario para cargar sus municipios actuales.</li>
+          <li>Marca o desmarca los municipios que desees asignar.</li>
+          <li>Presiona "Guardar cambios" para confirmar la asignación.</li>
+        </ol>
+      </div>
     </div>
   </mat-card>
 
-  <mat-card class="buscador-card">
+  <mat-card class="buscador-card admin-selector-card">
     <form [formGroup]="filtroForm" (ngSubmit)="buscarUsuarios()" class="buscador-form">
       <mat-form-field appearance="outline" class="search-field">
         <mat-label>Buscar usuario</mat-label>
@@ -21,7 +25,7 @@
         <input matInput formControlName="search" placeholder="Nombre, usuario o correo" />
       </mat-form-field>
 
-      <button mat-raised-button type="submit" class="btn-accion">
+      <button mat-raised-button type="submit" class="btn-buscar">
         <mat-icon>search</mat-icon>
         Buscar
       </button>
@@ -72,11 +76,11 @@
 
       <mat-card-content>
         <div class="acciones-top">
-          <button mat-raised-button class="btn-accion" (click)="seleccionarTodos()">
+          <button mat-raised-button class="admin-btn-accion" (click)="seleccionarTodos()">
             <mat-icon>checklist</mat-icon>
             Seleccionar todos
           </button>
-          <button mat-raised-button class="btn-accion" (click)="limpiarSeleccion()">
+          <button mat-raised-button class="admin-btn-accion" (click)="limpiarSeleccion()">
             <mat-icon>close</mat-icon>
             Limpiar selección
           </button>
@@ -105,7 +109,7 @@
       </mat-card-content>
 
       <mat-card-actions align="end">
-        <button mat-raised-button class="btn-accion" (click)="guardarAsignacion()"
+        <button mat-raised-button class="admin-btn-accion" (click)="guardarAsignacion()"
           [disabled]="guardandoAsignacion || cargandoAsignaciones">
           <mat-icon>save</mat-icon>
           <ng-container *ngIf="!guardandoAsignacion; else guardando">

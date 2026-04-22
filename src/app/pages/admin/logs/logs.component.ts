@@ -13,6 +13,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -45,6 +46,7 @@ import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/component
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
+    MatDividerModule,
     MatDatepickerModule,
     MatNativeDateModule,
     AdminNavbarComponent,

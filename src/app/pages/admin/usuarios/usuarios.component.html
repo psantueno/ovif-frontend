@@ -1,9 +1,22 @@
 <div class="usuarios-container">
-
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
+  <mat-card class="admin-helper-card admin-card">
+    <div class="helper-content">
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Administración de usuarios</h3>
+        <hr>
+        <ol>
+          <li>Consultá el listado completo paginado o filtrá por nombre, municipio o rol.</li>
+          <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
+        </ol>
+      </div>
+    </div>
+  </mat-card>
+
   <!-- 🔍 Filtros -->
-  <mat-card class="filtros-card">
+  <mat-card class="admin-selector-card admin-filtros-card admin-card filtros-card">
     <form [formGroup]="filtroForm" (ngSubmit)="aplicarFiltros()" class="filtro-form">
 
       <!-- Búsqueda global -->
@@ -44,14 +57,20 @@
 
   <!-- 📋 Resultados -->
   <ng-container *ngIf="busquedaEjecutada">
-    <mat-card class="usuarios-card" *ngIf="dataSource.data.length > 0; else sinResultados">
+    <mat-card class="admin-tabla-card admin-card" *ngIf="dataSource.data.length > 0; else sinResultados">
       <mat-card-header>
         <mat-icon class="header-icon">group</mat-icon>
-        <mat-card-title>Gestión de Usuarios</mat-card-title>
+        <div class="header-text">
+          <mat-card-title>Usuarios configurados</mat-card-title>
+          <mat-card-subtitle>
+            {{ totalRegistros }} registro{{ totalRegistros === 1 ? '' : 's' }} encontrados
+          </mat-card-subtitle>
+        </div>
       </mat-card-header>
 
       <mat-card-content>
-        <table mat-table [dataSource]="dataSource" class="usuarios-table">
+        <div class="admin-tabla-wrapper">
+        <table mat-table [dataSource]="dataSource" class="usuarios-table admin-tabla">
 
           <!-- Usuario -->
           <ng-container matColumnDef="usuario">
@@ -85,7 +104,7 @@
           <ng-container matColumnDef="acciones">
             <th mat-header-cell *matHeaderCellDef> Acciones </th>
             <td mat-cell *matCellDef="let u">
-              <div class="acciones">
+              <div class="admin-acciones">
                 <button mat-icon-button color="accent" matTooltip="Ver" (click)="verUsuario(u)">
                   <mat-icon>visibility</mat-icon>
                 </button>
@@ -107,7 +126,8 @@
           <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
           <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
         </table>
-        <mat-paginator [length]="totalRegistros" [pageSize]="limite" [pageSizeOptions]="[5, 10, 20]"
+        </div>
+        <mat-paginator class="admin-paginator" [length]="totalRegistros" [pageSize]="limite" [pageSizeOptions]="[5, 10, 20]"
           (page)="cambiarPagina($event)">
         </mat-paginator>
       </mat-card-content>
@@ -115,7 +135,7 @@
 
     <!-- ❌ Sin resultados -->
     <ng-template #sinResultados>
-      <mat-card class="usuarios-card sin-resultados-card">
+      <mat-card class="admin-tabla-card admin-card sin-resultados-card">
         <mat-card-content>
           <div class="sin-resultados">
             <mat-icon>search_off</mat-icon>

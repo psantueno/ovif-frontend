@@ -1,22 +1,23 @@
 <div class="prorroga-container">
   <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
 
-  <mat-card class="helper-card">
+  <mat-card class="admin-helper-card admin-card">
     <div class="helper-content">
-      <h3>
-        <mat-icon class="helper-icon" color="primary">info</mat-icon>
-        Gestionar prórrogas de cierre
-      </h3>
-      <ol>
-        <li>Seleccioná el municipio filtrando por nombre.</li>
-        <li>Elegí el periodo cerrado que querés modificar.</li>
-        <li>Revisá la fecha oficial y la prórroga vigente.</li>
-        <li>Ingresá la nueva fecha de cierre y guardá los cambios.</li>
-      </ol>
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Administración de prórrogas de cierre</h3>
+        <hr>
+        <ol>
+          <li>Seleccioná el municipio filtrando por nombre.</li>
+          <li>Elegí el periodo cerrado que querés modificar.</li>
+          <li>Revisá la fecha oficial y la prórroga vigente.</li>
+          <li>Ingresá la nueva fecha de cierre y guardá los cambios.</li>
+        </ol>
+      </div>
     </div>
   </mat-card>
 
-  <mat-card class="selector-card">
+  <mat-card class="admin-selector-card selector-card">
     <div class="selector-content">
       <mat-form-field appearance="outline" class="selector-field">
         <mat-label>Seleccionar municipio</mat-label>
@@ -271,7 +272,7 @@
       <div class="form-actions">
         <button
           mat-raised-button
-          class="btn-accion"
+          class="admin-btn-accion"
           type="button"
           (click)="guardarProrroga()"
           [disabled]="guardandoProrroga || prorrogaForm.invalid || periodoNoDisponible"
