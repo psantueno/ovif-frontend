@@ -1,0 +1,18 @@
+<div class="unauthorized-container">
+  <div class="unauthorized-content">
+    <img src="assets/img/ovif_unauthorized.png" alt="Acceso no autorizado" class="unauthorized-image" />
+
+    <p class="error-message">
+      No tenés permisos para acceder a esta página.<br />
+      Si creés que es un error, contactá al administrador.
+    </p>
+
+    <a [routerLink]="homePath" class="btn-inicio">
+      <mat-icon>home</mat-icon> IR AL INICIO
+    </a>
+
+    <button class="btn-volver" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon> Volver a la página anterior
+    </button>
+  </div>
+</div>

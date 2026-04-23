@@ -13,7 +13,7 @@ export const AdminGuard: CanActivateFn = () => {
   return authService.ensureUser().pipe(
     map((user) => {
       if (!user) {
-        return redirectTo(router, ['/login']);
+        return redirectTo(router, ['/not-found']);
       }
 
       const roleNames = getUserRoleNames(user);
@@ -21,8 +21,8 @@ export const AdminGuard: CanActivateFn = () => {
         return true;
       }
 
-      return redirectTo(router, ['/panel-carga-mensual']);
+      return redirectTo(router,(['/unauthorized']));
     }),
-    catchError(() => of(redirectTo(router, ['/login'])))
+    catchError(() => of(redirectTo(router,(['/login']))))
   );
 };
