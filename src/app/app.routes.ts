@@ -5,29 +5,51 @@ import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-cha
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
 import { MainLayout } from './shared/layouts/main-layout.component';
+import { MaintenanceGuard } from './core/guards/maintenance.guard';
+import { MaintenancePageGuard } from './core/guards/maintenance-page.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate: [MaintenanceGuard],
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent)
   },
   {
     path: 'forgot-password',
+    canActivate: [MaintenanceGuard],
     loadComponent: () => import('./pages/solicitar-blanqueo/forgot-password.component').then((m) => m.ForgotPasswordComponent)
   },
   {
     path: 'reset-password',
+    canActivate: [MaintenanceGuard],
     loadComponent: () => import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
   },
   // ACCESO DENEGADO SIN MUNICIPIO ASIGNADO
   {
     path: 'sin-acceso',
+    canActivate: [MaintenanceGuard],
     loadComponent: () => import('./pages/sin-acceso/sin-acceso.component').then((m) => m.SinAccesoComponent)
+  },
+  // Página 404
+  {
+    path: 'not-found',
+    loadComponent: () => import('./pages/not-found/not-found.component').then((m) => m.NotFoundComponent)
+  },
+  // Página acceso no autorizado
+  {
+    path: 'unauthorized',
+    loadComponent: () => import('./pages/unauthorized/unauthorized.component').then((m) => m.UnauthorizedComponent)
+  },
+  // Página de mantenimiento (MaintenancePageGuard redirige si el sistema NO está en mantenimiento)
+  {
+    path: 'mantenimiento',
+    canActivate: [MaintenancePageGuard],
+    loadComponent: () => import('./pages/mantenimiento/mantenimiento.component').then((m) => m.MantenimientoComponent)
   },
   {
     path: '',
     component: MainLayout,
-    canActivate: [AuthGuard],
+    canActivate: [MaintenanceGuard, AuthGuard],
     canActivateChild: [MunicipioGuard],
     children: [
       {
@@ -167,5 +189,5 @@ export const routes: Routes = [
       }
     ]
   },
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: 'not-found' }
 ];

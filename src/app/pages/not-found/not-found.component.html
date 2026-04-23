@@ -1,0 +1,17 @@
+<div class="not-found-container">
+  <div class="not-found-content">
+    <img src="assets/img/ovif_not_found.png" alt="Página no encontrada" class="not-found-image" />
+
+    <p class="error-message">
+      Lo sentimos, la página que buscás no existe<br />o fue movida a otra dirección.
+    </p>
+
+    <a [routerLink]="homePath" class="btn-inicio">
+      <mat-icon>home</mat-icon> IR AL INICIO
+    </a>
+
+    <button class="btn-volver" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon> Volver a la página anterior
+    </button>
+  </div>
+</div>

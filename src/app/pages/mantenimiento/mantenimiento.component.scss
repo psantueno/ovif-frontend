@@ -1,0 +1,53 @@
+.mantenimiento-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh;
+  background-color: var(--color-neutral, #fcf2dd);
+  padding: 2rem;
+}
+
+.mantenimiento-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 700px;
+}
+
+.mantenimiento-image {
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 2rem;
+  object-fit: contain;
+}
+
+.mantenimiento-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-primary, #2b3e4c);
+  line-height: 1.4;
+  margin: 0 0 1rem;
+
+  .brand-name {
+    color: var(--color-primary, #2b3e4c);
+    font-weight: 900;
+  }
+}
+
+.mantenimiento-subtitle {
+  color: #555;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.contact-link {
+  color: var(--color-primary, #2b3e4c);
+  font-weight: 600;
+  text-decoration: underline;
+
+  &:hover {
+    color: var(--color-secondary, #89b968);
+  }
+}
