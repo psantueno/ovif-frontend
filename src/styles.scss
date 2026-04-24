@@ -238,6 +238,9 @@ html, body {
 // 🔧 Personalizaciones específicas de componentes Angular Material
 .mat-mdc-card {
   & {
+    --mdc-elevated-card-container-color: var(--color-surface);
+    --mdc-outlined-card-container-color: var(--color-surface);
+    --mat-card-container-color: var(--color-surface);
     background-color: var(--color-surface);
     border: 1px solid rgba(var(--color-neutral-rgb), 0.3);
   }
