@@ -12,7 +12,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
 
@@ -134,34 +134,34 @@ export class EjerciciosFiscalesComponent implements OnInit {
       const key = this.buildKey(ejercicio.ejercicio, ejercicio.mes);
       this.eliminando.add(key);
 
-      this.ejerciciosService.eliminarEjercicio(ejercicio.ejercicio, ejercicio.mes).subscribe({
-        next: () => {
-          Swal.fire({
-            icon: 'success',
-            title: 'Ejercicio eliminado',
-            text: 'El ejercicio fiscal se eliminó correctamente.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#3085d6'
-          });
-          this.cargarEjercicios();
-        },
-        error: (error) => {
-          const message = this.resolveErrorMessage(
-            error,
-            'No se pudo eliminar el ejercicio porque está vinculado a otros registros.'
-          );
-          Swal.fire({
-            icon: 'error',
-            title: 'No se pudo eliminar',
-            text: message,
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
-          });
-        },
-        complete: () => {
-          this.eliminando.delete(key);
-        }
-      });
+      this.ejerciciosService
+        .eliminarEjercicio(ejercicio.ejercicio, ejercicio.mes)
+        .pipe(finalize(() => this.eliminando.delete(key)))
+        .subscribe({
+          next: () => {
+            Swal.fire({
+              icon: 'success',
+              title: 'Ejercicio eliminado',
+              text: 'El ejercicio fiscal se eliminó correctamente.',
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#3085d6'
+            });
+            this.cargarEjercicios();
+          },
+          error: (error) => {
+            const message = this.resolveErrorMessage(
+              error,
+              'No se pudo eliminar el ejercicio porque está vinculado a otros registros.'
+            );
+            Swal.fire({
+              icon: 'error',
+              title: 'No se pudo eliminar',
+              text: message,
+              confirmButtonText: 'Aceptar',
+              confirmButtonColor: '#d33'
+            });
+          }
+        });
     });
   }
 
@@ -197,6 +197,7 @@ export class EjerciciosFiscalesComponent implements OnInit {
 
   private cargarEjercicios(): void {
     this.cargando = true;
+    let recargandoPaginaAnterior = false;
     const page = this.pageIndex + 1;
     const params: { page: number; limit: number; year?: string } = {
       page,
@@ -207,34 +208,38 @@ export class EjerciciosFiscalesComponent implements OnInit {
       params.year = this.yearFilter;
     }
 
-    this.ejerciciosService.listarEjercicios(params).subscribe({
-      next: (response: EjerciciosPageResponse) => {
-        const datos = Array.isArray(response?.data) ? response.data : [];
-        if (datos.length === 0 && (response?.total ?? 0) > 0 && this.pageIndex > 0) {
-          this.pageIndex = Math.max(this.pageIndex - 1, 0);
+    this.ejerciciosService
+      .listarEjercicios(params)
+      .pipe(finalize(() => {
+        if (!recargandoPaginaAnterior) {
           this.cargando = false;
-          this.cargarEjercicios();
-          return;
         }
-        this.ejercicios = datos;
-        this.totalRegistros = Number(response?.total) || datos.length;
-        this.pageSize = Number(response?.limit) || this.pageSize;
-        this.ordenarEjercicios();
-      },
-      error: (error) => {
-        const message = this.resolveErrorMessage(error, 'No se pudieron obtener los ejercicios fiscales.');
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al cargar',
-          text: message,
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
-      },
-      complete: () => {
-        this.cargando = false;
-      }
-    });
+      }))
+      .subscribe({
+        next: (response: EjerciciosPageResponse) => {
+          const datos = Array.isArray(response?.data) ? response.data : [];
+          if (datos.length === 0 && (response?.total ?? 0) > 0 && this.pageIndex > 0) {
+            recargandoPaginaAnterior = true;
+            this.pageIndex = Math.max(this.pageIndex - 1, 0);
+            this.cargarEjercicios();
+            return;
+          }
+          this.ejercicios = datos;
+          this.totalRegistros = Number(response?.total) || datos.length;
+          this.pageSize = Number(response?.limit) || this.pageSize;
+          this.ordenarEjercicios();
+        },
+        error: (error) => {
+          const message = this.resolveErrorMessage(error, 'No se pudieron obtener los ejercicios fiscales.');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al cargar',
+            text: message,
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#d33'
+          });
+        }
+      });
   }
 
   cambiarPagina(event: PageEvent): void {
