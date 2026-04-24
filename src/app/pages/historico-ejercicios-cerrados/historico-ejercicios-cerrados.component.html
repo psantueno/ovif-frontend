@@ -1,41 +1,65 @@
 <div class="page-container">
-  <app-back-button class="back" [link]="['/panel-carga-mensual']" text="Volver al menú principal"></app-back-button>
+  <app-back-button class="back" [link]="['/home']" text="Volver al menú principal"></app-back-button>
 
   <header class="page-header">
-    <div>
-      <p class="eyebrow">Histórico de cierres</p>
-      <h1>Descarga de informes</h1>
-      <p class="subtitle">
-        Seleccioná ejercicio, mes y módulo para descargar el informe disponible.
-      </p>
-    </div>
-    <div class="municipio-chip" *ngIf="municipioActual">
-      <mat-icon>location_on</mat-icon>
-      <div class="municipio-info">
-        <span>Municipio</span>
-        <strong>{{ municipioNombre }}</strong>
+    <div class="header-content">
+      <div class="header-copy">
+        <div class="eyebrow-row">
+          <span class="eyebrow-accent"></span>
+          <p class="eyebrow">Histórico de cierres</p>
+        </div>
+        <h1>Descarga de informes</h1>
+        <p class="subtitle">
+          Seleccioná ejercicio, mes y módulo para descargar el informe disponible.
+        </p>
+        <div class="header-highlight">
+          <mat-icon>inventory_2</mat-icon>
+          <span>Consultá ejercicios cerrados y descargá el archivo exacto del módulo que necesites.</span>
+        </div>
+      </div>
+
+      <div class="municipio-badge" *ngIf="municipioActual">
+        <div class="municipio-badge__icon-wrapper">
+          <div class="municipio-badge__icon">
+            <mat-icon>location_on</mat-icon>
+          </div>
+          <span class="municipio-badge__pulse"></span>
+        </div>
+        <div class="municipio-badge__info">
+          <span class="municipio-badge__label">Municipio activo</span>
+          <strong class="municipio-badge__name">{{ municipioNombre }}</strong>
+          <span class="municipio-badge__hint">Los informes se listan únicamente para este municipio.</span>
+        </div>
       </div>
     </div>
   </header>
 
-  <section class="card">
-    <div class="card-header">
-      <div class="card-title">
-        <mat-icon>assignment</mat-icon>
+  <section class="filters-card">
+    <div class="filters-card__header">
+      <div class="filters-card__title-group">
+        <div class="filters-card__icon">
+          <mat-icon>tune</mat-icon>
+        </div>
         <div>
           <p class="eyebrow">Filtros</p>
           <h2>Ejercicio, mes y módulo</h2>
+          <p class="filters-card__subtitle">Completá los tres campos para habilitar una descarga precisa.</p>
         </div>
       </div>
-      <div class="status" *ngIf="cargandoFiltros">
+      <div class="filters-card__status" *ngIf="cargandoFiltros">
         <mat-icon>hourglass_top</mat-icon>
-        <span>Cargando opciones...</span>
+        <span>Cargando opciones…</span>
       </div>
     </div>
 
+    <div class="filters-card__divider"></div>
+
     <form class="form-grid" [formGroup]="form" (ngSubmit)="descargarInforme()">
       <div class="form-field">
-        <label for="ejercicio">Ejercicio</label>
+        <label for="ejercicio">
+          <mat-icon class="field-icon">calendar_today</mat-icon>
+          Ejercicio
+        </label>
         <select id="ejercicio" formControlName="ejercicio">
           <option [ngValue]="null">Seleccioná el año</option>
           <option *ngFor="let ej of filtroEjercicios" [ngValue]="ej">{{ ej }}</option>
@@ -43,7 +67,10 @@
       </div>
 
       <div class="form-field">
-        <label for="mes">Mes</label>
+        <label for="mes">
+          <mat-icon class="field-icon">date_range</mat-icon>
+          Mes
+        </label>
         <select id="mes" formControlName="mes">
           <option [ngValue]="null">Seleccioná el mes</option>
           <option *ngFor="let mes of filtroMeses" [ngValue]="mes">
@@ -53,7 +80,10 @@
       </div>
 
       <div class="form-field">
-        <label for="modulo">Módulo</label>
+        <label for="modulo">
+          <mat-icon class="field-icon">view_module</mat-icon>
+          Módulo
+        </label>
         <select id="modulo" formControlName="modulo">
           <option value="">Seleccioná el módulo</option>
           <option *ngFor="let modulo of filtroModulos" [value]="modulo">
@@ -63,16 +93,21 @@
       </div>
 
       <div class="form-actions">
-        <button type="button" class="secondary" [disabled]="cargandoInforme" (click)="limpiarFiltros()">
+        <button type="button" class="btn btn--secondary" [disabled]="cargandoInforme" (click)="limpiarFiltros()">
           <mat-icon>clear</mat-icon>
           <span>Limpiar filtros</span>
         </button>
-        <button type="submit" [disabled]="cargandoInforme">
+        <button type="submit" class="btn btn--primary" [disabled]="cargandoInforme">
           <mat-icon *ngIf="!cargandoInforme">download</mat-icon>
           <mat-icon *ngIf="cargandoInforme">hourglass_top</mat-icon>
-          <span>{{ cargandoInforme ? 'Buscando informe...' : 'Descargar informe' }}</span>
+          <span>{{ cargandoInforme ? 'Buscando informe…' : 'Descargar informe' }}</span>
         </button>
       </div>
     </form>
+
+    <div class="filters-card__footer">
+      <mat-icon>info_outline</mat-icon>
+      <span>Si un informe no aparece, verificá que el ejercicio haya sido cerrado y que exista archivo para ese módulo.</span>
+    </div>
   </section>
 </div>
