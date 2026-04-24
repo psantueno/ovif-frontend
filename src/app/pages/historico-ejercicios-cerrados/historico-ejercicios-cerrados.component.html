@@ -97,7 +97,7 @@
           <mat-icon>clear</mat-icon>
           <span>Limpiar filtros</span>
         </button>
-        <button type="submit" class="btn btn--primary" [disabled]="cargandoInforme">
+        <button type="submit" class="btn btn--primary" [disabled]="cargandoInforme || form.value.ejercicio === null || form.value.mes === null || form.value.modulo === ''">
           <mat-icon *ngIf="!cargandoInforme">download</mat-icon>
           <mat-icon *ngIf="cargandoInforme">hourglass_top</mat-icon>
           <span>{{ cargandoInforme ? 'Buscando informe…' : 'Descargar informe' }}</span>

@@ -80,6 +80,7 @@ export class MunicipioMailsComponent implements OnInit {
   private readonly eliminando = new Set<MunicipioMail>();
 
   municipiosSinCargar: string[] = [];
+  sinMailsExpanded = false;
 
   readonly buscadorControl = new FormControl<MunicipioMailControlValue>('');
   private readonly municipiosMailsSubject = new BehaviorSubject<MunicipioMailSelectOption[]>([]);

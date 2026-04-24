@@ -78,20 +78,22 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
   private actualizarFiltros(): void {
     const { ejercicio, mes, modulo } = this.form.value;
-
-    // 1️⃣ filtrar dataset según lo seleccionado
-    const filtrados = this.modulosCerrados.filter(item => {
-      return (
-        (!ejercicio || item.ejercicio === ejercicio) &&
-        (!mes || item.mes === mes) &&
-        (!modulo || item.modulo === modulo)
-      );
-    });
-
-    // 2️⃣ recalcular opciones disponibles
-    this.filtroEjercicios = this.unique(filtrados.map(f => f.ejercicio));
-    this.filtroMeses = this.unique(filtrados.map(f => f.mes));
-    this.filtroModulos = this.unique(filtrados.map(f => f.modulo));
+    this.filtroEjercicios = this.unique(
+    this.modulosCerrados
+      .filter(i => (!mes || i.mes === mes) && (!modulo || i.modulo === modulo))
+      .map(i => i.ejercicio)
+    );
+    this.filtroMeses = this.unique(
+      this.modulosCerrados
+        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!modulo || i.modulo === modulo))
+        .map(i => i.mes)
+        .sort((a, b) => a - b)
+    );
+    this.filtroModulos = this.unique(
+      this.modulosCerrados
+        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!mes || i.mes === mes))
+        .map(i => i.modulo)
+    );
   }
 
   limpiarFiltros() {
@@ -141,7 +143,7 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
           this.cargandoFiltros = false;
           this.resetMensaje();
           this.filtroEjercicios = this.unique(modulosCerrados.map(d => d.ejercicio));
-          this.filtroMeses = this.unique(modulosCerrados.map(d => d.mes));
+          this.filtroMeses = this.unique(modulosCerrados.map(d => d.mes)).sort((a, b) => a - b);
           this.filtroModulos = this.unique(modulosCerrados.map(d => d.modulo));
         },
         error: () => {
