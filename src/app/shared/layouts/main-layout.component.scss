@@ -1,5 +1,14 @@
+:host {
+  display: block;
+  flex: 1 0 auto;
+  min-height: 100%;
+}
+
 .app-main {
-  // min-height: 100vh;
+  display: flex;
+  flex: 1 0 auto;
+  min-height: 100%;
+  flex-direction: column;
   padding: 2rem;
   background-color: var(--color-neutral);
 }
