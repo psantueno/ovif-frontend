@@ -17,6 +17,8 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { Convenio, ConvenioPayload, ConveniosAdminService } from '../../../services/convenios-admin.service';
 
@@ -109,38 +111,17 @@ export class ConvenioDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.mode === 'edit' ? 'Convenio actualizado' : 'Convenio creado',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(this.mode === 'edit' ? 'Convenio actualizado' : 'Convenio creado');
           this.dialogRef.close(true);
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudo guardar el convenio.');
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: message,
-            showConfirmButton: false,
-            timer: 5000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError(resolveErrorMessage(error, 'No se pudo guardar el convenio.'));
         }
       });
   }
 
-  obtenerFechaMinima(fecha: Date | null): Date | null{
-    if(!fecha) return null;
+  obtenerFechaMinima(fecha: Date | null): Date | null {
+    if (!fecha) return null;
 
     const dia = fecha.getDate();
     const mes = fecha.getMonth();
@@ -149,8 +130,8 @@ export class ConvenioDialogComponent implements OnInit {
     return new Date(anio, mes, dia + 1)
   }
 
-  obtenerFechaMaxima(fecha: Date | null): Date | null{
-    if(!fecha) return null;
+  obtenerFechaMaxima(fecha: Date | null): Date | null {
+    if (!fecha) return null;
 
     const dia = fecha.getDate();
     const mes = fecha.getMonth();
@@ -159,7 +140,7 @@ export class ConvenioDialogComponent implements OnInit {
     return new Date(anio, mes, dia - 1)
   }
 
-  get convenioModificable(){
+  get convenioModificable() {
     if (this.isViewMode) {
       return false;
     }
@@ -220,25 +201,7 @@ export class ConvenioDialogComponent implements OnInit {
     return payload;
   }
 
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-
-    return fallback;
-  }
-
-  private obtenerFecha(fechaStr: string){
+  private obtenerFecha(fechaStr: string) {
     let fechaValida = null;
 
     const [dia, mes, anio] = fechaStr.split('/');
@@ -247,7 +210,7 @@ export class ConvenioDialogComponent implements OnInit {
     const mesNumerico = Number(mes) ?? null;
     const anioNumerico = Number(anio) ?? null;
 
-    if(diaNumerico && mesNumerico && anioNumerico) fechaValida = new Date(anioNumerico, mesNumerico - 1, diaNumerico);
+    if (diaNumerico && mesNumerico && anioNumerico) fechaValida = new Date(anioNumerico, mesNumerico - 1, diaNumerico);
 
     return fechaValida;
   }

@@ -9,6 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { Municipio, MunicipioPayload, MunicipiosAdminService } from '../../../services/municipios-admin.service';
 
@@ -59,14 +61,6 @@ export class MunicipioDialogComponent implements OnInit {
         [Validators.required, Validators.min(0)]
       )
     });
-
-    if (!this.data?.municipio_id) {
-      this.form
-        .get('municipio_password')
-        ?.setValidators([Validators.required, Validators.minLength(6)]);
-    }
-
-    this.form.get('municipio_password')?.updateValueAndValidity();
   }
 
   guardar(): void {
@@ -93,32 +87,11 @@ export class MunicipioDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.data?.municipio_id ? 'Municipio actualizado' : 'Municipio creado',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(this.data?.municipio_id ? 'Municipio actualizado' : 'Municipio creado');
           this.dialogRef.close(true);
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudo guardar el municipio.');
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: message,
-            showConfirmButton: false,
-            timer: 5000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError(resolveErrorMessage(error, 'No se pudo guardar el municipio.'));
         }
       });
   }
@@ -173,23 +146,5 @@ export class MunicipioDialogComponent implements OnInit {
       return 0;
     }
     return Math.trunc(parsed);
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-
-    return fallback;
   }
 }

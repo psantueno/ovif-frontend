@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -13,8 +13,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
-import Swal from 'sweetalert2';
 import { finalize } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { confirmarEliminacion, mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { AdminBreadcrumb, AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { TipoPauta, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
@@ -44,6 +46,8 @@ import { TipoPautaDialogComponent, TipoPautaDialogData } from './tipo-pauta-dial
   styleUrls: ['./tipos-pauta.component.scss']
 })
 export class TiposPautaComponent implements OnInit {
+  private readonly destroyRef = inject(DestroyRef);
+
   readonly breadcrumbs: AdminBreadcrumb[] = [
     { label: 'Admin', link: '/admin' },
     { label: 'Tipos de pauta' }
@@ -97,7 +101,7 @@ export class TiposPautaComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe((updated) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated) => {
       if (updated) this.cargarTiposPauta();
     });
   }
@@ -111,7 +115,7 @@ export class TiposPautaComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe((updated) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((updated) => {
       if (updated) this.cargarTiposPauta();
     });
   }
@@ -129,50 +133,26 @@ export class TiposPautaComponent implements OnInit {
   eliminarTipoPauta(tipoPauta: TipoPauta): void {
     if (!tipoPauta?.tipo_pauta_id) return;
 
-    Swal.fire({
-      title: 'Eliminar tipo de pauta',
-      text: `¿Confirmás eliminar "${tipoPauta.nombre}"? Esta acción no se puede deshacer.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d'
-    }).then((result) => {
+    confirmarEliminacion(
+      'Eliminar tipo de pauta',
+      `¿Confirmás eliminar "${tipoPauta.nombre}"? Esta acción no se puede deshacer.`
+    ).then((result) => {
       if (!result.isConfirmed) return;
 
       this.eliminando.add(tipoPauta.tipo_pauta_id);
-      this.tiposPautaAdminService.eliminarTipoPauta(tipoPauta.tipo_pauta_id).subscribe({
-        next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Tipo de pauta eliminado correctamente',
-            showConfirmButton: false,
-            timer: 2200,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
-          this.cargarTiposPauta();
-          this.eliminando.delete(tipoPauta.tipo_pauta_id);
-        },
-        error: (error) => {
-          this.eliminando.delete(tipoPauta.tipo_pauta_id);
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudo eliminar el tipo de pauta'),
-            showConfirmButton: false,
-            timer: 3500,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
-        }
-      });
+      this.tiposPautaAdminService.eliminarTipoPauta(tipoPauta.tipo_pauta_id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: () => {
+            mostrarToastExito('Tipo de pauta eliminado correctamente');
+            this.cargarTiposPauta();
+            this.eliminando.delete(tipoPauta.tipo_pauta_id);
+          },
+          error: (error) => {
+            this.eliminando.delete(tipoPauta.tipo_pauta_id);
+            mostrarToastError(resolveErrorMessage(error, 'No se pudo eliminar el tipo de pauta'));
+          }
+        });
     });
   }
 
@@ -212,28 +192,8 @@ export class TiposPautaComponent implements OnInit {
           }
         },
         error: (error) => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudieron cargar los tipos de pauta'),
-            showConfirmButton: false,
-            timer: 3500,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError(resolveErrorMessage(error, 'No se pudieron cargar los tipos de pauta'));
         }
       });
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-    }
-    return fallback;
   }
 }

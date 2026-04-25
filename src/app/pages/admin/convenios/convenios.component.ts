@@ -18,6 +18,8 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { confirmarEliminacion, mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { ConveniosAdminService, Convenio } from '../../../services/convenios-admin.service';
@@ -203,27 +205,21 @@ export class ConveniosComponent implements OnInit {
       return;
     }
 
-    if(!convenio?.modificable) {
+    if (!convenio?.modificable) {
       Swal.fire({
         title: 'Operación restringida',
         text: `No puedes eliminar el convenio "${convenio.nombre}". Este convenio está asociado a otros datos.`,
         icon: 'warning',
         confirmButtonText: 'Cancelar',
         confirmButtonColor: '#6c757d'
-      })
+      });
       return;
     }
 
-    Swal.fire({
-      title: 'Eliminar convenio',
-      text: `¿Confirmás eliminar "${convenio.nombre}"? Esta acción no se puede deshacer.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d'
-    }).then((result) => {
+    confirmarEliminacion(
+      'Eliminar convenio',
+      `¿Confirmás eliminar "${convenio.nombre}"? Esta acción no se puede deshacer.`
+    ).then((result) => {
       if (!result.isConfirmed) {
         return;
       }
@@ -235,34 +231,13 @@ export class ConveniosComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'success',
-              title: 'Convenio eliminado correctamente',
-              showConfirmButton: false,
-              timer: 2500,
-              timerProgressBar: true,
-              background: '#f0fdf4',
-              color: '#14532d'
-            });
+            mostrarToastExito('Convenio eliminado correctamente');
             this.cargarConvenios();
             this.eliminando.delete(convenio.convenio_id);
             this.enviando = false;
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el convenio.');
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'error',
-              title: message,
-              showConfirmButton: false,
-              timer: 2500,
-              timerProgressBar: true,
-              background: '#fee2e2',
-              color: '#7f1d1d'
-            });
+            mostrarToastError(resolveErrorMessage(error, 'No se pudo eliminar el convenio.'));
             this.eliminando.delete(convenio.convenio_id);
             this.enviando = false;
           }
@@ -325,11 +300,10 @@ export class ConveniosComponent implements OnInit {
           }
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudieron obtener los convenios.');
           Swal.fire({
             icon: 'error',
             title: 'Error al cargar',
-            text: message,
+            text: resolveErrorMessage(error, 'No se pudieron obtener los convenios.'),
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#d33'
           });
@@ -347,21 +321,5 @@ export class ConveniosComponent implements OnInit {
     const termino = typeof value === 'string' ? value : value.nombre;
     const clean = termino.trim();
     return clean.length > 0 ? clean : null;
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-    return fallback;
   }
 }

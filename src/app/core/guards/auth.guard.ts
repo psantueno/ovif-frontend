@@ -26,7 +26,7 @@ export const AuthGuard: CanActivateFn = () => {
         return true;
       }
 
-      return true;
+      return redirect(router, ['/sin-acceso']);
     }),
     catchError(() => of(redirect(router, ['/login'])))
   );

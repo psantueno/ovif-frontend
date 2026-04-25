@@ -9,6 +9,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { UsuariosService } from '../../../services/usuarios.service';
+import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -29,6 +30,7 @@ import Swal from 'sweetalert2';
 })
 export class UsuariosDialogComponent implements OnInit {
   form!: FormGroup;
+  enviando = false;
 
   constructor(
     private fb: FormBuilder,
@@ -66,43 +68,29 @@ export class UsuariosDialogComponent implements OnInit {
     }
 
     const formValue = this.form.value;
+    this.enviando = true;
 
-    if (this.data?.usuario_id) {
-      // 🔹 Editar usuario
-      this.usuariosService.updateUsuario(this.data.usuario_id, formValue).subscribe({
+    const request$ = this.data?.usuario_id
+      ? this.usuariosService.updateUsuario(this.data.usuario_id, formValue)
+      : this.usuariosService.createUsuario(formValue);
+
+    request$
+      .pipe(finalize(() => (this.enviando = false)))
+      .subscribe({
         next: () => {
           Swal.fire({
             toast: true,
             position: 'top-end',
             icon: 'success',
-            title: 'Usuario actualizado correctamente',
+            title: this.data?.usuario_id ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente',
             showConfirmButton: false,
             timer: 1800,
           });
           this.dialogRef.close(true);
         },
         error: (err) => {
-          Swal.fire('Error', err.error?.error || 'Error actualizando usuario', 'error');
+          Swal.fire('Error', err.error?.error || 'No se pudo guardar el usuario.', 'error');
         },
       });
-    } else {
-      // 🔹 Crear usuario
-      this.usuariosService.createUsuario(formValue).subscribe({
-        next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: 'Usuario creado correctamente',
-            showConfirmButton: false,
-            timer: 1800,
-          });
-          this.dialogRef.close(true);
-        },
-        error: (err) => {
-          Swal.fire('Error', err.error?.error || 'Error creando usuario', 'error');
-        },
-      });
-    }
   }
 }

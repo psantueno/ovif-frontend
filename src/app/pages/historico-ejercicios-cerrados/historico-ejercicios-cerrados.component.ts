@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +24,7 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
   private readonly ejerciciosService = inject(EjerciciosService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   municipioActual: any = null;
   //filtros: InformesFiltrosResponse = { ejercicios: [], meses: [], modulos: [] };
@@ -67,9 +69,11 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
     this.cargarFiltros();
 
-    this.form.valueChanges.subscribe(() => {
-      this.actualizarFiltros();
-    })
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.actualizarFiltros();
+      });
   }
 
   private unique<T>(array: T[]): T[] {
@@ -78,20 +82,22 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
   private actualizarFiltros(): void {
     const { ejercicio, mes, modulo } = this.form.value;
-
-    // 1️⃣ filtrar dataset según lo seleccionado
-    const filtrados = this.modulosCerrados.filter(item => {
-      return (
-        (!ejercicio || item.ejercicio === ejercicio) &&
-        (!mes || item.mes === mes) &&
-        (!modulo || item.modulo === modulo)
-      );
-    });
-
-    // 2️⃣ recalcular opciones disponibles
-    this.filtroEjercicios = this.unique(filtrados.map(f => f.ejercicio));
-    this.filtroMeses = this.unique(filtrados.map(f => f.mes));
-    this.filtroModulos = this.unique(filtrados.map(f => f.modulo));
+    this.filtroEjercicios = this.unique(
+    this.modulosCerrados
+      .filter(i => (!mes || i.mes === mes) && (!modulo || i.modulo === modulo))
+      .map(i => i.ejercicio)
+    );
+    this.filtroMeses = this.unique(
+      this.modulosCerrados
+        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!modulo || i.modulo === modulo))
+        .map(i => i.mes)
+        .sort((a, b) => a - b)
+    );
+    this.filtroModulos = this.unique(
+      this.modulosCerrados
+        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!mes || i.mes === mes))
+        .map(i => i.modulo)
+    );
   }
 
   limpiarFiltros() {
@@ -141,7 +147,7 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
           this.cargandoFiltros = false;
           this.resetMensaje();
           this.filtroEjercicios = this.unique(modulosCerrados.map(d => d.ejercicio));
-          this.filtroMeses = this.unique(modulosCerrados.map(d => d.mes));
+          this.filtroMeses = this.unique(modulosCerrados.map(d => d.mes)).sort((a, b) => a - b);
           this.filtroModulos = this.unique(modulosCerrados.map(d => d.modulo));
         },
         error: () => {

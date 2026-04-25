@@ -8,8 +8,81 @@
   align-items: center;
 }
 
+.municipios-sin-cargar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+
+  .check-icon {
+    color: #16a34a;
+    font-size: 1.25rem;
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+
+  .todos-asignados-msg {
+    font-size: 0.9rem;
+    color: #16a34a;
+    font-weight: 500;
+  }
+}
+
+.municipios-sin-cargar-toggle {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0;
+  box-sizing: border-box;
+
+  &:hover .municipios-sin-cargar-title {
+    opacity: 0.8;
+  }
+
+  .municipios-sin-cargar-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .municipios-count {
+    font-size: 0.8rem;
+    font-weight: 400;
+    padding: 0.1rem 0.5rem;
+    line-height: 1.4;
+  }
+
+  .expand-icon {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+}
+
+.municipios-sin-asignar-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
 @media (max-width: 768px) {
   .emails-admin-container {
     padding: 1rem;
+  }
+
+  .municipios-sin-asignar-container {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .municipios-sin-cargar-toggle {
+    .municipios-sin-cargar-title {
+      font-size: 0.9rem;
+    }
   }
 }

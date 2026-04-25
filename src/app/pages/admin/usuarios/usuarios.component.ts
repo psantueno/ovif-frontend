@@ -1,4 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTableDataSource, MatTableModule } from '@angular/material/table';
@@ -78,6 +79,8 @@ export class UsuariosComponent implements OnInit {
     { label: 'Usuarios' }
   ];
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private dialog: MatDialog,
     private fb: FormBuilder,
@@ -129,15 +132,21 @@ export class UsuariosComponent implements OnInit {
   }
 
   cargarMunicipios() {
-    this.usuariosService.getMunicipios().subscribe((res) => {
-      this.municipios = res;
-    });
+    this.usuariosService.getMunicipios()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { this.municipios = res; },
+        error: () => { this.municipios = []; }
+      });
   }
 
   cargarRoles() {
-    this.usuariosService.getRoles().subscribe((res) => {
-      this.roles = res;
-    });
+    this.usuariosService.getRoles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => { this.roles = res; },
+        error: () => { this.roles = []; }
+      });
   }
 
   abrirDialogCrear() {
@@ -146,9 +155,11 @@ export class UsuariosComponent implements OnInit {
       data: null,
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.cargarUsuarios();
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) this.cargarUsuarios();
+      });
   }
 
   verUsuario(usuario: Usuario) {
@@ -164,9 +175,11 @@ export class UsuariosComponent implements OnInit {
       data: usuario,
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (result) this.cargarUsuarios();
-    });
+    dialogRef.afterClosed()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((result) => {
+        if (result) this.cargarUsuarios();
+      });
   }
 
   cambiarEstadoUsuario(usuario: Usuario) {

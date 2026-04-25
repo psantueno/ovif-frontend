@@ -15,6 +15,8 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { confirmarEliminacion } from '../../../core/utils/swal.util';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { EjerciciosService, EjercicioMes, EjerciciosPageResponse } from '../../../services/ejercicios.service';
@@ -117,16 +119,10 @@ export class EjerciciosFiscalesComponent implements OnInit {
   }
 
   eliminarEjercicio(ejercicio: EjercicioMes): void {
-    Swal.fire({
-      title: 'Eliminar ejercicio fiscal',
-      text: `¿Desea eliminar el ejercicio ${ejercicio.ejercicio} / mes ${this.mesLabel(ejercicio.mes)}? Esta acción no se puede deshacer.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6'
-    }).then((result) => {
+    confirmarEliminacion(
+      'Eliminar ejercicio fiscal',
+      `¿Desea eliminar el ejercicio ${ejercicio.ejercicio} / mes ${this.mesLabel(ejercicio.mes)}? Esta acción no se puede deshacer.`
+    ).then((result) => {
       if (!result.isConfirmed) {
         return;
       }
@@ -149,14 +145,10 @@ export class EjerciciosFiscalesComponent implements OnInit {
             this.cargarEjercicios();
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(
-              error,
-              'No se pudo eliminar el ejercicio porque está vinculado a otros registros.'
-            );
             Swal.fire({
               icon: 'error',
               title: 'No se pudo eliminar',
-              text: message,
+              text: resolveErrorMessage(error, 'No se pudo eliminar el ejercicio porque está vinculado a otros registros.'),
               confirmButtonText: 'Aceptar',
               confirmButtonColor: '#d33'
             });
@@ -175,7 +167,7 @@ export class EjerciciosFiscalesComponent implements OnInit {
       data: null
     });
 
-    dialogRef.afterClosed().subscribe((resultado) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
         this.cargarEjercicios();
       }
@@ -188,7 +180,7 @@ export class EjerciciosFiscalesComponent implements OnInit {
       data: { ejercicio }
     });
 
-    dialogRef.afterClosed().subscribe((resultado) => {
+    dialogRef.afterClosed().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((resultado) => {
       if (resultado) {
         this.cargarEjercicios();
       }
@@ -230,11 +222,10 @@ export class EjerciciosFiscalesComponent implements OnInit {
           this.ordenarEjercicios();
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudieron obtener los ejercicios fiscales.');
           Swal.fire({
             icon: 'error',
             title: 'Error al cargar',
-            text: message,
+            text: resolveErrorMessage(error, 'No se pudieron obtener los ejercicios fiscales.'),
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#d33'
           });
@@ -255,25 +246,6 @@ export class EjerciciosFiscalesComponent implements OnInit {
       }
       return b.ejercicio - a.ejercicio;
     });
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err === 'object' && typeof err.error === 'string' && err.error.trim().length > 0) {
-        return err.error;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-    return fallback;
   }
 
   private buildKey(ejercicio: number, mes: number): string {
