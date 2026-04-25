@@ -49,6 +49,8 @@ export interface CreateEjercicioPayload {
 export interface UpdateEjercicioPayload {
   fecha_inicio: string;
   fecha_fin: string;
+  convenio_id: number;
+  pauta_id: number;
 }
 
 export interface ConvenioOption {
@@ -168,14 +170,23 @@ export class EjerciciosService {
   }
 
   actualizarEjercicio(ejercicio: number, mes: number, payload: UpdateEjercicioPayload): Observable<EjercicioMes> {
-    return this.http.put<any>(`${this.baseUrl}/${ejercicio}/mes/${mes}`, payload).pipe(
+    const params = {
+      convenio_id: String(payload.convenio_id),
+      pauta_id: String(payload.pauta_id),
+    };
+    const body = { fecha_inicio: payload.fecha_inicio, fecha_fin: payload.fecha_fin };
+    return this.http.put<any>(`${this.baseUrl}/${ejercicio}/mes/${mes}`, body, { params }).pipe(
       map((response) => this.normalizeEjercicio(response)),
       catchError((error) => throwError(() => error))
     );
   }
 
-  eliminarEjercicio(ejercicio: number, mes: number): Observable<void> {
-    return this.http.delete<void>(`${this.baseUrl}/${ejercicio}/mes/${mes}`).pipe(
+  eliminarEjercicio(ejercicio: number, mes: number, convenioId: number, pautaId: number): Observable<void> {
+    const params = {
+      convenio_id: String(convenioId),
+      pauta_id: String(pautaId),
+    };
+    return this.http.delete<void>(`${this.baseUrl}/${ejercicio}/mes/${mes}`, { params }).pipe(
       catchError((error) => throwError(() => error))
     );
   }
