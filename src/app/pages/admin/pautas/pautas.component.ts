@@ -18,6 +18,8 @@ import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { confirmarEliminacion, mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { Pauta, PautasAdminService } from '../../../services/pautas-admin.service';
@@ -190,27 +192,21 @@ export class PautasComponent implements OnInit {
       return;
     }
 
-    if(!pauta?.modificable) {
+    if (!pauta?.modificable) {
       Swal.fire({
         title: 'Operación restringida',
         text: `No puedes eliminar la pauta "${pauta.descripcion}". Esta pauta está asociada a otros datos.`,
         icon: 'warning',
         confirmButtonText: 'Cancelar',
         confirmButtonColor: '#6c757d'
-      })
+      });
       return;
     }
 
-    Swal.fire({
-      title: 'Eliminar pauta',
-      text: `¿Confirmás eliminar "${pauta.descripcion}"? Esta acción no se puede deshacer.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d'
-    }).then((result) => {
+    confirmarEliminacion(
+      'Eliminar pauta',
+      `¿Confirmás eliminar "${pauta.descripcion}"? Esta acción no se puede deshacer.`
+    ).then((result) => {
       if (!result.isConfirmed) {
         return;
       }
@@ -222,34 +218,13 @@ export class PautasComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: () => {
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'success',
-              title: 'Pauta eliminada correctamente',
-              showConfirmButton: false,
-              timer: 2500,
-              timerProgressBar: true,
-              background: '#f0fdf4',
-              color: '#14532d'
-            });
+            mostrarToastExito('Pauta eliminada correctamente');
             this.cargarPautas();
             this.eliminando.delete(pauta.pauta_id);
             this.enviando = false;
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar la pauta.');
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'error',
-              title: message,
-              showConfirmButton: false,
-              timer: 2500,
-              timerProgressBar: true,
-              background: '#fee2e2',
-              color: '#7f1d1d'
-            });
+            mostrarToastError(resolveErrorMessage(error, 'No se pudo eliminar la pauta.'));
             this.eliminando.delete(pauta.pauta_id);
             this.enviando = false;
           }
@@ -330,11 +305,10 @@ export class PautasComponent implements OnInit {
           }
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudieron obtener las pautas.');
           Swal.fire({
             icon: 'error',
             title: 'Error al cargar',
-            text: message,
+            text: resolveErrorMessage(error, 'No se pudieron obtener las pautas.'),
             confirmButtonText: 'Aceptar',
             confirmButtonColor: '#d33'
           });
@@ -352,21 +326,5 @@ export class PautasComponent implements OnInit {
     const termino = typeof value === 'string' ? value : value.descripcion;
     const clean = termino.trim();
     return clean.length > 0 ? clean : null;
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-    return fallback;
   }
 }

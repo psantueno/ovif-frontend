@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -23,6 +24,7 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
   private readonly ejerciciosService = inject(EjerciciosService);
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   municipioActual: any = null;
   //filtros: InformesFiltrosResponse = { ejercicios: [], meses: [], modulos: [] };
@@ -67,9 +69,11 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
     this.cargarFiltros();
 
-    this.form.valueChanges.subscribe(() => {
-      this.actualizarFiltros();
-    })
+    this.form.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.actualizarFiltros();
+      });
   }
 
   private unique<T>(array: T[]): T[] {

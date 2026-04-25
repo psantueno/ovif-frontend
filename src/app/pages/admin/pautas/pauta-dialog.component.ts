@@ -10,6 +10,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { Pauta, PautasAdminService, PautaPayload } from '../../../services/pautas-admin.service';
 import { ConvenioSelectOption, ConvenioService } from '../../../services/convenio.service';
@@ -108,32 +110,11 @@ export class PautaDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.data?.pauta_id ? 'Pauta actualizada' : 'Pauta creada',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(this.data?.pauta_id ? 'Pauta actualizada' : 'Pauta creada');
           this.dialogRef.close(true);
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudo guardar la pauta.');
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: message,
-            showConfirmButton: false,
-            timer: 5000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError(resolveErrorMessage(error, 'No se pudo guardar la pauta.'));
         }
       });
   }
@@ -193,24 +174,6 @@ export class PautaDialogComponent implements OnInit {
     return payload;
   }
 
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-
-    return fallback;
-  }
-
   private cargarConvenios(): void {
     this.cargandoConvenios = true;
     this.convenioService
@@ -221,6 +184,7 @@ export class PautaDialogComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error obteniendo catálogo de convenios', error);
+          this.cargandoConvenios = false;
         },
         complete: () => {
           this.cargandoConvenios = false;
@@ -240,6 +204,7 @@ export class PautaDialogComponent implements OnInit {
         error: (error) => {
           this.tiposPauta = [];
           console.error('Error obteniendo catálogo de tipos de pauta', error);
+          this.cargandoTiposPauta = false;
         },
         complete: () => {
           this.cargandoTiposPauta = false;
@@ -272,8 +237,8 @@ export class PautaDialogComponent implements OnInit {
         cantDiasCtrl.enable({ emitEvent: false });
         plazoMesCtrl.enable({ emitEvent: false });
       }
-      //cantDiasCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
-      //plazoMesCtrl.setValidators([Validators.required, Validators.min(0)]);
+      cantDiasCtrl.setValidators([Validators.required, Validators.min(1), Validators.max(31)]);
+      plazoMesCtrl.setValidators([Validators.required, Validators.min(0)]);
     } else {
       cantDiasCtrl.clearValidators();
       plazoMesCtrl.clearValidators();

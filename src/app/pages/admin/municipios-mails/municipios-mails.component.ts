@@ -17,7 +17,8 @@ import { MatDividerModule } from '@angular/material/divider';
 import { BehaviorSubject, combineLatest } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { confirmarEliminacion, mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 import { AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { LoadingOverlayComponent } from '../../../shared/components/loading-overlay/loading-overlay.component';
 import { AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
@@ -189,52 +190,25 @@ export class MunicipioMailsComponent implements OnInit {
   }
 
   eliminarMunicipioMail(mail: MunicipioMail): void {
-    if (!mail?.municipio_id && !mail.email) {
+    if (!mail?.municipio_id || !mail?.email) {
       return;
     }
 
-    Swal.fire({
-      title: 'Eliminar mail',
-      text: `¿Confirmás eliminar el mail "${mail.email}" del municipio "${mail.municipio_nombre}"? Esta acción no se puede deshacer.`,
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#6c757d'
-    }).then((result) => {
+    confirmarEliminacion(
+      'Eliminar mail',
+      `¿Confirmás eliminar el mail "${mail.email}" del municipio "${mail.municipio_nombre}"? Esta acción no se puede deshacer.`
+    ).then((result) => {
       if (result.isConfirmed) {
         this.eliminando.add(mail);
         this.municipiosMailsAdminService.eliminarMunicipioMail(mail.municipio_id, mail.email).subscribe({
           next: () => {
             this.cargarMunicipiosMails();
             this.cargarCatalogo();
-            this.cargarMunicipiosSinMails()
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'success',
-              title: 'Mail eliminado',
-              showConfirmButton: false,
-              timer: 2000,
-              timerProgressBar: true,
-              background: '#f0fdf4',
-              color: '#14532d'
-            });
+            this.cargarMunicipiosSinMails();
+            mostrarToastExito('Mail eliminado');
           },
           error: (error) => {
-            const message = this.resolveErrorMessage(error, 'No se pudo eliminar el mail.');
-            Swal.fire({
-              toast: true,
-              position: 'top-end',
-              icon: 'error',
-              title: message,
-              showConfirmButton: false,
-              timer: 5000,
-              timerProgressBar: true,
-              background: '#fee2e2',
-              color: '#7f1d1d'
-            });
+            mostrarToastError(resolveErrorMessage(error, 'No se pudo eliminar el mail.'));
           },
           complete: () => {
             this.eliminando.delete(mail);
@@ -289,33 +263,16 @@ export class MunicipioMailsComponent implements OnInit {
           this.cargandoLista = false;
         },
         error: (error) => {
-          console.error('Error cargando mails:', error);
           this.dataSource.data = [];
           this.totalRegistros = 0;
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudieron cargar los mails de municipios'),
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
           this.cargandoLista = false;
+          mostrarToastError(resolveErrorMessage(error, 'No se pudieron cargar los mails de municipios'));
         }
       });
   }
 
   private cargarMunicipiosSinMails(): void {
     this.cargandoLista = true;
-    const params = {
-      pagina: this.pageIndex + 1,
-      limite: this.pageSize,
-      search: this.searchTerm
-    };
-
     this.municipiosMailsAdminService
       .listarMunicipiosSinMail()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -339,23 +296,5 @@ export class MunicipioMailsComponent implements OnInit {
     const termino = typeof value === 'string' ? value : value.email;
     const clean = termino.trim();
     return clean.length > 0 ? clean : null;
-  }
-
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-
-    return fallback;
   }
 }

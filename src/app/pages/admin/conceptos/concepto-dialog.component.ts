@@ -12,6 +12,8 @@ import { Concepto, ConceptosAdminService, ConceptoPayload } from '../../../servi
 import { PartidaRecursoService, PartidaRecursoSelectOption } from '../../../services/partida-recurso.service';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { resolveErrorMessage } from '../../../core/utils/error.util';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 @Component({
   selector: 'app-concepto-dialog',
@@ -79,32 +81,11 @@ export class ConceptoDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.data?.cod_concepto ? 'Concepto actualizado' : 'Concepto creado',
-            showConfirmButton: false,
-            timer: 2000,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(this.data?.cod_concepto ? 'Concepto actualizado' : 'Concepto creado');
           this.dialogRef.close(true);
         },
         error: (error) => {
-          const message = this.resolveErrorMessage(error, 'No se pudo guardar el concepto.');
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: message,
-            showConfirmButton: false,
-            timer: 5000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError(resolveErrorMessage(error, 'No se pudo guardar el concepto.'));
         }
       });
   }
@@ -135,25 +116,7 @@ export class ConceptoDialogComponent implements OnInit {
     return payload;
   }
 
-  private resolveErrorMessage(error: any, fallback: string): string {
-    if (error?.error) {
-      const err = error.error.error;
-      if (typeof err === 'string' && err.trim().length > 0) {
-        return err;
-      }
-      if (typeof err?.message === 'string' && err.message.trim().length > 0) {
-        return err.message;
-      }
-    }
-
-    if (typeof error?.message === 'string' && error.message.trim().length > 0) {
-      return error.message;
-    }
-
-    return fallback;
-  }
-
-    private cargarPartidasRecursos(): void {
+  private cargarPartidasRecursos(): void {
     this.cargandoPartidas = true;
     this.partidaRecursoService
       .getCatalogoPartidasRecursos()
@@ -163,6 +126,7 @@ export class ConceptoDialogComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error obteniendo catálogo de convenio', error);
+          this.cargandoPartidas = false;
         },
         complete: () => {
           this.cargandoPartidas = false;
