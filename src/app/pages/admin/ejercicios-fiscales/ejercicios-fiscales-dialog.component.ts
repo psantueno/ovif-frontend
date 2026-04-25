@@ -227,7 +227,9 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
     if (this.data?.ejercicio) {
       const payload: UpdateEjercicioPayload = {
         fecha_inicio: rawValue.fecha_inicio,
-        fecha_fin: rawValue.fecha_fin
+        fecha_fin: rawValue.fecha_fin,
+        convenio_id: Number(this.data.ejercicio.convenio_id),
+        pauta_id: Number(this.data.ejercicio.pauta_id),
       };
       this.actualizarEjercicio(this.data.ejercicio.ejercicio, this.data.ejercicio.mes, payload);
     } else {

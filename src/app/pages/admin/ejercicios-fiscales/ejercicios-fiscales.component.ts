@@ -131,7 +131,7 @@ export class EjerciciosFiscalesComponent implements OnInit {
       this.eliminando.add(key);
 
       this.ejerciciosService
-        .eliminarEjercicio(ejercicio.ejercicio, ejercicio.mes)
+        .eliminarEjercicio(ejercicio.ejercicio, ejercicio.mes, ejercicio.convenio_id!, ejercicio.pauta_id!)
         .pipe(finalize(() => this.eliminando.delete(key)))
         .subscribe({
           next: () => {
