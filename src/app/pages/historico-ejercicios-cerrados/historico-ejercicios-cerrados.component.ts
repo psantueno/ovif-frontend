@@ -69,33 +69,57 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
     this.cargarFiltros();
 
-    this.form.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.actualizarFiltros();
-      });
+    this.deshabilitarFiltrosDependientes();
+
+    this.form.get('ejercicio')?.valueChanges.subscribe(() => {
+      this.onCambioEjercicio();
+    });
   }
 
   private unique<T>(array: T[]): T[] {
     return [...new Set(array)];
   }
 
-  private actualizarFiltros(): void {
-    const { ejercicio, mes, modulo } = this.form.value;
-    this.filtroEjercicios = this.unique(
-    this.modulosCerrados
-      .filter(i => (!mes || i.mes === mes) && (!modulo || i.modulo === modulo))
-      .map(i => i.ejercicio)
-    );
+  private deshabilitarFiltrosDependientes(): void {
+    this.filtroMeses = [];
+    this.filtroModulos = [];
+    this.form.get('mes')?.disable();
+    this.form.get('modulo')?.disable();
+  }
+
+  private habilitarFiltrosDependientes(): void {
+    this.form.get('mes')?.enable();
+    this.form.get('modulo')?.enable();
+  }
+
+  private onCambioEjercicio(): void {
+    const ejercicio = this.form.get('ejercicio')?.value;
+
+    if (!ejercicio) {
+      this.deshabilitarFiltrosDependientes();
+      return;
+    }
+
+    this.habilitarFiltrosDependientes();
+
+    // limpiar campos dependientes
+    this.form.patchValue({
+      mes: null,
+      modulo: ""
+    }, { emitEvent: false });
+
+    // actualizar meses
     this.filtroMeses = this.unique(
       this.modulosCerrados
-        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!modulo || i.modulo === modulo))
+        .filter(i => !ejercicio || i.ejercicio === ejercicio)
         .map(i => i.mes)
         .sort((a, b) => a - b)
     );
+
+    // actualizar modulos
     this.filtroModulos = this.unique(
       this.modulosCerrados
-        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!mes || i.mes === mes))
+        .filter(i => !ejercicio || i.ejercicio === ejercicio)
         .map(i => i.modulo)
     );
   }
@@ -105,10 +129,9 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     this.form.patchValue({ mes: null }, { emitEvent: false });
     this.form.patchValue({ modulo: '' }, { emitEvent: false });
 
-    // 2️⃣ recalcular opciones disponibles
     this.filtroEjercicios = this.unique(this.modulosCerrados.map(f => f.ejercicio));
-    this.filtroMeses = this.unique(this.modulosCerrados.map(f => f.mes));
-    this.filtroModulos = this.unique(this.modulosCerrados.map(f => f.modulo));
+
+    this.deshabilitarFiltrosDependientes();
   }
 
   get municipioNombre(): string {
