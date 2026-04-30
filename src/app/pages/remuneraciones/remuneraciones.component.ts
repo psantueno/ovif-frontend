@@ -60,7 +60,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: string = 'masiva';
-  readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
+  readonly manualRemuneracionesUrl = '../assets/pdfs/carga-informacion/MANUAL-REMUNERACIONES.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: Remuneraciones[] = [];
   regimenes: Set<string> = new Set;

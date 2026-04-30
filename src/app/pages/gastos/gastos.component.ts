@@ -60,7 +60,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly plantillaGastosManualUrl = 'assets/plantillas/manual.pdf';
+  readonly manualGastosUrl = '../assets/pdfs/carga-informacion/MANUAL-GASTOS.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: GastoPreviewRow[] = [];

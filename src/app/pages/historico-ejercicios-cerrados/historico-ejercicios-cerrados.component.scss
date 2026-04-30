@@ -392,6 +392,14 @@
       box-shadow: 0 0 0 3px rgba(43, 62, 76, 0.1);
       background: white;
     }
+
+    &:disabled {
+      background: #f9fafb;
+      color: #9ca3af;
+      cursor: not-allowed;
+      border-color: #e5e7eb;
+      box-shadow: none;
+    }
   }
 }
 

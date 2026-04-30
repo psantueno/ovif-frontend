@@ -59,7 +59,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly plantillaRecursosManualUrl = 'assets/plantillas/manual.pdf';
+  readonly manualRecursosUrl = '../assets/pdfs/carga-informacion/MANUAL-RECURSOS.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: RecursoPreviewRow[] = [];
