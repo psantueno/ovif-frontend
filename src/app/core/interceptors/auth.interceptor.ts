@@ -47,5 +47,5 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function isAuthUrl(url: string): boolean {
-  return url.includes('/auth/login') || url.includes('/auth/refresh');
+  return url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout');
 }
