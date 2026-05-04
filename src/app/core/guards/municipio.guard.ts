@@ -15,7 +15,6 @@ const RUTAS_RESTRINGIDAS = new Set([
 ]);
 
 const redirectToSinAcceso = (router: Router): UrlTree => router.createUrlTree(['/sin-acceso']);
-const redirectToAdmin = (router: Router): UrlTree => router.createUrlTree(['/admin']);
 const redirectToUnauthorized = (router: Router): UrlTree => router.createUrlTree(['/unauthorized']);
 const redirectToLogin = (router: Router): UrlTree => router.createUrlTree(['/login']);
 const redirectToSeleccion = (router: Router): UrlTree => router.createUrlTree(['/']);
@@ -37,8 +36,15 @@ export const MunicipioGuard: CanActivateChildFn = (route, state) => {
       }
 
       const roleNames = getUserRoleNames(user);
-      if (roleNames.includes('administrador')) {
-        return of(redirectToUnauthorized(router));
+      const isOperador = roleNames.includes('operador');
+      const isAdministrador = roleNames.includes('administrador');
+
+      if (!isOperador) {
+        if (isAdministrador) {
+          return of(redirectToUnauthorized(router));
+        }
+
+        return of(redirectToSinAcceso(router));
       }
 
       if (municipioService.getMunicipioActual()) {

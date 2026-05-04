@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, tap } from 'rxjs';
+import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, tap, timeout } from 'rxjs';
 import { API_URL } from '../app.config';
 import Swal from 'sweetalert2'; // 👈 asegurate de tenerlo importado
 import { MunicipioService } from './municipio.service';
@@ -35,6 +35,16 @@ export class AuthService {
     return payload;
   }
 
+  private clearSessionState(): void {
+    this.setUser(null);
+    this.profileRequest$ = null;
+    this.municipioService.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('municipioSeleccionado');
+    localStorage.removeItem('ejercicioMesSeleccionado');
+  }
+
   ensureUser(): Observable<any | null> {
     if (this.user) {
       return of(this.user);
@@ -66,7 +76,9 @@ export class AuthService {
         .subscribe({
           next: (res: any) => {
             // Limpieza previa
-            localStorage.removeItem('municipioSeleccionado');
+            this.municipioService.clear();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
 
             // Guardar datos del usuario (cookies se setean automáticamente)
             this.setUser(res.user);
@@ -166,15 +178,18 @@ export class AuthService {
 
 
 
-  logout(): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
-      tap(() => {
-        this.setUser(null);
-        this.profileRequest$ = null;
-        localStorage.removeItem('municipioSeleccionado');
-        this.router.navigate(['/login']);
+  logout(): Observable<void> {
+    this.clearSessionState();
+    this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
+      timeout(3000),
+      catchError((err) => {
+        console.warn('No se pudo confirmar el cierre de sesión en el servidor', err);
+        return of(null);
       })
-    );
+    ).subscribe();
+    this.router.navigate(['/login']);
+
+    return of(void 0);
   }
 
   changePassword(oldPassword: string, newPassword: string): Observable<any> {
