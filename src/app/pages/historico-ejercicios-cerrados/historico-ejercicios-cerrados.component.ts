@@ -69,35 +69,107 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
 
     this.cargarFiltros();
 
-    this.form.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        this.actualizarFiltros();
-      });
+    this.deshabilitarFiltrosDependientesEjercicio();
+
+    this.form.get('ejercicio')?.valueChanges.subscribe(() => {
+      this.onCambioEjercicio();
+    });
+
+    this.form.get('mes')?.valueChanges.subscribe(() => {
+      this.onCambioMes();
+    });
   }
 
   private unique<T>(array: T[]): T[] {
     return [...new Set(array)];
   }
 
-  private actualizarFiltros(): void {
-    const { ejercicio, mes, modulo } = this.form.value;
-    this.filtroEjercicios = this.unique(
-    this.modulosCerrados
-      .filter(i => (!mes || i.mes === mes) && (!modulo || i.modulo === modulo))
-      .map(i => i.ejercicio)
-    );
+  private deshabilitarFiltrosDependientesEjercicio(): void {
+    this.filtroMeses = [];
+    this.filtroModulos = [];
+    this.form.get('mes')?.disable();
+    this.form.get('modulo')?.disable();
+  }
+
+  private deshabilitarFiltrosDependientesMes(): void {
+    this.filtroModulos = [];
+    this.form.get('modulo')?.disable();
+  }
+
+  private habilitarFiltrosDependientesEjercicio(): void {
+    this.form.get('mes')?.enable();
+  }
+
+  private habilitarFiltrosDependientesMes(): void {
+    this.form.get('modulo')?.enable();
+  }
+
+  private onCambioEjercicio(): void {
+    const ejercicio = this.form.get('ejercicio')?.value;
+    const mes = this.form.get('mes')?.value;
+    const modulo = this.form.get('modulo')?.value;
+
+    if (!ejercicio) {
+      this.deshabilitarFiltrosDependientesEjercicio();
+      return;
+    }
+
+    // actualizar meses
     this.filtroMeses = this.unique(
       this.modulosCerrados
-        .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!modulo || i.modulo === modulo))
+        .filter(i => !ejercicio || i.ejercicio === ejercicio)
         .map(i => i.mes)
         .sort((a, b) => a - b)
     );
+
+    // si el mes seleccionado no es válido para el ejercicio, limpiar y deshabilitar dependientes
+    if(this.filtroMeses.some(m => m === mes) && this.modulosCerrados.some(i => i.ejercicio === ejercicio && i.mes === mes && i.modulo === modulo)) {
+      // actualizar módulos
+      this.filtroModulos = this.unique(
+        this.modulosCerrados
+          .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!mes || i.mes === mes))
+          .map(i => i.modulo)
+      );
+      return;
+    }
+
+    // limpiar campos dependientes
+    this.form.patchValue({
+      mes: null,
+      modulo: ""
+    }, { emitEvent: false });
+
+    this.deshabilitarFiltrosDependientesMes();
+    this.habilitarFiltrosDependientesEjercicio();
+  }
+
+  private onCambioMes(): void {
+    const ejercicio = this.form.get('ejercicio')?.value;
+    const mes = this.form.get('mes')?.value;
+    const modulo = this.form.get('modulo')?.value;
+
+    if (!mes) {
+      this.deshabilitarFiltrosDependientesMes();
+      return;
+    }
+
+    this.habilitarFiltrosDependientesMes();
+
+    // actualizar módulos
     this.filtroModulos = this.unique(
       this.modulosCerrados
         .filter(i => (!ejercicio || i.ejercicio === ejercicio) && (!mes || i.mes === mes))
         .map(i => i.modulo)
     );
+
+    if(this.filtroModulos.some(m => m === modulo)) {
+      return;
+    }
+
+    // limpiar campos dependientes
+    this.form.patchValue({
+      modulo: ""
+    }, { emitEvent: false });
   }
 
   limpiarFiltros() {
@@ -105,10 +177,9 @@ export class HistoricoEjerciciosCerradosComponent implements OnInit {
     this.form.patchValue({ mes: null }, { emitEvent: false });
     this.form.patchValue({ modulo: '' }, { emitEvent: false });
 
-    // 2️⃣ recalcular opciones disponibles
     this.filtroEjercicios = this.unique(this.modulosCerrados.map(f => f.ejercicio));
-    this.filtroMeses = this.unique(this.modulosCerrados.map(f => f.mes));
-    this.filtroModulos = this.unique(this.modulosCerrados.map(f => f.modulo));
+
+    this.deshabilitarFiltrosDependientesEjercicio();
   }
 
   get municipioNombre(): string {

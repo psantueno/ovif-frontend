@@ -59,8 +59,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly manualUrl = 'assets/plantillas/manual.pdf';
-  readonly plantillaUrl = 'assets/plantillas/plantilla_determinacion_tributaria.csv';
+  readonly manualDeterminacionUrl = '../assets/pdfs/carga-informacion/MANUAL-DETERMINACION.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: DeterminacionTributariaPreviewRow[] = [];

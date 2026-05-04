@@ -60,7 +60,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly plantillaRecaudacionesManualUrl = 'assets/plantillas/manual.pdf';
+  readonly manualRecaudacionesUrl = '../assets/pdfs/carga-informacion/MANUAL-RECAUDACIONES.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: RecaudacionPreviewRow[] = [];
