@@ -17,7 +17,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEB_ROOT="${WEB_ROOT:-/var/www/ovif}"
-FRONTEND_CONFIGURATION="${FRONTEND_CONFIGURATION:-production}"
+FRONTEND_CONFIGURATION="${FRONTEND_CONFIGURATION:-development}"
 BUILD_DIR="${BUILD_DIR:-dist/ovif-frontend/browser}"
 RUN_NPM_CI="${RUN_NPM_CI:-0}"
 RELOAD_NGINX="${RELOAD_NGINX:-1}"
