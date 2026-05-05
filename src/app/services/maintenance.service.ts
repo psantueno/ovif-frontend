@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, catchError, map, tap, shareReplay } from 'rxjs';
+import { Observable, of, catchError, map, tap, shareReplay, timeout } from 'rxjs';
 import { API_URL } from '../app.config';
 
 @Injectable({ providedIn: 'root' })
@@ -20,6 +20,7 @@ export class MaintenanceService {
       this.statusRequest$ = this.http
         .get<{ maintenance: boolean }>(`${this.apiUrl}/status`)
         .pipe(
+          timeout(5000),
           map((res) => res.maintenance === true),
           tap((val) => {
             this.maintenanceEnabled = val;

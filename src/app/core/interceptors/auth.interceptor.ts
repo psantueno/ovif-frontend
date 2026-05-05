@@ -1,47 +1,59 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { catchError, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { API_URL } from '../../app.config';
+import { AuthService } from '../../services/auth.service';
 
 /** Single-flight: solo un refresh a la vez */
 let refreshInProgress$: Observable<any> | null = null;
 
+const RETRIED_HEADER = 'X-Retried';
+
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Capturamos inject() en el contexto de inyección del interceptor
   const http = inject(HttpClient);
   const apiUrl = inject(API_URL);
-  const router = inject(Router);
+  const authService = inject(AuthService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && !isAuthUrl(req.url)) {
-        // Single-flight refresh
-        if (!refreshInProgress$) {
-          refreshInProgress$ = http.post(`${apiUrl}/auth/refresh`, {}).pipe(
-            shareReplay(1),
-            catchError((refreshError) => {
-              refreshInProgress$ = null;
-              localStorage.removeItem('municipioSeleccionado');
-              router.navigate(['/login']);
-              return throwError(() => refreshError);
-            }),
-          );
-        }
+      // No intentar refresh si: no es 401, es URL de auth, ya se reintentó, o se está deslogueando
+      if (
+        error.status !== 401 ||
+        isAuthUrl(req.url) ||
+        req.headers.has(RETRIED_HEADER) ||
+        authService.isLoggingOut
+      ) {
+        return throwError(() => error);
+      }
 
-        return refreshInProgress$.pipe(
-          switchMap(() => {
+      // Single-flight refresh
+      if (!refreshInProgress$) {
+        refreshInProgress$ = http.post(`${apiUrl}/auth/refresh`, {}).pipe(
+          shareReplay(1),
+          catchError((refreshError) => {
             refreshInProgress$ = null;
-            return next(req.clone());
+            // Refresh falló → sesión muerta en el servidor, limpiar localmente
+            authService.handleSessionExpired();
+            return throwError(() => refreshError);
           }),
-          catchError((err) => {
-            refreshInProgress$ = null;
-            return throwError(() => err);
-          })
         );
       }
-      return throwError(() => error);
+
+      return refreshInProgress$.pipe(
+        switchMap(() => {
+          refreshInProgress$ = null;
+          // Reintentar con header de marca para evitar loop infinito
+          const retried = req.clone({
+            setHeaders: { [RETRIED_HEADER]: '1' }
+          });
+          return next(retried);
+        }),
+        catchError((err) => {
+          refreshInProgress$ = null;
+          return throwError(() => err);
+        })
+      );
     })
   );
 };
