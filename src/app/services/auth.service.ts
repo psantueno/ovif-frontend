@@ -19,6 +19,11 @@ export class AuthService {
   private readonly userSubject = new BehaviorSubject<any | null>(null);
   readonly user$ = this.userSubject.asObservable();
   private profileRequest$: Observable<any | null> | null = null;
+  private loggingOut = false;
+
+  get isLoggingOut(): boolean {
+    return this.loggingOut;
+  }
 
   private setUser(user: any | null): void {
     this.user = user ?? null;
@@ -46,6 +51,10 @@ export class AuthService {
   }
 
   ensureUser(): Observable<any | null> {
+    if (this.loggingOut) {
+      return of(null);
+    }
+
     if (this.user) {
       return of(this.user);
     }
@@ -54,8 +63,7 @@ export class AuthService {
       this.profileRequest$ = this.profile().pipe(
         map((res) => this.normalizeUserPayload(res)),
         tap((usuario) => this.setUser(usuario)),
-        catchError((err) => {
-          console.error('Error asegurando sesión del usuario', err);
+        catchError(() => {
           this.setUser(null);
           return of(null);
         }),
@@ -178,16 +186,32 @@ export class AuthService {
 
 
 
-  logout(): Observable<void> {
+  /** Limpieza local cuando la sesión expiró o fue revocada (sin POST al servidor). */
+  handleSessionExpired(): void {
+    if (this.loggingOut) {
+      return;
+    }
     this.clearSessionState();
+    this.router.navigate(['/login']);
+  }
+
+  logout(): Observable<void> {
+    if (this.loggingOut) {
+      return of(void 0);
+    }
+
+    this.loggingOut = true;
+    this.clearSessionState();
+    this.router.navigate(['/login']);
+
+    // Fire-and-forget: notificar al servidor sin bloquear la UX
     this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
       timeout(3000),
-      catchError((err) => {
-        console.warn('No se pudo confirmar el cierre de sesión en el servidor', err);
-        return of(null);
+      catchError(() => of(null)),
+      finalize(() => {
+        this.loggingOut = false;
       })
     ).subscribe();
-    this.router.navigate(['/login']);
 
     return of(void 0);
   }
