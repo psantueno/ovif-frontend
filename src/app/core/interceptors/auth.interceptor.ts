@@ -8,7 +8,16 @@ import { AuthService } from '../../services/auth.service';
 /** Single-flight: solo un refresh a la vez */
 let refreshInProgress$: Observable<any> | null = null;
 
+/** Once a refresh fails, stop retrying until next login. */
+let refreshFailed = false;
+
 const RETRIED_HEADER = 'X-Retried';
+
+/** Reset module-level state after a successful login. */
+export function resetRefreshState(): void {
+  refreshInProgress$ = null;
+  refreshFailed = false;
+}
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const http = inject(HttpClient);
@@ -22,7 +31,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         error.status !== 401 ||
         isAuthUrl(req.url) ||
         req.headers.has(RETRIED_HEADER) ||
-        authService.isLoggingOut
+        authService.isLoggingOut ||
+        authService.isSessionDead ||
+        refreshFailed
       ) {
         return throwError(() => error);
       }
@@ -33,6 +44,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           shareReplay(1),
           catchError((refreshError) => {
             refreshInProgress$ = null;
+            refreshFailed = true;
             // Refresh falló → sesión muerta en el servidor, limpiar localmente
             authService.handleSessionExpired();
             return throwError(() => refreshError);

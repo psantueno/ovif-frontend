@@ -41,7 +41,7 @@
 
   <mat-card *ngIf="error" class="estado-card error-card"><mat-icon>error</mat-icon><span>{{ error }}</span></mat-card>
 
-  <mat-tab-group animationDuration="180ms">
+  <mat-tab-group class="observabilidad-tabs" animationDuration="180ms">
     <mat-tab label="General">
       <section class="tab-content">
         <div *ngIf="loading" class="loading-row"><mat-spinner diameter="36"></mat-spinner></div>

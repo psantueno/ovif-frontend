@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 // componentes standalone
 import { HeaderComponent } from './shared/header/header.component';
 import { FooterComponent } from './shared/footer/footer.component';
+import { SessionExpiredOverlayComponent } from './shared/components/session-expired-overlay/session-expired-overlay.component';
 import { AuthService } from './services/auth.service';
 import { MunicipioService } from './services/municipio.service';
 import { getUserRoleNames } from './core/utils/roles.util';
@@ -15,7 +16,8 @@ import { getUserRoleNames } from './core/utils/roles.util';
   imports: [
     RouterOutlet,
     HeaderComponent,
-    FooterComponent
+    FooterComponent,
+    SessionExpiredOverlayComponent
   ],
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
@@ -26,6 +28,9 @@ export class AppComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly municipioService = inject(MunicipioService);
   private readonly userSub: Subscription;
+  private readonly sessionExpiredSub: Subscription;
+
+  sessionExpired = false;
 
   constructor() {
     // Reaccionar cuando los guards validen la sesión y user$ emita un usuario
@@ -34,9 +39,18 @@ export class AppComponent implements OnDestroy {
         this.municipioService.ensureMunicipioSeleccionado().subscribe();
       }
     });
+
+    this.sessionExpiredSub = this.authService.sessionExpired$.subscribe((expired) => {
+      this.sessionExpired = expired;
+    });
+  }
+
+  onSessionExpiredAccepted(): void {
+    this.authService.acknowledgeSessionExpired();
   }
 
   ngOnDestroy() {
     this.userSub.unsubscribe();
+    this.sessionExpiredSub.unsubscribe();
   }
 }

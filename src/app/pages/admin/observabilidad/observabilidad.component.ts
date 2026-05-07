@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
+import { MAT_DATE_LOCALE, MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +25,21 @@ import {
   ObservabilidadRateLimits,
   ObservabilidadService,
 } from '../../../services/observabilidad.service';
+
+const ES_AR_DATE_FORMATS = {
+  parse: {
+    dateInput: null,
+    timeInput: null,
+  },
+  display: {
+    dateInput: { day: '2-digit', month: '2-digit', year: 'numeric' },
+    timeInput: { hour: '2-digit', minute: '2-digit' },
+    monthYearLabel: { month: 'long', year: 'numeric' },
+    dateA11yLabel: { day: '2-digit', month: 'long', year: 'numeric' },
+    monthYearA11yLabel: { month: 'long', year: 'numeric' },
+    timeOptionLabel: { hour: '2-digit', minute: '2-digit' },
+  },
+};
 
 @Component({
   selector: 'app-observabilidad',
@@ -49,7 +64,11 @@ import {
     MatTooltipModule,
     AdminNavbarComponent,
   ],
-  providers: [provideNativeDateAdapter(), provideCharts(withDefaultRegisterables())],
+  providers: [
+    provideNativeDateAdapter(ES_AR_DATE_FORMATS),
+    { provide: MAT_DATE_LOCALE, useValue: 'es-AR' },
+    provideCharts(withDefaultRegisterables()),
+  ],
   templateUrl: './observabilidad.component.html',
   styleUrls: ['./observabilidad.component.scss'],
 })
