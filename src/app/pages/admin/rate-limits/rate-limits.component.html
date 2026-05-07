@@ -1,0 +1,178 @@
+<div class="rate-limits-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="admin-helper-card admin-card">
+    <div class="helper-content">
+      <mat-icon color="primary">monitor_heart</mat-icon>
+      <div class="helper-text-container">
+        <h3>Observabilidad y Rate Limits</h3>
+        <hr>
+        <ol>
+          <li>Monitoreá requests, bloqueos y latencias por usuario y endpoint.</li>
+          <li>Usá los filtros para revisar cierres mensuales y días de mayor concurrencia.</li>
+          <li>Exportá CSV o JSON para análisis externo.</li>
+        </ol>
+      </div>
+    </div>
+  </mat-card>
+
+  <mat-card class="admin-selector-card admin-card filtros-card">
+    <form [formGroup]="filtrosForm" (ngSubmit)="cargarInforme()" class="filtro-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" formControlName="desde" readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" formControlName="hasta" readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Usuario ID</mat-label>
+        <input matInput formControlName="usuario_id" inputmode="numeric">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Endpoint</mat-label>
+        <input matInput formControlName="endpoint">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Limiter</mat-label>
+        <mat-select formControlName="limiter">
+          <mat-option value="">Todos</mat-option>
+          <mat-option *ngFor="let limiter of limiterOptions" [value]="limiter">{{ limiter }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <input matInput formControlName="status_code" inputmode="numeric">
+      </mat-form-field>
+
+      <button mat-raised-button type="submit" class="btn-buscar">
+        <mat-icon>search</mat-icon> Filtrar
+      </button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="limpiarFiltros()">
+        <mat-icon>clear</mat-icon> Limpiar
+      </button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="exportar('csv')">
+        <mat-icon>download</mat-icon> CSV
+      </button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="exportar('json')">
+        <mat-icon>data_object</mat-icon> JSON
+      </button>
+    </form>
+  </mat-card>
+
+  <section class="metric-grid" *ngIf="resumen">
+    <div class="metric">
+      <span>Total requests</span>
+      <strong>{{ resumen.totalRequests }}</strong>
+    </div>
+    <div class="metric">
+      <span>Total 429</span>
+      <strong>{{ resumen.total429 }}</strong>
+    </div>
+    <div class="metric">
+      <span>Usuarios activos</span>
+      <strong>{{ resumen.usuariosActivos }}</strong>
+    </div>
+    <div class="metric">
+      <span>Profile 401 / Refresh</span>
+      <strong>{{ resumen.patrones.profile401 }} / {{ resumen.patrones.refreshRequests }}</strong>
+    </div>
+  </section>
+
+  <mat-card class="admin-tabla-card admin-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">block</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Bloqueos por limiter</mat-card-title>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="resumen?.bloqueosPorLimiter || []" class="admin-tabla">
+        <ng-container matColumnDef="limiter">
+          <th mat-header-cell *matHeaderCellDef>Limiter</th>
+          <td mat-cell *matCellDef="let row">{{ row.limiter }}</td>
+        </ng-container>
+        <ng-container matColumnDef="total">
+          <th mat-header-cell *matHeaderCellDef>Total</th>
+          <td mat-cell *matCellDef="let row">{{ row.total }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="limiterColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: limiterColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="admin-tabla-card admin-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">group</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Top usuarios</mat-card-title>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="usuarios" class="admin-tabla">
+        <ng-container matColumnDef="usuario_id"><th mat-header-cell *matHeaderCellDef>Usuario</th><td mat-cell *matCellDef="let row">{{ row.usuario_id }}</td></ng-container>
+        <ng-container matColumnDef="total_requests"><th mat-header-cell *matHeaderCellDef>Requests</th><td mat-cell *matCellDef="let row">{{ row.total }}</td></ng-container>
+        <ng-container matColumnDef="total_429"><th mat-header-cell *matHeaderCellDef>429</th><td mat-cell *matCellDef="let row">{{ row.total_429 }}</td></ng-container>
+        <ng-container matColumnDef="avg_duration_ms"><th mat-header-cell *matHeaderCellDef>Promedio</th><td mat-cell *matCellDef="let row">{{ formatMs(row.avg_duration_ms) }}</td></ng-container>
+        <ng-container matColumnDef="ultimo_request"><th mat-header-cell *matHeaderCellDef>Último</th><td mat-cell *matCellDef="let row">{{ row.ultimo_request | date:'dd/MM/yyyy HH:mm' }}</td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: userColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="admin-tabla-card admin-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">route</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Top endpoints</mat-card-title>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="endpoints" class="admin-tabla">
+        <ng-container matColumnDef="method"><th mat-header-cell *matHeaderCellDef>Método</th><td mat-cell *matCellDef="let row">{{ row.method }}</td></ng-container>
+        <ng-container matColumnDef="route_pattern"><th mat-header-cell *matHeaderCellDef>Endpoint</th><td mat-cell *matCellDef="let row" [matTooltip]="row.route_pattern">{{ row.route_pattern }}</td></ng-container>
+        <ng-container matColumnDef="total_requests"><th mat-header-cell *matHeaderCellDef>Requests</th><td mat-cell *matCellDef="let row">{{ row.total }}</td></ng-container>
+        <ng-container matColumnDef="total_429"><th mat-header-cell *matHeaderCellDef>429</th><td mat-cell *matCellDef="let row">{{ row.total_429 }}</td></ng-container>
+        <ng-container matColumnDef="avg_duration_ms"><th mat-header-cell *matHeaderCellDef>Promedio</th><td mat-cell *matCellDef="let row">{{ formatMs(row.avg_duration_ms) }}</td></ng-container>
+        <ng-container matColumnDef="p95_duration_ms"><th mat-header-cell *matHeaderCellDef>P95</th><td mat-cell *matCellDef="let row">{{ formatMs(row.p95_duration_ms) }}</td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="endpointColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: endpointColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="admin-tabla-card admin-card">
+    <mat-card-header>
+      <mat-icon class="header-icon">warning</mat-icon>
+      <div class="header-text">
+        <mat-card-title>Eventos 429</mat-card-title>
+      </div>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="eventos" class="admin-tabla">
+        <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let row">{{ row.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td></ng-container>
+        <ng-container matColumnDef="limiter"><th mat-header-cell *matHeaderCellDef>Limiter</th><td mat-cell *matCellDef="let row">{{ row.limiter }}</td></ng-container>
+        <ng-container matColumnDef="usuario_id"><th mat-header-cell *matHeaderCellDef>Usuario</th><td mat-cell *matCellDef="let row">{{ row.usuario_id || '-' }}</td></ng-container>
+        <ng-container matColumnDef="method"><th mat-header-cell *matHeaderCellDef>Método</th><td mat-cell *matCellDef="let row">{{ row.method }}</td></ng-container>
+        <ng-container matColumnDef="route_pattern"><th mat-header-cell *matHeaderCellDef>Endpoint</th><td mat-cell *matCellDef="let row" [matTooltip]="row.original_url">{{ row.route_pattern || row.original_url }}</td></ng-container>
+        <ng-container matColumnDef="rate_limit_used"><th mat-header-cell *matHeaderCellDef>Used</th><td mat-cell *matCellDef="let row">{{ row.rate_limit_used }}</td></ng-container>
+        <ng-container matColumnDef="rate_limit_limit"><th mat-header-cell *matHeaderCellDef>Limit</th><td mat-cell *matCellDef="let row">{{ row.rate_limit_limit }}</td></ng-container>
+        <tr mat-header-row *matHeaderRowDef="eventColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: eventColumns;"></tr>
+      </table>
+      <mat-paginator [length]="totalEventos" [pageSize]="pageSize" [pageSizeOptions]="[10, 20, 50]" (page)="cambiarPagina($event)"></mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -18,6 +18,7 @@ import {
   parseRecursosExcelFile,
   RecursoPreviewRow,
 } from '../../core/utils/recursosExcelParser.util';
+import { getExcelProcessingErrorMessage } from '../../core/utils/secureExcelReader.util';
 
 type MensajeTipo = 'info' | 'error';
 
@@ -223,7 +224,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error al procesar archivo de recursos:', error);
-      this.erroresCargaMasiva.push('No se pudo procesar el archivo. Verificá que sea una planilla Excel válida.');
+      this.erroresCargaMasiva.push(getExcelProcessingErrorMessage(error));
     } finally {
       this.cargandoArchivoMasivo = false;
     }

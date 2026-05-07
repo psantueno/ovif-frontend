@@ -14,6 +14,7 @@ import {
 } from '../../services/municipio.service';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { onFileChangeWithMetadata, Remuneraciones } from '../../core/utils/excelReader.util';
+import { getExcelProcessingErrorMessage } from '../../core/utils/secureExcelReader.util';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
 import { ParseError, parseRemuneracionesConMetadata } from '../../core/utils/cargaTypesParser';
@@ -217,7 +218,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       this.previsualizacionMasiva = importesParseados;
       this.erroresPrevisualizacion = errores;
     } catch (error) {
-      this.erroresCargaMasiva.push('Ocurrió un error al procesar el archivo Excel.');
+      this.erroresCargaMasiva.push(getExcelProcessingErrorMessage(error));
       console.error('Error al procesar Excel:', error);
     } finally {
       this.cargandoArchivoMasivo = false;

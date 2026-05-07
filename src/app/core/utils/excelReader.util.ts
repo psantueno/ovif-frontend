@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { readExcelSecure } from './secureExcelReader.util';
 
 export interface Remuneraciones {
   legajo: number,
@@ -67,39 +67,11 @@ export const onFileChange = <T>(event: any): Promise<ExcelParser<T>> => {
     });
   }
 
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (e: any) => {
-      try {
-        const binary = e.target.result;
-
-        const workbook = XLSX.read(binary, { type: 'binary' });
-
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-
-        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-          header: 1,
-          defval: null
-        });
-
-        const jsonRows = transformRowsToJson<T>(rows);
-
-        resolve({
-          rows: jsonRows,
-          file
-        });
-
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = reject;
-
-    reader.readAsBinaryString(file);
-  });
+  return (async () => {
+    const rows = await readExcelSecure(file, { raw: true });
+    const jsonRows = transformRowsToJson<T>(rows as any[][]);
+    return { rows: jsonRows, file };
+  })();
 };
 
 export const onFileChangeWithMetadata = <T>(event: any): Promise<ExcelParserWithMetadata<T>> => {
@@ -112,36 +84,11 @@ export const onFileChangeWithMetadata = <T>(event: any): Promise<ExcelParserWith
     });
   }
 
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = (e: any) => {
-      try {
-        const binary = e.target.result;
-
-        const workbook = XLSX.read(binary, { type: 'binary' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-
-        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, {
-          header: 1,
-          defval: null
-        });
-
-        const rowsWithMetadata = transformRowsToJsonWithMetadata<T>(rows);
-
-        resolve({
-          rows: rowsWithMetadata,
-          file
-        });
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = reject;
-    reader.readAsBinaryString(file);
-  });
+  return (async () => {
+    const rows = await readExcelSecure(file, { raw: true });
+    const rowsWithMetadata = transformRowsToJsonWithMetadata<T>(rows as any[][]);
+    return { rows: rowsWithMetadata, file };
+  })();
 };
 
 const normalizeHeader = (header: string) => {
@@ -177,7 +124,8 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
     const obj: any = {};
 
     headers.forEach((header, index) => {
-      obj[header] = row[index] ?? null;
+      const value = row[index];
+      obj[header] = (value === undefined || value === null || value === '') ? null : value;
     });
 
     return obj;
@@ -223,7 +171,8 @@ const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata
 
     const obj: any = {};
     headers.forEach((header, colIndex) => {
-      obj[header] = row[colIndex] ?? null;
+      const value = row[colIndex];
+      obj[header] = (value === undefined || value === null || value === '') ? null : value;
     });
 
     if(Object.values(obj).every(value => value !== null)){

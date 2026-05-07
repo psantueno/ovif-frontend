@@ -18,6 +18,7 @@ import {
   DeterminacionTributariaPreviewRow,
   parseDeterminacionTributariaExcelFile,
 } from '../../core/utils/determinacionTributariaExcelParser.util';
+import { getExcelProcessingErrorMessage } from '../../core/utils/secureExcelReader.util';
 
 type MensajeTipo = 'info' | 'error';
 
@@ -223,9 +224,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error al procesar archivo de determinacion tributaria:', error);
-      this.erroresCargaMasiva.push(
-        'No se pudo procesar el archivo. Verifica que sea una planilla Excel valida.'
-      );
+      this.erroresCargaMasiva.push(getExcelProcessingErrorMessage(error));
     } finally {
       this.cargandoArchivoMasivo = false;
     }

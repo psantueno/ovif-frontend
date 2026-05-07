@@ -1,0 +1,125 @@
+.observabilidad-container {
+  padding: 24px;
+}
+
+.filtros-card {
+  margin-bottom: 20px;
+}
+
+.filtro-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.tab-content {
+  display: grid;
+  gap: 18px;
+  padding: 20px 0;
+}
+
+.metric-grid,
+.charts-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.metric-grid {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.charts-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.metric {
+  border: 1px solid #d9e2ec;
+  border-radius: 8px;
+  padding: 14px;
+  background: #fff;
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+
+  span {
+    color: #5f6b7a;
+    font-size: 13px;
+  }
+
+  strong {
+    color: #12324a;
+    font-size: 24px;
+    line-height: 1;
+  }
+}
+
+.chart-card {
+  padding: 16px;
+}
+
+.chart-card mat-card-title {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.chart-box {
+  height: 280px;
+}
+
+.admin-tabla {
+  width: 100%;
+
+  td,
+  th {
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.header-icon {
+  margin-right: 8px;
+}
+
+.estado-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+}
+
+.error-card {
+  color: #9f1d1d;
+  background: #fff4f4;
+  border: 1px solid #f1b6b6;
+}
+
+.loading-row {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.json-preview {
+  display: inline-block;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  .observabilidad-container {
+    padding: 16px;
+  }
+
+  .chart-box {
+    height: 240px;
+  }
+}
