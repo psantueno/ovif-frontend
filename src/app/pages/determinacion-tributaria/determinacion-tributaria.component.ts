@@ -60,7 +60,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly manualDeterminacionUrl = '../assets/pdfs/carga-informacion/MANUAL-DETERMINACION.pdf';
+  readonly manualDeterminacionUrl = '../../../assets/pdfs/carga-informacion/DETERMINACION.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: DeterminacionTributariaPreviewRow[] = [];
@@ -307,9 +307,6 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
             } else {
               this.mostrarToastExito('Los datos fueron guardados correctamente.');
             }
-
-            this.archivoMasivoSeleccionado = null;
-            this.resetEstadoCargaMasiva();
           },
           error: (error) => {
             console.error('Error al guardar determinacion tributaria:', error);
@@ -397,6 +394,22 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
           this.mostrarError(mensaje, titulo);
         },
       });
+  }
+
+  reemplazarArchivo(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    input.value = '';
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+
+    input.click();
+  }
+
+  tieneCambiosPendientes(): boolean {
+    return this.archivoMasivoSeleccionado !== null && this.previsualizacionMasiva.length > 0;
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {

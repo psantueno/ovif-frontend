@@ -62,7 +62,7 @@
               <strong>{{ archivoMasivoSeleccionado.name }}</strong>
               <small *ngIf="previsualizacionMasiva.length">{{ totalFilasLeidas }} filas leidas</small>
             </div>
-            <button type="button" class="upload-dropzone__replace" (click)="limpiarArchivoMasiva(archivoExcel)">
+            <button type="button" class="upload-dropzone__replace" (click)="reemplazarArchivo($event, archivoExcel)">
               Reemplazar archivo
             </button>
           </div>

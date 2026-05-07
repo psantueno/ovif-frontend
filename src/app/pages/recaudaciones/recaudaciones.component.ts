@@ -61,7 +61,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly manualRecaudacionesUrl = '../assets/pdfs/carga-informacion/MANUAL-RECAUDACIONES.pdf';
+  readonly manualRecaudacionesUrl = '../../../assets/pdfs/carga-informacion/RECAUDACIONES.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: RecaudacionPreviewRow[] = [];
@@ -326,9 +326,6 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
             } else {
               this.mostrarToastExito('Los importes fueron guardados correctamente.');
             }
-
-            this.archivoMasivoSeleccionado = null;
-            this.resetEstadoCargaMasiva();
           },
           error: (error) => {
             console.error('Error al guardar recaudaciones:', error);
@@ -360,6 +357,18 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = null;
     this.resetEstadoCargaMasiva();
+  }
+
+  reemplazarArchivo(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    input.value = '';
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+
+    input.click();
   }
 
   generarInforme(): void {
@@ -428,6 +437,10 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
           this.mostrarError(mensaje, titulo);
         },
       });
+  }
+
+  tieneCambiosPendientes(): boolean {
+    return this.archivoMasivoSeleccionado !== null && this.previsualizacionMasiva.length > 0;
   }
 
   private mostrarMensaje(tipo: MensajeTipo, texto: string): void {

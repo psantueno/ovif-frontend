@@ -82,7 +82,9 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
   }
 
   const headerRow = Array.isArray(matrix[0]) ? matrix[0] : [];
-  const normalizedHeaders = headerRow
+  const headerRowFiltered = headerRow.filter(row => row !== null && row !== undefined && row !== "")
+
+  const normalizedHeaders = headerRowFiltered
     .map((header) => normalizeHeader(header))
     .filter((header) => header.length > 0);
 

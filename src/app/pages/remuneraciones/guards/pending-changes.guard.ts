@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import Swal from 'sweetalert2';
-import { GastosComponent } from '../gastos.component';
+import { RemuneracionesComponent } from '../remuneraciones.component';
 
 @Injectable({ providedIn: 'root' })
-export class GastosPendingChangesGuard implements CanDeactivate<GastosComponent> {
-  canDeactivate(component: GastosComponent): boolean | Promise<boolean> {
+export class RemuneracionesPendingChangesGuard implements CanDeactivate<RemuneracionesComponent> {
+  canDeactivate(component: RemuneracionesComponent): boolean | Promise<boolean> {
     if (!component.tieneCambiosPendientes()) {
       return true;
     }
