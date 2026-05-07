@@ -126,6 +126,15 @@ export class ObservabilidadComponent implements OnInit {
   }
 
   cargarTodo(): void {
+    const validationError = this.validateFilters();
+    if (validationError) {
+      this.error = validationError;
+      this.explorerError = '';
+      this.loading = false;
+      this.explorerLoading = false;
+      return;
+    }
+
     this.loading = true;
     this.error = '';
     const filters = this.getFilters();
@@ -136,6 +145,7 @@ export class ObservabilidadComponent implements OnInit {
       },
       error: (error) => {
         this.error = error?.error?.error || 'No se pudieron cargar las métricas.';
+        this.loading = false;
       },
       complete: () => {
         this.loading = false;
@@ -145,16 +155,31 @@ export class ObservabilidadComponent implements OnInit {
       next: (rateLimits) => {
         this.rateLimits = rateLimits;
       },
+      error: () => {
+        this.rateLimits = null;
+      },
     });
     this.observabilidadService.anomalias(filters).subscribe({
       next: (anomalias) => {
         this.anomalias = anomalias;
+      },
+      error: () => {
+        this.anomalias = null;
       },
     });
     this.cargarExplorer();
   }
 
   cargarExplorer(): void {
+    const validationError = this.validateFilters();
+    if (validationError) {
+      this.explorerRows = [];
+      this.explorerTotal = 0;
+      this.explorerError = '';
+      this.explorerLoading = false;
+      return;
+    }
+
     this.explorerLoading = true;
     this.explorerError = '';
     this.observabilidadService.explorer(this.getFilters(), this.explorerPage, this.explorerPageSize).subscribe({
@@ -166,6 +191,7 @@ export class ObservabilidadComponent implements OnInit {
         this.explorerRows = [];
         this.explorerTotal = 0;
         this.explorerError = error?.error?.error || 'No se pudo cargar el explorer.';
+        this.explorerLoading = false;
       },
       complete: () => {
         this.explorerLoading = false;
@@ -195,6 +221,12 @@ export class ObservabilidadComponent implements OnInit {
   }
 
   exportar(format: 'json' | 'csv'): void {
+    const validationError = this.validateFilters();
+    if (validationError) {
+      this.error = validationError;
+      return;
+    }
+
     this.observabilidadService.exportar(this.getFilters(), format).subscribe((blob) => {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
@@ -246,6 +278,38 @@ export class ObservabilidadComponent implements OnInit {
 
   private getFilters(): ObservabilidadFilters {
     return this.filtrosForm.value as ObservabilidadFilters;
+  }
+
+  private validateFilters(): string {
+    const { desde, hasta, usuario_id, status_code } = this.filtrosForm.value;
+    const desdeDate = this.asValidDate(desde);
+    const hastaDate = this.asValidDate(hasta);
+
+    if (!desdeDate || !hastaDate) {
+      return 'Seleccioná fechas válidas para filtrar.';
+    }
+
+    if (desdeDate.getTime() > hastaDate.getTime()) {
+      return 'La fecha "Desde" debe ser menor o igual a la fecha "Hasta".';
+    }
+
+    if (usuario_id && !/^\d+$/.test(String(usuario_id).trim())) {
+      return 'El Usuario ID debe ser un número entero positivo.';
+    }
+
+    if (status_code) {
+      const parsedStatus = Number(String(status_code).trim());
+      if (!Number.isInteger(parsedStatus) || parsedStatus < 100 || parsedStatus > 599) {
+        return 'El Status debe ser un código HTTP válido entre 100 y 599.';
+      }
+    }
+
+    return '';
+  }
+
+  private asValidDate(value: Date | string | null | undefined): Date | null {
+    const date = value instanceof Date ? value : value ? new Date(value) : null;
+    return date && Number.isFinite(date.getTime()) ? date : null;
   }
 
   private defaultDesde(): Date {
