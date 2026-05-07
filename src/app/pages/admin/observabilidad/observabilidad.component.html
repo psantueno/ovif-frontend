@@ -1,0 +1,174 @@
+<div class="observabilidad-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <mat-card class="admin-selector-card admin-card filtros-card">
+    <form [formGroup]="filtrosForm" (ngSubmit)="cargarTodo()" class="filtro-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" formControlName="desde" readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" formControlName="hasta" readonly>
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Usuario ID</mat-label><input matInput formControlName="usuario_id" inputmode="numeric"></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Módulo</mat-label><input matInput formControlName="module"></mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Endpoint</mat-label><input matInput formControlName="route_pattern"></mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Método</mat-label>
+        <mat-select formControlName="method">
+          <mat-option *ngFor="let method of methodOptions" [value]="method">{{ method || 'Todos' }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline"><mat-label>Status</mat-label><input matInput formControlName="status_code" inputmode="numeric"></mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Limiter</mat-label>
+        <mat-select formControlName="limiter">
+          <mat-option *ngFor="let limiter of limiterOptions" [value]="limiter">{{ limiter || 'Todos' }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-raised-button type="submit" class="btn-buscar"><mat-icon>search</mat-icon> Filtrar</button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="limpiarFiltros()"><mat-icon>clear</mat-icon> Limpiar</button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="exportar('csv')"><mat-icon>download</mat-icon> CSV</button>
+      <button mat-raised-button type="button" class="btn-buscar" (click)="exportar('json')"><mat-icon>data_object</mat-icon> JSON</button>
+    </form>
+  </mat-card>
+
+  <mat-card *ngIf="error" class="estado-card error-card"><mat-icon>error</mat-icon><span>{{ error }}</span></mat-card>
+
+  <mat-tab-group animationDuration="180ms">
+    <mat-tab label="General">
+      <section class="tab-content">
+        <div *ngIf="loading" class="loading-row"><mat-spinner diameter="36"></mat-spinner></div>
+        <section class="metric-grid" *ngIf="metricas">
+          <div class="metric"><span>Total requests</span><strong>{{ formatNumber(metricas.kpis.totalRequests) }}</strong></div>
+          <div class="metric"><span>4xx</span><strong>{{ formatNumber(metricas.kpis.total4xx) }}</strong></div>
+          <div class="metric"><span>5xx</span><strong>{{ formatNumber(metricas.kpis.total5xx) }}</strong></div>
+          <div class="metric"><span>429</span><strong>{{ formatNumber(metricas.kpis.total429) }}</strong></div>
+          <div class="metric"><span>P95 global</span><strong>{{ formatMs(metricas.kpis.p95DurationMs) }}</strong></div>
+          <div class="metric"><span>Usuarios activos</span><strong>{{ metricas.kpis.usuariosActivos ?? '-' }}</strong></div>
+        </section>
+
+        <section class="charts-grid" *ngIf="metricas">
+          <mat-card class="chart-card">
+            <mat-card-title>Requests por día</mat-card-title>
+            <div class="chart-box"><canvas baseChart type="line" [data]="requestsDiaChart" [options]="lineOptions"></canvas></div>
+          </mat-card>
+          <mat-card class="chart-card">
+            <mat-card-title>Requests por hora</mat-card-title>
+            <div class="chart-box"><canvas baseChart type="bar" [data]="requestsHoraChart" [options]="barOptions"></canvas></div>
+          </mat-card>
+          <mat-card class="chart-card">
+            <mat-card-title>Status codes</mat-card-title>
+            <div class="chart-box"><canvas baseChart type="doughnut" [data]="statusChart" [options]="doughnutOptions"></canvas></div>
+          </mat-card>
+        </section>
+
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">speed</mat-icon><mat-card-title>Top 5 endpoints lentos</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="metricas?.topEndpointsLentos || []" class="admin-tabla">
+              <ng-container matColumnDef="method"><th mat-header-cell *matHeaderCellDef>Método</th><td mat-cell *matCellDef="let row">{{ row.method }}</td></ng-container>
+              <ng-container matColumnDef="route_pattern"><th mat-header-cell *matHeaderCellDef>Endpoint</th><td mat-cell *matCellDef="let row" [matTooltip]="row.route_pattern">{{ row.route_pattern }}</td></ng-container>
+              <ng-container matColumnDef="total_requests"><th mat-header-cell *matHeaderCellDef>Requests</th><td mat-cell *matCellDef="let row">{{ row.total_requests }}</td></ng-container>
+              <ng-container matColumnDef="avg_duration_ms"><th mat-header-cell *matHeaderCellDef>Promedio</th><td mat-cell *matCellDef="let row">{{ formatMs(row.avg_duration_ms) }}</td></ng-container>
+              <ng-container matColumnDef="p95_duration_ms"><th mat-header-cell *matHeaderCellDef>P95</th><td mat-cell *matCellDef="let row">{{ formatMs(row.p95_duration_ms) }}</td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="slowEndpointColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: slowEndpointColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Rate Limits">
+      <section class="tab-content">
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">block</mat-icon><mat-card-title>Bloqueos por limiter</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="rateLimits?.bloqueosPorLimiter || []" class="admin-tabla">
+              <ng-container matColumnDef="limiter"><th mat-header-cell *matHeaderCellDef>Limiter</th><td mat-cell *matCellDef="let row">{{ row.limiter }}</td></ng-container>
+              <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let row">{{ row.total }}</td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="limiterColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: limiterColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">group</mat-icon><mat-card-title>Usuarios afectados</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="rateLimits?.usuariosAfectados || []" class="admin-tabla">
+              <ng-container matColumnDef="usuario_id"><th mat-header-cell *matHeaderCellDef>Usuario</th><td mat-cell *matCellDef="let row">{{ row.usuario_id }}</td></ng-container>
+              <ng-container matColumnDef="total"><th mat-header-cell *matHeaderCellDef>Total</th><td mat-cell *matCellDef="let row">{{ row.total }}</td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="usuariosAfectadosColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: usuariosAfectadosColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">warning</mat-icon><mat-card-title>Eventos recientes</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="rateLimits?.eventosRecientes || []" class="admin-tabla">
+              <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let row">{{ row.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td></ng-container>
+              <ng-container matColumnDef="limiter"><th mat-header-cell *matHeaderCellDef>Limiter</th><td mat-cell *matCellDef="let row">{{ row.limiter }}</td></ng-container>
+              <ng-container matColumnDef="usuario_id"><th mat-header-cell *matHeaderCellDef>Usuario</th><td mat-cell *matCellDef="let row">{{ row.usuario_id || '-' }}</td></ng-container>
+              <ng-container matColumnDef="method"><th mat-header-cell *matHeaderCellDef>Método</th><td mat-cell *matCellDef="let row">{{ row.method }}</td></ng-container>
+              <ng-container matColumnDef="route_pattern"><th mat-header-cell *matHeaderCellDef>Endpoint</th><td mat-cell *matCellDef="let row">{{ row.route_pattern || row.original_url }}</td></ng-container>
+              <ng-container matColumnDef="rate_limit_used"><th mat-header-cell *matHeaderCellDef>Used</th><td mat-cell *matCellDef="let row">{{ row.rate_limit_used }}</td></ng-container>
+              <ng-container matColumnDef="rate_limit_limit"><th mat-header-cell *matHeaderCellDef>Limit</th><td mat-cell *matCellDef="let row">{{ row.rate_limit_limit }}</td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="eventosColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: eventosColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Explorer">
+      <section class="tab-content">
+        <mat-card *ngIf="explorerError" class="estado-card error-card"><mat-icon>error</mat-icon><span>{{ explorerError }}</span></mat-card>
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">search</mat-icon><mat-card-title>Requests crudos</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <div *ngIf="explorerLoading" class="loading-row"><mat-spinner diameter="32"></mat-spinner></div>
+            <table mat-table [dataSource]="explorerRows" class="admin-tabla">
+              <ng-container matColumnDef="fecha"><th mat-header-cell *matHeaderCellDef>Fecha</th><td mat-cell *matCellDef="let row">{{ row.fecha | date:'dd/MM/yyyy HH:mm:ss' }}</td></ng-container>
+              <ng-container matColumnDef="usuario_id"><th mat-header-cell *matHeaderCellDef>Usuario</th><td mat-cell *matCellDef="let row">{{ row.usuario_id || '-' }}</td></ng-container>
+              <ng-container matColumnDef="method"><th mat-header-cell *matHeaderCellDef>Método</th><td mat-cell *matCellDef="let row">{{ row.method }}</td></ng-container>
+              <ng-container matColumnDef="route_pattern"><th mat-header-cell *matHeaderCellDef>Endpoint</th><td mat-cell *matCellDef="let row" [matTooltip]="row.route_pattern">{{ row.route_pattern }}</td></ng-container>
+              <ng-container matColumnDef="status_code"><th mat-header-cell *matHeaderCellDef>Status</th><td mat-cell *matCellDef="let row">{{ row.status_code }}</td></ng-container>
+              <ng-container matColumnDef="duration_ms"><th mat-header-cell *matHeaderCellDef>Duración</th><td mat-cell *matCellDef="let row">{{ formatMs(row.duration_ms) }}</td></ng-container>
+              <ng-container matColumnDef="limiter"><th mat-header-cell *matHeaderCellDef>Limiter</th><td mat-cell *matCellDef="let row">{{ row.limiter || '-' }}</td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="explorerColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: explorerColumns;"></tr>
+            </table>
+            <mat-paginator [length]="explorerTotal" [pageSize]="explorerPageSize" [pageSizeOptions]="[10, 20, 50, 100]" (page)="cambiarPaginaExplorer($event)"></mat-paginator>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Anomalías">
+      <section class="tab-content">
+        <mat-card class="admin-tabla-card admin-card">
+          <mat-card-header><mat-icon class="header-icon">monitor_heart</mat-icon><mat-card-title>Anomalías detectadas</mat-card-title></mat-card-header>
+          <mat-card-content>
+            <table mat-table [dataSource]="anomalias?.anomalias || []" class="admin-tabla">
+              <ng-container matColumnDef="type"><th mat-header-cell *matHeaderCellDef>Tipo</th><td mat-cell *matCellDef="let row">{{ anomalyLabel(row.type) }}</td></ng-container>
+              <ng-container matColumnDef="active"><th mat-header-cell *matHeaderCellDef>Estado</th><td mat-cell *matCellDef="let row">{{ row.active ? 'Activa' : 'Normal' }}</td></ng-container>
+              <ng-container matColumnDef="severity"><th mat-header-cell *matHeaderCellDef>Severidad</th><td mat-cell *matCellDef="let row">{{ row.severity }}</td></ng-container>
+              <ng-container matColumnDef="metrics"><th mat-header-cell *matHeaderCellDef>Métricas</th><td mat-cell *matCellDef="let row"><span class="json-preview">{{ row.metrics | json }}</span></td></ng-container>
+              <tr mat-header-row *matHeaderRowDef="anomaliasColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: anomaliasColumns;"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </section>
+    </mat-tab>
+  </mat-tab-group>
+</div>

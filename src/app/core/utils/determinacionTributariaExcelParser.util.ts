@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import { readExcelSecure, ExcelValidationError } from './secureExcelReader.util';
 import { normalizarNumeroEntero, normalizarNumeroDecimal } from './normalizadorNumerico';
 
 const EXPECTED_HEADERS = [
@@ -65,11 +65,15 @@ export const parseDeterminacionTributariaExcelFile = async (
 ): Promise<DeterminacionTributariaExcelParseResult> => {
   const globalErrors: string[] = [];
 
-  const buffer = await file.arrayBuffer();
-  const workbook = XLSX.read(buffer, { type: 'array', raw: false });
-
-  if (!workbook.SheetNames.length) {
-    globalErrors.push('El archivo no contiene hojas de calculo.');
+  let matrix: unknown[][];
+  try {
+    matrix = await readExcelSecure(file);
+  } catch (error) {
+    if (error instanceof ExcelValidationError) {
+      globalErrors.push(error.message);
+    } else {
+      globalErrors.push('Ocurrió un error inesperado al procesar el archivo.');
+    }
     return {
       rows: [],
       totalRowsRead: 0,
@@ -78,13 +82,6 @@ export const parseDeterminacionTributariaExcelFile = async (
       globalErrors,
     };
   }
-
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
-    header: 1,
-    defval: '',
-    raw: false,
-  });
 
   if (!matrix.length) {
     globalErrors.push('El archivo esta vacio.');
