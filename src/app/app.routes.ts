@@ -174,11 +174,6 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/admin/logs/logs.component').then((m) => m.LogsComponent)
       },
       {
-        path: 'admin/rate-limits',
-        canActivate: [AdminGuard],
-        loadComponent: () => import('./pages/admin/rate-limits/rate-limits.component').then((m) => m.RateLimitsComponent)
-      },
-      {
         path: 'admin/observabilidad',
         canActivate: [AdminGuard],
         loadComponent: () => import('./pages/admin/observabilidad/observabilidad.component').then((m) => m.ObservabilidadComponent)

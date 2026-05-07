@@ -5,3 +5,8 @@
   </main>
   <app-footer></app-footer>
 </div>
+
+<app-session-expired-overlay
+  [display]="sessionExpired"
+  (accepted)="onSessionExpiredAccepted()">
+</app-session-expired-overlay>

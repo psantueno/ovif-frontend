@@ -1,11 +1,15 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, catchError, finalize, map, of, shareReplay, tap, timeout } from 'rxjs';
 import { API_URL } from '../app.config';
-import Swal from 'sweetalert2'; // 👈 asegurate de tenerlo importado
+import Swal from 'sweetalert2';
 import { MunicipioService } from './municipio.service';
 import { getLandingPathByRoles, getUserRoleNames } from '../core/utils/roles.util';
+import { resetRefreshState } from '../core/interceptors/auth.interceptor';
+
+/** Minimum elapsed time (ms) before re-checking session on visibility change. */
+const VISIBILITY_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 @Injectable({ providedIn: 'root' })
 
@@ -14,6 +18,7 @@ export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
   private municipioService = inject(MunicipioService);
+  private ngZone = inject(NgZone);
 
   private user: any = null;
   private readonly userSubject = new BehaviorSubject<any | null>(null);
@@ -21,8 +26,26 @@ export class AuthService {
   private profileRequest$: Observable<any | null> | null = null;
   private loggingOut = false;
 
+  /** Once true, no more profile/refresh attempts are made until next login. */
+  private sessionDead = false;
+
+  /** Emits true when session expires — consumed by the overlay in AppComponent. */
+  private readonly sessionExpiredSubject = new BehaviorSubject<boolean>(false);
+  readonly sessionExpired$ = this.sessionExpiredSubject.asObservable();
+
+  /** Timestamp of last successful profile verification. */
+  private lastVerifiedAt = 0;
+
+  constructor() {
+    this.setupVisibilityCheck();
+  }
+
   get isLoggingOut(): boolean {
     return this.loggingOut;
+  }
+
+  get isSessionDead(): boolean {
+    return this.sessionDead;
   }
 
   private setUser(user: any | null): void {
@@ -51,18 +74,24 @@ export class AuthService {
   }
 
   ensureUser(): Observable<any | null> {
-    if (this.loggingOut) {
+    if (this.loggingOut || this.sessionDead) {
       return of(null);
     }
 
     if (this.user) {
+      this.lastVerifiedAt = Date.now();
       return of(this.user);
     }
 
     if (!this.profileRequest$) {
       this.profileRequest$ = this.profile().pipe(
         map((res) => this.normalizeUserPayload(res)),
-        tap((usuario) => this.setUser(usuario)),
+        tap((usuario) => {
+          this.setUser(usuario);
+          if (usuario) {
+            this.lastVerifiedAt = Date.now();
+          }
+        }),
         catchError(() => {
           this.setUser(null);
           return of(null);
@@ -78,6 +107,11 @@ export class AuthService {
   }
 
   login(usuario: string, password: string): Observable<any> {
+    // Reset dead-session state so fresh login works cleanly
+    this.sessionDead = false;
+    this.sessionExpiredSubject.next(false);
+    resetRefreshState();
+
     return new Observable((observer) => {
       this.http
         .post(`${this.apiUrl}/auth/login`, { usuario, password })
@@ -188,10 +222,17 @@ export class AuthService {
 
   /** Limpieza local cuando la sesión expiró o fue revocada (sin POST al servidor). */
   handleSessionExpired(): void {
-    if (this.loggingOut) {
+    if (this.loggingOut || this.sessionDead) {
       return;
     }
+    this.sessionDead = true;
     this.clearSessionState();
+    this.sessionExpiredSubject.next(true);
+  }
+
+  /** Called when user acknowledges the session-expired overlay. */
+  acknowledgeSessionExpired(): void {
+    this.sessionExpiredSubject.next(false);
     this.router.navigate(['/login']);
   }
 
@@ -234,6 +275,26 @@ export class AuthService {
 
   getUser() {
     return this.user;
+  }
+
+  /**
+   * Listens for tab/window becoming visible again.
+   * If enough time has passed, proactively verifies the session.
+   */
+  private setupVisibilityCheck(): void {
+    this.ngZone.runOutsideAngular(() => {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        if (this.sessionDead || this.loggingOut || !this.user) return;
+        if (Date.now() - this.lastVerifiedAt < VISIBILITY_CHECK_INTERVAL_MS) return;
+
+        // Re-enter Angular zone so subscribers react
+        this.ngZone.run(() => {
+          this.profileRequest$ = null; // force fresh request
+          this.ensureUser().subscribe();
+        });
+      });
+    });
   }
 
   // solicitar blanqueo
