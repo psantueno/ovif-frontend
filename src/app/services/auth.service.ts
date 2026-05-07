@@ -29,6 +29,9 @@ export class AuthService {
   /** Once true, no more profile/refresh attempts are made until next login. */
   private sessionDead = false;
 
+  /** Tracks whether user was authenticated at any point during this app lifecycle. */
+  private wasAuthenticated = false;
+
   /** Emits true when session expires — consumed by the overlay in AppComponent. */
   private readonly sessionExpiredSubject = new BehaviorSubject<boolean>(false);
   readonly sessionExpired$ = this.sessionExpiredSubject.asObservable();
@@ -50,6 +53,9 @@ export class AuthService {
 
   private setUser(user: any | null): void {
     this.user = user ?? null;
+    if (this.user) {
+      this.wasAuthenticated = true;
+    }
     this.userSubject.next(this.user);
   }
 
@@ -227,7 +233,11 @@ export class AuthService {
     }
     this.sessionDead = true;
     this.clearSessionState();
-    this.sessionExpiredSubject.next(true);
+    // Only show overlay if user was authenticated during this app lifecycle.
+    // On a fresh page load with no valid session, just let the guard redirect to /login.
+    if (this.wasAuthenticated) {
+      this.sessionExpiredSubject.next(true);
+    }
   }
 
   /** Called when user acknowledges the session-expired overlay. */
