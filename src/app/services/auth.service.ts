@@ -242,6 +242,7 @@ export class AuthService {
     }
 
     this.loggingOut = true;
+    this.sessionDead = true;
     this.clearSessionState();
     this.router.navigate(['/login']);
 
