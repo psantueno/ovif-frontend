@@ -61,7 +61,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
   vistaActual: string = 'masiva';
-  readonly manualRemuneracionesUrl = '../assets/pdfs/carga-informacion/MANUAL-REMUNERACIONES.pdf';
+  readonly manualRemuneracionesUrl = '../../../assets/pdfs/carga-informacion/REMUNERACIONES.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: Remuneraciones[] = [];
   regimenes: Set<string> = new Set;
@@ -326,6 +326,18 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     this.resetEstadoCargaMasiva();
   }
 
+  reemplazarArchivo(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    input.value = '';
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+
+    input.click();
+  }
+
   get obtenerTotalFilasMasivas(): number {
     return this.totalFilasDetectadas;
   }
@@ -429,6 +441,10 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     const remuneracionPorRegimen = this.previsualizacionMasiva.filter(rem => rem.regimen_laboral === regimen);
 
     return remuneracionPorRegimen.length;
+  }
+
+  tieneCambiosPendientes(): boolean {
+    return this.archivoMasivoSeleccionado !== null && this.previsualizacionMasiva.length > 0;
   }
 
   private obtenerRegimenes(remuneraciones: Remuneraciones[]): void {

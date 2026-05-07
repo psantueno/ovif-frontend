@@ -152,13 +152,14 @@ const isCellEmpty = (value: any): boolean => {
 const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata<T>[] => {
   if (!rows.length) return [];
 
-  const headerIndex = rows.findIndex(row =>
-    row.every(cell => cell !== null && cell !== undefined && cell !== "")
-  );
+  const headerIndex = rows.findIndex(row => row[1] !== null && row[1] !== undefined && row[1] !== "");
 
   if (headerIndex === -1) return [];
 
-  const headers = rows[headerIndex].map(h =>
+  const headerRow = rows[headerIndex];
+  const headerRowFiltered = headerRow.filter(row => row !== null)
+
+  const headers = headerRowFiltered.map(h =>
     normalizeHeader(String(h))
   );
 

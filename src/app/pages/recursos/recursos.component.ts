@@ -60,7 +60,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly manualRecursosUrl = '../assets/pdfs/carga-informacion/MANUAL-RECURSOS.pdf';
+  readonly manualRecursosUrl = '../../../assets/pdfs/carga-informacion/RECURSOS.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: RecursoPreviewRow[] = [];
@@ -295,9 +295,6 @@ export class RecursosComponent implements OnInit, OnDestroy {
           } else {
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
           }
-
-          this.archivoMasivoSeleccionado = null;
-          this.resetEstadoCargaMasiva();
         },
         error: (error) => {
           console.error('Error al guardar las partidas de recursos:', error);
@@ -318,6 +315,18 @@ export class RecursosComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = null;
     this.resetEstadoCargaMasiva();
+  }
+
+  reemplazarArchivo(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    input.value = '';
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+
+    input.click();
   }
 
   generarInforme(): void {

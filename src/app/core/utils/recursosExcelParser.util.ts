@@ -84,7 +84,9 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
   }
 
   const headerRow = Array.isArray(matrix[0]) ? matrix[0] : [];
-  const normalizedHeaders = headerRow
+  const headerRowFiltered = headerRow.filter(row => row !== null && row !== undefined && row !== "")
+console.log("headerrf: ", headerRowFiltered)
+  const normalizedHeaders = headerRowFiltered
     .map((header) => normalizeHeader(header))
     .filter((header) => header.length > 0);
 

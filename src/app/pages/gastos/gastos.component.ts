@@ -61,7 +61,7 @@ export class GastosComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  readonly manualGastosUrl = '../assets/pdfs/carga-informacion/MANUAL-GASTOS.pdf';
+  readonly manualGastosUrl = '../../../assets/pdfs/carga-informacion/GASTOS.pdf';
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: GastoPreviewRow[] = [];
@@ -298,9 +298,6 @@ export class GastosComponent implements OnInit, OnDestroy {
           } else {
             this.mostrarToastExito('Los importes fueron guardados correctamente.');
           }
-
-          this.archivoMasivoSeleccionado = null;
-          this.resetEstadoCargaMasiva();
         },
         error: (error) => {
           console.error('Error al guardar las partidas de gastos:', error);
@@ -321,6 +318,18 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = null;
     this.resetEstadoCargaMasiva();
+  }
+
+  reemplazarArchivo(event: MouseEvent, input: HTMLInputElement): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    input.value = '';
+
+    this.archivoMasivoSeleccionado = null;
+    this.resetEstadoCargaMasiva();
+
+    input.click();
   }
 
   generarInforme(): void {

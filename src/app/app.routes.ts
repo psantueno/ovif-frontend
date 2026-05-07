@@ -1,7 +1,10 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
-import { PendingChangesGuard } from './pages/gastos/guards/pending-changes.guard';
+import { GastosPendingChangesGuard } from './pages/gastos/guards/pending-changes.guard';
 import { RecursosPendingChangesGuard } from './pages/recursos/guards/pending-changes.guard';
+import { RecaudacionesPendingChangesGuard } from './pages/recaudaciones/guards/pending-changes.guard';
+import { RemuneracionesPendingChangesGuard } from './pages/remuneraciones/guards/pending-changes.guard';
+import { DeterminacionPendingChangesGuard } from './pages/determinacion-tributaria/guards/pending-changes.guard';
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
 import { MainLayout } from './shared/layouts/main-layout.component';
@@ -72,7 +75,7 @@ export const routes: Routes = [
       },
       {
         path: 'gastos',
-        canDeactivate: [PendingChangesGuard],
+        canDeactivate: [GastosPendingChangesGuard],
         loadComponent: () => import('./pages/gastos/gastos.component').then((m) => m.GastosComponent)
       },
       {
@@ -82,10 +85,12 @@ export const routes: Routes = [
       },
       {
         path: 'recaudaciones',
+        canDeactivate: [RecaudacionesPendingChangesGuard],
         loadComponent: () => import('./pages/recaudaciones/recaudaciones.component').then((m) => m.RecaudacionesComponent)
       },
       {
         path: 'remuneraciones',
+        canDeactivate: [RemuneracionesPendingChangesGuard],
         loadComponent: () => import('./pages/remuneraciones/remuneraciones.component').then((m) => m.RemuneracionesComponent)
       },
       {
@@ -93,7 +98,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/determinacion-tributaria/determinacion-tributaria.component').then(
             (m) => m.DeterminacionTributariaComponent
-          )
+          ),
+        canDeactivate: [DeterminacionPendingChangesGuard],
       },
       {
         path: 'historico-ejercicios-cerrados',
