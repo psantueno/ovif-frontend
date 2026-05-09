@@ -13,7 +13,7 @@ export const AuthGuard: CanActivateFn = () => {
   return authService.ensureUser().pipe(
     map((user) => {
       if (!user) {
-        return redirect(router, ['/login']);
+        return redirect(router, ['/']);
       }
 
       const roleNames = getUserRoleNames(user);
@@ -28,6 +28,6 @@ export const AuthGuard: CanActivateFn = () => {
 
       return redirect(router, ['/sin-acceso']);
     }),
-    catchError(() => of(redirect(router, ['/login'])))
+    catchError(() => of(redirect(router, ['/'])))
   );
 };

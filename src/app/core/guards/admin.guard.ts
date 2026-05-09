@@ -23,6 +23,6 @@ export const AdminGuard: CanActivateFn = () => {
 
       return redirectTo(router,(['/unauthorized']));
     }),
-    catchError(() => of(redirectTo(router,(['/login']))))
+    catchError(() => of(redirectTo(router,(['/']))))
   );
 };

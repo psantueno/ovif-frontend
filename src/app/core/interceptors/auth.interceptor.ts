@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { catchError, Observable, shareReplay, switchMap, throwError } from 'rxjs';
 import { API_URL } from '../../app.config';
-import { AuthService } from '../../services/auth.service';
+import { AuthService, AUTH_FLAG_KEY } from '../../services/auth.service';
 
 /** Single-flight: solo un refresh a la vez */
 let refreshInProgress$: Observable<any> | null = null;
@@ -33,7 +33,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         req.headers.has(RETRIED_HEADER) ||
         authService.isLoggingOut ||
         authService.isSessionDead ||
-        refreshFailed
+        refreshFailed ||
+        !localStorage.getItem(AUTH_FLAG_KEY)
       ) {
         return throwError(() => error);
       }
