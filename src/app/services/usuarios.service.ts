@@ -81,11 +81,4 @@ export class UsuariosService {
     return this.http.delete(`${this.apiUrl}/usuarios/${id}`);
   }
 
-  cerrarSesion(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('municipioSeleccionado');
-    localStorage.removeItem('ejercicioMesSeleccionado');
-  }
-
 }

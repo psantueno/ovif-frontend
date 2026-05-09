@@ -120,7 +120,7 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
   const dataRows = rows.slice(headerIndex + 1);
 
   // construir objetos dinámicamente
-  const objects = dataRows.map(row => {
+  return dataRows.map(row => {
     const obj: any = {};
 
     headers.forEach((header, index) => {
@@ -130,11 +130,6 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
 
     return obj;
   });
-
-  // 🔎 eliminar objetos que tengan algún valor null
-  return objects.filter(obj =>
-    Object.values(obj).every(value => value !== null)
-  );
 }
 
 const isCellEmpty = (value: any): boolean => {
@@ -157,11 +152,15 @@ const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata
   if (headerIndex === -1) return [];
 
   const headerRow = rows[headerIndex];
-  const headerRowFiltered = headerRow.filter(row => row !== null)
 
-  const headers = headerRowFiltered.map(h =>
-    normalizeHeader(String(h))
-  );
+  // Mapear headers preservando el índice original de columna.
+  // No filtrar el array (desplaza índices y cruza datos).
+  const headerMap: { header: string; colIndex: number }[] = [];
+  headerRow.forEach((h, i) => {
+    if (h !== null && h !== undefined && String(h).trim() !== '') {
+      headerMap.push({ header: normalizeHeader(String(h)), colIndex: i });
+    }
+  });
 
   const dataRows = rows.slice(headerIndex + 1);
 
@@ -171,17 +170,15 @@ const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata
     }
 
     const obj: any = {};
-    headers.forEach((header, colIndex) => {
+    headerMap.forEach(({ header, colIndex }) => {
       const value = row[colIndex];
       obj[header] = (value === undefined || value === null || value === '') ? null : value;
     });
 
-    if(Object.values(obj).every(value => value !== null)){
-      acc.push({
-        row: obj as T,
-        filaExcel: headerIndex + index + 2
-      });
-    }
+    acc.push({
+      row: obj as T,
+      filaExcel: headerIndex + index + 2
+    });
 
     return acc;
   }, []);

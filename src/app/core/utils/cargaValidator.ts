@@ -10,6 +10,25 @@ const parseExcelDate = (fecha: string): string => {
   return `${anio}-${mes}-${dia}`;
 };
 
+/**
+ * Convierte un serial numérico de Excel (epoch 1900, con bug Lotus 1-2-3)
+ * a string dd/mm/yyyy. Usa UTC para evitar shifts de timezone.
+ */
+const excelSerialToDateStr = (serial: number): string => {
+  const date = new Date(Date.UTC(1899, 11, 30 + serial));
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const y = date.getUTCFullYear();
+  return `${d}/${m}/${y}`;
+};
+
+const preprocessFecha = (value: unknown): unknown => {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return excelSerialToDateStr(value);
+  }
+  return value;
+};
+
 const decimalSchema = (campo: string = "importe") =>
   z.preprocess((value) => {
 
@@ -32,18 +51,24 @@ const decimalSchema = (campo: string = "importe") =>
     error: `El campo "${campo}" debe ser un número decimal válido`
   }));
 
-const fechaSchema = z
-  .string()
-  .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Formato de fecha inválido (dd/mm/yyyy)")
-  .transform(parseExcelDate);
+const fechaSchema = z.preprocess(
+  preprocessFecha,
+  z.string()
+    .regex(/^\d{2}\/\d{2}\/\d{4}$/, "Formato de fecha inválido (dd/mm/yyyy)")
+    .transform(parseExcelDate)
+);
 
-  const fechaFinServicioSchema = z
-    .string('La fecha de fin del servicio debe ser una cadena de caracteres')
-    .transform((value, ctx) => {
-      // caso "-"
-      if (value === "-") {
-        return null;
-      }
+  const fechaFinServicioSchema = z.preprocess(
+    (value) => {
+      if (value === null || value === undefined) return null;
+      return preprocessFecha(value);
+    },
+    z.string('La fecha de fin del servicio debe ser una cadena de caracteres')
+      .transform((value, ctx) => {
+        // caso "-"
+        if (value === "-") {
+          return null;
+        }
 
       // validar formato dd/mm/yyyy
       const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -76,7 +101,7 @@ const fechaSchema = z
       // retornar yyyy-mm-dd
       return `${y}-${m}-${d}`;
     })
-  .nullable();
+  ).nullable();
 
 export const RemuneracionesSchema = z.object({
   legajo: z
