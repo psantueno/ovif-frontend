@@ -16,8 +16,8 @@ const RUTAS_RESTRINGIDAS = new Set([
 
 const redirectToSinAcceso = (router: Router): UrlTree => router.createUrlTree(['/sin-acceso']);
 const redirectToUnauthorized = (router: Router): UrlTree => router.createUrlTree(['/unauthorized']);
-const redirectToLogin = (router: Router): UrlTree => router.createUrlTree(['/login']);
-const redirectToSeleccion = (router: Router): UrlTree => router.createUrlTree(['/']);
+const redirectToLogin = (router: Router): UrlTree => router.createUrlTree(['/']);
+const redirectToSeleccion = (router: Router): UrlTree => router.createUrlTree(['/seleccionar-municipio']);
 
 export const MunicipioGuard: CanActivateChildFn = (route, state) => {
   const router = inject(Router);

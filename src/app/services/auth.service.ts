@@ -11,6 +11,13 @@ import { resetRefreshState } from '../core/interceptors/auth.interceptor';
 /** Minimum elapsed time (ms) before re-checking session on visibility change. */
 const VISIBILITY_CHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * localStorage key used as a synchronous gate.
+ * Set on login, removed on logout/expiry. Prevents profile+refresh calls
+ * for unauthenticated users without consulting the backend.
+ */
+export const AUTH_FLAG_KEY = 'authenticated';
+
 @Injectable({ providedIn: 'root' })
 
 export class AuthService {
@@ -41,6 +48,7 @@ export class AuthService {
 
   constructor() {
     this.setupVisibilityCheck();
+    this.setupStorageListener();
   }
 
   get isLoggingOut(): boolean {
@@ -73,6 +81,7 @@ export class AuthService {
     this.setUser(null);
     this.profileRequest$ = null;
     this.municipioService.clear();
+    localStorage.removeItem(AUTH_FLAG_KEY);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('municipioSeleccionado');
@@ -81,6 +90,10 @@ export class AuthService {
 
   ensureUser(): Observable<any | null> {
     if (this.loggingOut || this.sessionDead) {
+      return of(null);
+    }
+
+    if (!localStorage.getItem(AUTH_FLAG_KEY)) {
       return of(null);
     }
 
@@ -130,6 +143,7 @@ export class AuthService {
 
             // Guardar datos del usuario (cookies se setean automáticamente)
             this.setUser(res.user);
+            localStorage.setItem(AUTH_FLAG_KEY, '1');
 
             const roleNames = getUserRoleNames(res.user);
             const isAdmin = roleNames.includes('administrador');
@@ -170,7 +184,7 @@ export class AuthService {
                     });
                 } else {
                   this.municipioService.clear();
-                  this.router.navigate(['/']);
+                  this.router.navigate(['/seleccionar-municipio']);
                 }
 
                 observer.next(res);
@@ -184,7 +198,7 @@ export class AuthService {
                   text: 'No se pudo verificar la asignación de municipios. Intentalo nuevamente.',
                   confirmButtonColor: '#2b3e4c',
                 });
-                this.router.navigate(['/login']);
+                this.router.navigate(['/']);
                 observer.error(err);
               },
             });
@@ -243,7 +257,7 @@ export class AuthService {
   /** Called when user acknowledges the session-expired overlay. */
   acknowledgeSessionExpired(): void {
     this.sessionExpiredSubject.next(false);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
   }
 
   logout(): Observable<void> {
@@ -254,7 +268,7 @@ export class AuthService {
     this.loggingOut = true;
     this.sessionDead = true;
     this.clearSessionState();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/']);
 
     // Fire-and-forget: notificar al servidor sin bloquear la UX
     this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
@@ -308,6 +322,18 @@ export class AuthService {
     });
   }
 
+  private setupStorageListener(): void {
+    this.ngZone.runOutsideAngular(() => {
+      window.addEventListener('storage', (event) => {
+        if (event.key === AUTH_FLAG_KEY && event.newValue === null) {
+          if (!this.loggingOut && !this.sessionDead) {
+            this.ngZone.run(() => this.handleSessionExpired());
+          }
+        }
+      });
+    });
+  }
+
   // solicitar blanqueo
   requestPasswordResetByUser(usuario: string) {
     return this.http.post(`${this.apiUrl}/auth/forgot-password`, { usuario });
@@ -329,7 +355,7 @@ export class AuthService {
               allowOutsideClick: false,
             }).then((result) => {
               if (result.isConfirmed) {
-                this.router.navigate(['/login']);
+                this.router.navigate(['/']);
               }
             });
 

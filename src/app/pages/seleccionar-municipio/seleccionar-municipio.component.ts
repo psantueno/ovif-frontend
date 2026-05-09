@@ -35,7 +35,7 @@ export class SeleccionarMunicipioComponent implements OnInit {
       },
       error: (err) => {
         console.error('❌ Error obteniendo municipios', err);
-        this.router.navigate(['/login']);
+        this.router.navigate(['/']);
       }
     });
   }

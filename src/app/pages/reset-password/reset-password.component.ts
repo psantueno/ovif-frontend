@@ -49,7 +49,7 @@ export class ResetPasswordComponent implements OnInit {
       title: 'Enlace inválido',
       text: 'El enlace para restablecer la contraseña no es válido.',
       confirmButtonColor: '#2b3e4c',
-    }).then(() => this.router.navigate(['/login']));
+    }).then(() => this.router.navigate(['/']));
     return;
   }
 
@@ -85,7 +85,7 @@ export class ResetPasswordComponent implements OnInit {
                     title: 'Contraseña actualizada',
                     text: 'Tu nueva contraseña fue guardada correctamente.',
                     confirmButtonColor: '#2b3e4c',
-                }).then(() => this.router.navigate(['/login']));
+                }).then(() => this.router.navigate(['/']));
             },
             error: (err) => {
                 this.loading = false;

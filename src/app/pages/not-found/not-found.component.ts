@@ -18,6 +18,11 @@ export class NotFoundComponent {
 
   get homePath(): string {
     const user = this.authService.getUser();
+
+    if(!user){
+      return "/"
+    }
+
     return getUserRoleNames(user).includes('administrador') ? '/admin' : '/home';
   }
 

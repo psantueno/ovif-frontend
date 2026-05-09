@@ -10,21 +10,23 @@ import { AdminGuard } from './core/guards/admin.guard';
 import { MainLayout } from './shared/layouts/main-layout.component';
 import { MaintenanceGuard } from './core/guards/maintenance.guard';
 import { MaintenancePageGuard } from './core/guards/maintenance-page.guard';
+import { GuestGuard } from './core/guards/guest.guard';
 
 export const routes: Routes = [
   {
-    path: 'login',
-    canActivate: [MaintenanceGuard],
+    path: '',
+    pathMatch: 'full',
+    canActivate: [MaintenanceGuard, GuestGuard],
     loadComponent: () => import('./pages/login/login.component').then((m) => m.LoginComponent)
   },
   {
     path: 'forgot-password',
-    canActivate: [MaintenanceGuard],
+    canActivate: [MaintenanceGuard, GuestGuard],
     loadComponent: () => import('./pages/solicitar-blanqueo/forgot-password.component').then((m) => m.ForgotPasswordComponent)
   },
   {
     path: 'reset-password',
-    canActivate: [MaintenanceGuard],
+    canActivate: [MaintenanceGuard, GuestGuard],
     loadComponent: () => import('./pages/reset-password/reset-password.component').then((m) => m.ResetPasswordComponent)
   },
   // ACCESO DENEGADO SIN MUNICIPIO ASIGNADO
@@ -56,7 +58,7 @@ export const routes: Routes = [
     canActivateChild: [MunicipioGuard],
     children: [
       {
-        path: '',
+        path: 'seleccionar-municipio',
         loadComponent: () =>
           import('./pages/seleccionar-municipio/seleccionar-municipio.component').then((m) => m.SeleccionarMunicipioComponent)
       },
