@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { ModuloPauta } from '../../models/pauta.model';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
+import { AuthService } from '../../services/auth.service';
 
 interface EjercicioPautaOption {
   valor: string;
@@ -40,6 +41,7 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
   private municipioSub?: Subscription;
   private sinMunicipioAlertado = false;
   private readonly ejerciciosService = inject(EjerciciosService);
+  private readonly authService = inject(AuthService);
 
   constructor(private router: Router, private readonly municipioService: MunicipioService) {}
 
@@ -54,6 +56,10 @@ export class PanelCargaMensualComponent implements OnInit, OnDestroy {
 
       if (!municipio?.municipio_id) {
         this.cargando = false;
+        if (this.authService.isLoggingOut || this.authService.isSessionDead) {
+          return;
+        }
+
         if (!this.sinMunicipioAlertado) {
           this.sinMunicipioAlertado = true;
           Swal.fire({

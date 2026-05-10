@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { UsuarioContextCardComponent } from '../usuario-context-card/usuario-context-card.component';
 import { MunicipioService } from '../../services/municipio.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'main-layout',
@@ -15,6 +16,7 @@ import { MunicipioService } from '../../services/municipio.service';
 })
 export class MainLayout implements OnInit, OnDestroy {
   private readonly municipioService = inject(MunicipioService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
@@ -35,6 +37,10 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   private handleMunicipioChange(): void {
+    if (this.authService.isLoggingOut || this.authService.isSessionDead) {
+      return;
+    }
+
     const url = this.router.url.split('?')[0];
     const seccion = url.split('/').filter(Boolean).pop() ?? '';
 
