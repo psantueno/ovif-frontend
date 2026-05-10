@@ -120,16 +120,18 @@ const transformRowsToJson = <T>(rows: any[][]): T[] => {
   const dataRows = rows.slice(headerIndex + 1);
 
   // construir objetos dinámicamente
-  return dataRows.map(row => {
-    const obj: any = {};
+  return dataRows
+    .filter(row => !isSummaryRow(row))
+    .map(row => {
+      const obj: any = {};
 
-    headers.forEach((header, index) => {
-      const value = row[index];
-      obj[header] = (value === undefined || value === null || value === '') ? null : value;
+      headers.forEach((header, index) => {
+        const value = row[index];
+        obj[header] = (value === undefined || value === null || value === '') ? null : value;
+      });
+
+      return obj;
     });
-
-    return obj;
-  });
 }
 
 const isCellEmpty = (value: any): boolean => {
@@ -141,6 +143,21 @@ const isCellEmpty = (value: any): boolean => {
     return value.trim() === '';
   }
 
+  return false;
+}
+
+/** Detecta filas de resumen/totales comunes en planillas contables. */
+const isSummaryRow = (row: any[]): boolean => {
+  // Revisar las primeras 3 celdas no vacías buscando keywords de totales
+  for (let i = 0; i < Math.min(row.length, 5); i++) {
+    const cell = row[i];
+    if (typeof cell === 'string') {
+      const normalized = cell.trim().toLowerCase().replace(/:$/, '');
+      if (['total', 'totales', 'subtotal', 'subtotales'].includes(normalized)) {
+        return true;
+      }
+    }
+  }
   return false;
 }
 
@@ -166,6 +183,10 @@ const transformRowsToJsonWithMetadata = <T>(rows: any[][]): ExcelRowWithMetadata
 
   return dataRows.reduce<ExcelRowWithMetadata<T>[]>((acc, row, index) => {
     if (!row || row.every((cell) => isCellEmpty(cell))) {
+      return acc;
+    }
+
+    if (isSummaryRow(row)) {
       return acc;
     }
 
