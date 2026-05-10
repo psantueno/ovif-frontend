@@ -46,6 +46,11 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
 
     this.municipioService.getMisMunicipios().subscribe({
       next: (data) => {
+        if (this.authService.isLoggingOut || this.authService.isSessionDead) {
+          this.cargandoMunicipios = false;
+          return;
+        }
+
         this.municipios = Array.isArray(data) ? data : [];
 
         if (this.municipios.length > 0) {
