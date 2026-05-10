@@ -266,20 +266,35 @@ export class AuthService {
     }
 
     this.loggingOut = true;
-    this.sessionDead = true;
-    this.clearSessionState();
-    this.router.navigate(['/']);
 
-    // Fire-and-forget: notificar al servidor sin bloquear la UX
-    this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
-      timeout(3000),
-      catchError(() => of(null)),
-      finalize(() => {
+    return new Observable((observer) => {
+      this.router.navigate(['/']).then((navigated) => {
+        if (!navigated) {
+          this.loggingOut = false;
+          observer.next();
+          observer.complete();
+          return;
+        }
+
+        this.sessionDead = true;
+        this.clearSessionState();
+
+        // Fire-and-forget: notificar al servidor sin bloquear la UX
+        this.http.post(`${this.apiUrl}/auth/logout`, {}, { observe: 'response' }).pipe(
+          timeout(3000),
+          catchError(() => of(null)),
+          finalize(() => {
+            this.loggingOut = false;
+          })
+        ).subscribe();
+
+        observer.next();
+        observer.complete();
+      }).catch((err) => {
         this.loggingOut = false;
-      })
-    ).subscribe();
-
-    return of(void 0);
+        observer.error(err);
+      });
+    });
   }
 
   changePassword(oldPassword: string, newPassword: string): Observable<any> {
