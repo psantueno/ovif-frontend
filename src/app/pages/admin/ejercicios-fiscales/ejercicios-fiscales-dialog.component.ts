@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs/operators';
 
@@ -159,7 +160,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
           }
         },
         error: () => {
-          this.showLoadError('No se pudieron obtener los convenios disponibles.');
+          mostrarToastError('No se pudieron obtener los convenios disponibles.');
         }
       });
   }
@@ -197,7 +198,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
           this.pautas = [];
           this.form.get('pauta_id')?.reset();
           this.selectedPautaParametros = null;
-          this.showLoadError('No se pudieron obtener las pautas para el convenio seleccionado.');
+          mostrarToastError('Error al cargar pautas del convenio seleccionado');
         }
       });
   }
@@ -209,7 +210,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.toast('Completa los campos obligatorios', 'warning');
+      mostrarToastWarning('Completa los campos obligatorios');
       return;
     }
 
@@ -220,7 +221,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
     };
 
     if (rawValue.fecha_inicio && rawValue.fecha_fin && rawValue.fecha_inicio > rawValue.fecha_fin) {
-      this.toast('La fecha de inicio debe ser anterior o igual a la fecha de fin.', 'warning');
+      mostrarToastWarning('La fecha de inicio debe ser anterior o igual a la fecha de fin.');
       return;
     }
 
@@ -252,7 +253,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
       next: () => {
-        this.toast('Ejercicio creado correctamente', 'success');
+        mostrarToastExito('Ejercicio fiscal creado');
         this.dialogRef.close(true);
       },
       error: (error) => {
@@ -269,25 +270,13 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
       next: () => {
-        this.toast('Ejercicio actualizado correctamente', 'success');
+        mostrarToastExito('Ejercicio actualizado correctamente');
         this.dialogRef.close(true);
       },
       error: (error) => {
         const mensajes = this.resolveErrorMessages(error, 'No se pudo actualizar el ejercicio fiscal.');
         this.showError(mensajes, 'No se pudo actualizar el ejercicio');
       }
-    });
-  }
-
-  private toast(message: string, icon: 'success' | 'warning' | 'error'): void {
-    Swal.fire({
-      toast: true,
-      position: 'top-end',
-      icon,
-      title: message,
-      showConfirmButton: false,
-      timer: 2200,
-      timerProgressBar: true
     });
   }
 
@@ -308,16 +297,6 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
       icon: 'error',
       title,
       html: htmlPartes.join(''),
-      confirmButtonText: 'Aceptar',
-      confirmButtonColor: '#d33'
-    });
-  }
-
-  private showLoadError(message: string): void {
-    Swal.fire({
-      icon: 'error',
-      title: 'Error al cargar datos',
-      text: message,
       confirmButtonText: 'Aceptar',
       confirmButtonColor: '#d33'
     });
@@ -394,7 +373,7 @@ export class EjerciciosFiscalesDialogComponent implements OnInit {
             return;
           }
           this.selectedPautaParametros = null;
-          this.showLoadError('No se pudieron obtener los parámetros de la pauta seleccionada.');
+          mostrarToastError('Error al cargar parámetros de la pauta');
         }
       });
   }
