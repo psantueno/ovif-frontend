@@ -15,6 +15,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { Parametro, ParametrosAdminService } from '../../../services/parametros-admin.service';
@@ -99,17 +100,7 @@ export class ConfiguracionParametrosComponent implements OnInit {
         this.abrirDialog({ mode: 'view', parametro: detalle });
       },
       error: (error) => {
-        Swal.fire({
-          toast: true,
-          position: 'top-end',
-          icon: 'error',
-          title: this.resolveErrorMessage(error, 'No se pudo cargar el detalle del parámetro'),
-          showConfirmButton: false,
-          timer: 3000,
-          timerProgressBar: true,
-          background: '#fee2e2',
-          color: '#7f1d1d'
-        });
+        mostrarToastError('Error al cargar detalle', this.resolveErrorMessage(error, 'No se pudo cargar el detalle del parámetro. Intente nuevamente más tarde.'));
       }
     });
   }
@@ -141,34 +132,14 @@ export class ConfiguracionParametrosComponent implements OnInit {
       this.cambiandoEstado.add(parametro.parametro_id);
       this.parametrosAdminService.actualizarEstadoParametro(parametro.parametro_id, estadoNuevo).subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: `Parámetro ${estadoNuevo ? 'activado' : 'desactivado'} correctamente`,
-            showConfirmButton: false,
-            timer: 2200,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(`Parámetro ${estadoNuevo ? 'activado' : 'desactivado'}`);
           this.cargarParametros();
           this.cambiandoEstado.delete(parametro.parametro_id);
         },
         error: (error) => {
           this.cambiandoEstado.delete(parametro.parametro_id);
           event.source.checked = !estadoNuevo;
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudo actualizar el estado'),
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError('Error al actualizar estado', this.resolveErrorMessage(error, 'No se pudo actualizar el estado del parámetro. Intente nuevamente más tarde.'));
         }
       });
     });
@@ -204,17 +175,7 @@ export class ConfiguracionParametrosComponent implements OnInit {
           this.totalRegistros = response.total;
         },
         error: (error) => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudieron cargar los parámetros'),
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError('Error al cargar', this.resolveErrorMessage(error, 'No se pudieron cargar los parámetros. Intente nuevamente más tarde.'));
         },
         complete: () => {
           this.cargandoLista = false;

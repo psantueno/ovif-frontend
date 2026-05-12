@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 
 import { TipoPauta, TipoPautaPayload, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
 
@@ -71,14 +72,7 @@ export class TipoPautaDialogComponent implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'warning',
-        title: 'Revisá los campos obligatorios',
-        showConfirmButton: false,
-        timer: 2200
-      });
+      mostrarToastWarning('Revisá los campos obligatorios');
       return;
     }
 
@@ -93,31 +87,11 @@ export class TipoPautaDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.mode === 'edit' ? 'Tipo de pauta actualizado' : 'Tipo de pauta creado',
-            showConfirmButton: false,
-            timer: 2200,
-            timerProgressBar: true,
-            background: '#f0fdf4',
-            color: '#14532d'
-          });
+          mostrarToastExito(this.mode === 'edit' ? 'Tipo de pauta actualizado' : 'Tipo de pauta creado');
           this.dialogRef.close(true);
         },
         error: (error) => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'error',
-            title: this.resolveErrorMessage(error, 'No se pudo guardar el tipo de pauta'),
-            showConfirmButton: false,
-            timer: 3500,
-            timerProgressBar: true,
-            background: '#fee2e2',
-            color: '#7f1d1d'
-          });
+          mostrarToastError('Error al guardar', this.resolveErrorMessage(error, 'No se pudo guardar el tipo de pauta. Intente nuevamente más tarde.'));
         }
       });
   }

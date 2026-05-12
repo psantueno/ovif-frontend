@@ -9,9 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatOption, MatSelect } from '@angular/material/select';
 import { finalize } from 'rxjs/operators';
-import Swal from 'sweetalert2';
 import { resolveErrorMessage } from '../../../core/utils/error.util';
-import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 
 import { Pauta, PautasAdminService, PautaPayload } from '../../../services/pautas-admin.service';
 import { ConvenioSelectOption, ConvenioService } from '../../../services/convenio.service';
@@ -76,27 +75,13 @@ export class PautaDialogComponent implements OnInit {
 
   guardar(): void {
     if (this.sinTiposPauta) {
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'warning',
-        title: 'No hay tipos de pauta cargados. Creá uno antes de guardar.',
-        showConfirmButton: false,
-        timer: 3000
-      });
+      mostrarToastWarning('No hay tipos de pauta cargados. Creá uno antes de guardar.');
       return;
     }
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'warning',
-        title: 'Revisá los campos obligatorios',
-        showConfirmButton: false,
-        timer: 2200
-      });
+      mostrarToastWarning('Revisá los campos obligatorios');
       return;
     }
 

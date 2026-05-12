@@ -16,7 +16,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
 import { BehaviorSubject, Subject, combineLatest, map, startWith, takeUntil } from 'rxjs';
 import Swal from 'sweetalert2';
-
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { EjercicioCerradoResponse, MunicipioSelectOption, MunicipioService } from '../../../services/municipio.service';
 
@@ -222,25 +222,13 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       motivoControl?.markAsTouched();
       observacionesControl?.markAsTouched();
       const message = this.obtenerMensajeErrorFormulario(fechaControl, tipoControl, motivoControl, observacionesControl);
-      Swal.fire({
-        icon: 'warning',
-        title: 'Datos incompletos o inválidos',
-        text: message,
-        confirmButtonText: 'Entendido',
-        confirmButtonColor: '#3085d6'
-      });
+      mostrarToastWarning('Datos incompletos o inválidos', message);
       return;
     }
 
     const value = fechaControl.value;
     if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Fecha inválida',
-        text: 'Seleccione una fecha válida antes de guardar.',
-        confirmButtonText: 'Aceptar',
-        confirmButtonColor: '#d33'
-      });
+      mostrarToastWarning('Fecha inválida', 'Seleccione una fecha válida antes de guardar.');
       return;
     }
 
@@ -272,24 +260,12 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       observaciones: observacionesControl?.value ?? ''
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Prórroga actualizada',
-          text: 'La nueva fecha de cierre se guardó correctamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        mostrarToastExito('Prórroga actualizada', 'La nueva fecha de cierre se guardó correctamente.');
         this.cargarEjerciciosCerrados();
       },
       error: (err) => {
         console.error('Error al actualizar la prórroga', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'No se pudo guardar',
-          text: 'Verificá los datos e intentá nuevamente.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
+        mostrarToastError('No se pudo guardar', 'Verificá los datos e intentá nuevamente.');
       },
       complete: () => {
         this.guardandoProrroga = false;
@@ -334,13 +310,7 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('Error al cargar municipios', err);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al cargar municipios',
-            text: 'No pudimos obtener el listado de municipios.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
-          });
+          mostrarToastError('Error al cargar municipios', 'No pudimos obtener el listado de municipios.');
         },
         complete: () => {
           this.cargandoMunicipios = false;
@@ -386,13 +356,7 @@ export class ProrrogaCierreComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error al obtener ejercicios cerrados', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al cargar periodos',
-          text: 'No pudimos obtener los periodos cerrados del municipio.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
+        mostrarToastError('Error al cargar periodos', 'No pudimos obtener los periodos cerrados del municipio.');
       },
       complete: () => {
         this.cargandoPeriodos = false;

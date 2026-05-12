@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { UsuariosService } from '../../../services/usuarios.service';
 import { finalize } from 'rxjs/operators';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 
 @Component({
   selector: 'app-usuarios-dialog',
@@ -46,7 +47,7 @@ export class UsuariosDialogComponent implements OnInit {
     nombre: [this.data?.nombre || '', Validators.required],
     apellido: [this.data?.apellido || '', Validators.required],
     password: [
-      '', 
+      '',
       !this.data?.usuario ? Validators.required : [] // ✅ solo requerido al crear
     ],
     activo: [this.data?.activo ?? true],
@@ -56,14 +57,7 @@ export class UsuariosDialogComponent implements OnInit {
   guardar() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'warning',
-        title: 'Completa los campos obligatorios',
-        showConfirmButton: false,
-        timer: 2000,
-      });
+      mostrarToastWarning('Revisá los campos obligatorios');
       return;
     }
 
@@ -78,18 +72,11 @@ export class UsuariosDialogComponent implements OnInit {
       .pipe(finalize(() => (this.enviando = false)))
       .subscribe({
         next: () => {
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'success',
-            title: this.data?.usuario_id ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente',
-            showConfirmButton: false,
-            timer: 1800,
-          });
+          mostrarToastExito(this.data?.usuario_id ? 'Usuario actualizado' : 'Usuario creado');
           this.dialogRef.close(true);
         },
         error: (err) => {
-          Swal.fire('Error', err.error?.error || 'No se pudo guardar el usuario.', 'error');
+          mostrarToastError('Error al guardar', err.error?.error || 'No se pudo guardar el usuario. Intente nuevamente más tarde.');
         },
       });
   }

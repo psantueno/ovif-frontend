@@ -295,17 +295,18 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
           take(1),
           finalize(() => {
             this.guardando = false;
+            this.limpiarArchivoMasiva();
           })
         )
         .subscribe({
           next: (response) => {
             if (response.resumen.errores?.length) {
               this.mostrarToastAviso(
-                'La carga se completo con observaciones.',
+                'La carga se completo con observaciones',
                 response.resumen.errores.join('\n')
               );
             } else {
-              this.mostrarToastExito('Los datos fueron guardados correctamente.');
+              this.mostrarToastExito('Los datos fueron guardados correctamente', 'Ya podés descargar el informe actualizado');
             }
           },
           error: (error) => {
@@ -495,14 +496,15 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
     };
   }
 
-  private mostrarToastExito(mensaje: string): Promise<void> {
+  private mostrarToastExito(title: string, mensaje: string = ''): Promise<void> {
     return Swal.fire({
       toast: true,
       icon: 'success',
-      title: mensaje,
+      title: title,
+      text: mensaje,
       position: 'top-end',
       showConfirmButton: false,
-      timer: 2500,
+      timer: 8000,
       timerProgressBar: true,
     }).then(() => undefined);
   }
@@ -511,7 +513,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
     return Swal.fire({
       toast: true,
       icon: 'info',
-      title,
+      title: title,
       text: mensaje,
       position: 'top-end',
       showConfirmButton: false,

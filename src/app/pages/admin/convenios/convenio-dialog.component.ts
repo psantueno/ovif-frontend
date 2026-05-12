@@ -16,9 +16,8 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 import { finalize } from 'rxjs/operators';
-import Swal from 'sweetalert2';
 import { resolveErrorMessage } from '../../../core/utils/error.util';
-import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 
 import { Convenio, ConvenioPayload, ConveniosAdminService } from '../../../services/convenios-admin.service';
 
@@ -90,14 +89,7 @@ export class ConvenioDialogComponent implements OnInit {
 
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      Swal.fire({
-        toast: true,
-        position: 'top-end',
-        icon: 'warning',
-        title: 'Revisá los campos obligatorios',
-        showConfirmButton: false,
-        timer: 2200
-      });
+      mostrarToastWarning('Revisá los campos obligatorios');
       return;
     }
 

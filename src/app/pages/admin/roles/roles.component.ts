@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDividerModule } from '@angular/material/divider';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../../core/utils/swal.util';
 
 import { UsuariosService, Usuario } from '../../../services/usuarios.service';
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
@@ -154,13 +155,7 @@ export class RolesComponent implements OnInit {
 
     this.usuariosService.actualizarRolesUsuario(this.selectedUsuario.usuario_id, rolesSeleccionados).subscribe({
       next: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Roles actualizados',
-          text: 'Los roles del usuario fueron actualizados correctamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        mostrarToastExito('Roles actualizados', 'Los cambios en los roles del usuario se guardaron correctamente.');
 
         if (Array.isArray((this.selectedUsuario as any).Roles)) {
           const rolesActualizados = rolesSeleccionados
@@ -172,13 +167,7 @@ export class RolesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al actualizar roles', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'No se pudo guardar',
-          text: 'Revisa tu conexión e intenta nuevamente.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
+        mostrarToastError('Error al guardar', 'No se pudieron actualizar los roles del usuario. Intente nuevamente más tarde.');
       },
       complete: () => {
         this.guardandoRoles = false;
@@ -243,13 +232,7 @@ export class RolesComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error al cargar roles', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'Error al cargar roles',
-          text: 'No fue posible obtener el catálogo de roles.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
+        mostrarToastError('Error al cargar roles', 'No fue posible obtener el catálogo de roles.');
         this.roles = [
           { rol_id: 1, nombre: 'Administrador', descripcion: 'Acceso total al sistema' },
           { rol_id: 2, nombre: 'Operador', descripcion: 'Gestión operativa de módulos asignados' }
@@ -298,23 +281,10 @@ export class RolesComponent implements OnInit {
       error: (err) => {
         if (err?.status === 404) {
           this.rolesAsignados = new Set();
-          Swal.fire({
-            toast: true,
-            position: 'top-end',
-            icon: 'info',
-            title: 'El usuario aún no tiene roles asignados.',
-            showConfirmButton: false,
-            timer: 2500
-          });
+          mostrarToastWarning('El usuario aún no tiene roles asignados.', 'No se encontraron roles asociados a este usuario.');
         } else {
           console.error('Error al obtener roles del usuario', err);
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al cargar roles',
-            text: 'No pudimos obtener los roles actuales del usuario.',
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
-          });
+          mostrarToastError('Error al cargar roles', 'No pudimos obtener los roles actuales del usuario.');
         }
 
         this.cargandoRolesAsignados = false;

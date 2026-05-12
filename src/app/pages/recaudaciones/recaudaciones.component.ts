@@ -316,22 +316,23 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
           take(1),
           finalize(() => {
             this.guardando = false;
+            this.limpiarArchivoMasiva();
           })
         )
         .subscribe({
           next: (response) => {
             if (response.resumen.errores?.length) {
               const erroresConcatenados = response.resumen.errores.join('\n');
-              this.mostrarToastAviso('La carga se completó con observaciones.', erroresConcatenados);
+              this.mostrarToastAviso('La carga se completó con observaciones', erroresConcatenados);
             } else {
-              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+              this.mostrarToastExito('Los datos fueron guardados correctamente', 'Ya podés descargar el informe actualizado');
             }
           },
           error: (error) => {
             console.error('Error al guardar recaudaciones:', error);
             const { titulo, mensaje } = this.resolverMensajeErrorBackend(
               error,
-              'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+              'No pudimos guardar los datos. Intentá nuevamente más tarde.'
             );
             this.mostrarError(mensaje, titulo);
           },
@@ -377,12 +378,12 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
     }
 
     if (this.guardando) {
-      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
+      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los datos.');
       return;
     }
 
     if (this.archivoMasivoSeleccionado && this.previsualizacionMasiva.length > 0) {
-      this.mostrarError('Subí los importes antes de generar el informe para visualizarlo actualizado.');
+      this.mostrarError('Subí los datos antes de generar el informe para visualizarlo actualizado.');
       return;
     }
 
@@ -559,14 +560,15 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
     return `${day}/${month}/${year}`;
   }
 
-  private mostrarToastExito(mensaje: string): Promise<void> {
+  private mostrarToastExito(title: string, mensaje: string = ''): Promise<void> {
     return Swal.fire({
       toast: true,
       icon: 'success',
-      title: mensaje,
+      title: title,
+      text: mensaje,
       position: 'top-end',
       showConfirmButton: false,
-      timer: 2500,
+      timer: 8000,
       timerProgressBar: true,
     }).then(() => undefined);
   }
@@ -710,7 +712,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
   private confirmarGuardadoRectificacion() {
     return Swal.fire({
-      title: '¿Confirma que desea guardar los importes de rectificación?',
+      title: '¿Confirma que desea guardar los datos de rectificación?',
       text: 'Asegurate de que los datos ingresados sean correctos antes de confirmar.',
       icon: 'question',
       showCancelButton: true,

@@ -264,22 +264,23 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
             take(1),
             finalize(() => {
               this.guardando = false;
+              this.limpiarArchivoMasiva();
             })
           )
           .subscribe({
             next: (response) => {
               if(response.resumen.errores?.length){
                 const erroresConcatenados = response.resumen.errores.join('\n');
-                this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+                this.mostrarToastAviso('Los carga se completó con observaciones', erroresConcatenados);
               }else{
-                this.mostrarToastExito('Los importes fueron guardados correctamente.');
+                this.mostrarToastExito('Los datos fueron guardados correctamente', 'Ya podés descargar el informe actualizado');
               }
             },
             error: (error) => {
               console.error('Error al guardar las remuneraciones:', error);
               const { titulo, mensaje } = this.resolverMensajeErrorBackend(
                 error,
-                'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+                'No pudimos guardar los datos. Intentá nuevamente más tarde.'
               );
               this.mostrarError(mensaje, titulo);
             },
@@ -294,22 +295,23 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
           take(1),
           finalize(() => {
             this.guardando = false;
+            this.limpiarArchivoMasiva();
           })
         )
         .subscribe({
           next: (response) => {
             if(response.resumen.errores?.length){
               const erroresConcatenados = response.resumen.errores.join('\n');
-              this.mostrarToastAviso('Los importes se cargaron parcialmente. Revise estos errores:', erroresConcatenados);
+              this.mostrarToastAviso('Los carga se completó con observaciones', erroresConcatenados);
             }else{
-              this.mostrarToastExito('Los importes fueron guardados correctamente.');
+              this.mostrarToastExito('Los datos fueron guardados correctamente', 'Ya podés descargar el informe actualizado');
             }
           },
           error: (error) => {
             console.error('Error al guardar las remuneraciones:', error);
             const { titulo, mensaje } = this.resolverMensajeErrorBackend(
               error,
-              'No pudimos guardar los importes. Intentá nuevamente más tarde.'
+              'No pudimos guardar los datos. Intentá nuevamente más tarde.'
             );
             this.mostrarError(mensaje, titulo);
           },
@@ -347,7 +349,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       return;
     }
     if (this.guardando) {
-      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los importes.');
+      this.mostrarMensaje('info', 'Esperá a que finalice el guardado de los datos.');
       return;
     }
     if (this.erroresCargaMasiva.length) {
@@ -569,14 +571,15 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
     return `${day}/${month}/${year}`;
   }
 
-  private mostrarToastExito(mensaje: string): Promise<void> {
+  private mostrarToastExito(title: string, mensaje: string = ''): Promise<void> {
     return Swal.fire({
       toast: true,
       icon: 'success',
-      title: mensaje,
+      title: title,
+      text: mensaje,
       position: 'top-end',
       showConfirmButton: false,
-      timer: 2500,
+      timer: 8000,
       timerProgressBar: true,
     }).then(() => undefined);
   }
@@ -678,7 +681,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
   private confirmarGuardadoRectificacion() {
     return Swal.fire({
-      title: '¿Confirma que desea guardar los importes de rectificación?',
+      title: '¿Confirma que desea guardar los datos de rectificación?',
       text: 'Asegurate de que los datos ingresados sean correctos antes de confirmar.',
       icon: 'question',
       showCancelButton: true,

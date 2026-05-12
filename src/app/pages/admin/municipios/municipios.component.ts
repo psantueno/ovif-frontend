@@ -288,13 +288,7 @@ export class MunicipiosComponent implements OnInit {
           }
         },
         error: (error) => {
-          Swal.fire({
-            icon: 'error',
-            title: 'Error al cargar',
-            text: resolveErrorMessage(error, 'No se pudieron obtener los municipios.'),
-            confirmButtonText: 'Aceptar',
-            confirmButtonColor: '#d33'
-          });
+          mostrarToastError('Error al cargar municipios', resolveErrorMessage(error, 'No se pudieron cargar los municipios. Intente nuevamente más tarde.'));
         },
         complete: () => {
           this.cargandoLista = false;

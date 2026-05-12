@@ -12,6 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import Swal from 'sweetalert2';
+import { mostrarToastExito, mostrarToastError } from '../../../core/utils/swal.util';
 
 import { UsuariosService, Usuario } from '../../../services/usuarios.service';
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
@@ -203,23 +204,11 @@ export class AsignacionMunicipiosComponent implements OnInit {
 
     this.usuariosService.actualizarMunicipiosUsuario(this.selectedUsuario.usuario_id, municipios).subscribe({
       next: () => {
-        Swal.fire({
-          icon: 'success',
-          title: 'Asignación guardada',
-          text: 'Los municipios fueron actualizados correctamente.',
-          timer: 2000,
-          showConfirmButton: false
-        });
+        mostrarToastExito('Asignación guardada', 'Los municipios asignados al usuario han sido actualizados correctamente.');
       },
       error: (err) => {
         console.error('Error al guardar asignación', err);
-        Swal.fire({
-          icon: 'error',
-          title: 'No se pudo guardar',
-          text: 'Revisa tu conexión e intenta nuevamente.',
-          confirmButtonText: 'Aceptar',
-          confirmButtonColor: '#d33'
-        });
+        mostrarToastError('Error al guardar', 'No pudimos actualizar la asignación de municipios. Intente nuevamente más tarde.');
       },
       complete: () => {
         this.guardandoAsignacion = false;
