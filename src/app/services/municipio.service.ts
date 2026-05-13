@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, map, catchError, of, throwError, from, switchMap } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -135,10 +135,10 @@ export interface RemuneracionUpsertPayload {
   basico_cargo_salarial: number,
   total_remunerativo: number,
   sac?: number,
-  cant_hs_extras_50?: number,
-  importe_hs_extras_50?: number,
-  cant_hs_extras_100?: number,
-  importe_hs_extras_100?: number,
+  cant_hs_extra_50?: number,
+  importe_hs_extra_50?: number,
+  cant_hs_extra_100?: number,
+  importe_hs_extra_100?: number,
   total_no_remunerativo?: number,
   total_ropa?: number,
   total_bonos?: number,
@@ -210,6 +210,7 @@ export interface UpsertResponse {
 export class MunicipioService {
   private readonly apiUrl = inject(API_URL);
   private readonly http = inject(HttpClient);
+  private readonly zone = inject(NgZone);
   private readonly storageKey = 'municipioSeleccionado';
   private readonly ejercicioMesKey = 'ejercicioMesSeleccionado';
   private readonly municipioSubject = new BehaviorSubject<any>(this.readFromStorage());
@@ -280,7 +281,7 @@ export class MunicipioService {
       allowOutsideClick: false,
       allowEscapeKey: false
     }).then(() => {
-      aplicarSeleccion();
+      this.zone.run(() => aplicarSeleccion());
     });
   }
 

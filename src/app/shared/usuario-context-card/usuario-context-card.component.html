@@ -21,6 +21,10 @@
       <ng-container *ngIf="municipios.length > 0 && municipioActual; else sinMunicipio">
         <mat-select [value]="municipioActual?.municipio_id" (selectionChange)="onMunicipioChange($event.value)"
           class="texto">
+          <mat-select-trigger [title]="municipioActual?.municipio_nombre || ''">
+            {{ nombreMunicipioCorto(municipioActual?.municipio_nombre) }}
+          </mat-select-trigger>
+
           <mat-option *ngFor="let m of municipios" [value]="m.municipio_id">
             {{ m.municipio_nombre }}
           </mat-option>

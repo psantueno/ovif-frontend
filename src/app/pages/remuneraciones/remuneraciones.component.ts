@@ -741,7 +741,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       fecha_inicio_servicio: remuneracion.fecha_inicio_servicio,
       basico_cargo_salarial: remuneracion.basico_cargo_salarial,
       total_remunerativo: remuneracion.total_remunerativo,
-      total_descuentos: remuneracion.total_bonos,
+      total_descuentos: remuneracion.total_descuentos,
       total_issn: remuneracion.total_issn,
       seguro_vida_obligatorio: remuneracion.seguro_vida_obligatorio,
       neto_a_cobrar: remuneracion.neto_a_cobrar
@@ -749,10 +749,10 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
     if(remuneracion.fecha_fin_servicio) payload.fecha_fin_servicio = remuneracion.fecha_fin_servicio;
     if(remuneracion.sac && remuneracion.sac !== 0) payload.sac = remuneracion.sac;
-    if(remuneracion.cant_hs_extras_50 && remuneracion.cant_hs_extras_50 !== 0) payload.cant_hs_extras_50 = remuneracion.cant_hs_extras_50;
-    if(remuneracion.cant_hs_extras_100 && remuneracion.cant_hs_extras_100 !== 0) payload.cant_hs_extras_100 = remuneracion.cant_hs_extras_100;
-    if(remuneracion.importe_horas_extras_50 && remuneracion.importe_horas_extras_50 !== 0) payload.importe_hs_extras_50 = remuneracion.importe_horas_extras_50;
-    if(remuneracion.importe_horas_extras_100 && remuneracion.importe_horas_extras_100 !== 0) payload.importe_hs_extras_100 = remuneracion.importe_horas_extras_100;
+    if(remuneracion.cant_hs_extras_50 && remuneracion.cant_hs_extras_50 !== 0) payload.cant_hs_extra_50 = remuneracion.cant_hs_extras_50;
+    if(remuneracion.cant_hs_extras_100 && remuneracion.cant_hs_extras_100 !== 0) payload.cant_hs_extra_100 = remuneracion.cant_hs_extras_100;
+    if(remuneracion.importe_horas_extras_50 && remuneracion.importe_horas_extras_50 !== 0) payload.importe_hs_extra_50 = remuneracion.importe_horas_extras_50;
+    if(remuneracion.importe_horas_extras_100 && remuneracion.importe_horas_extras_100 !== 0) payload.importe_hs_extra_100 = remuneracion.importe_horas_extras_100;
     if(remuneracion.total_no_remunerativo && remuneracion.total_no_remunerativo !== 0) payload.total_no_remunerativo = Number(remuneracion.total_no_remunerativo);
     if(remuneracion.total_bonos && remuneracion.total_bonos !== 0) payload.total_bonos = Number(remuneracion.total_bonos);
     if(remuneracion.total_ropa && remuneracion.total_ropa !== 0) payload.total_ropa = Number(remuneracion.total_ropa);
