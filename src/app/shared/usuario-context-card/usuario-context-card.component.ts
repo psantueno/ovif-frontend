@@ -103,14 +103,19 @@ export class UsuarioContextCardComponent implements OnInit, OnDestroy {
     return '';
   }
 
-  onMunicipioChange(id: number) {
+  nombreMunicipioCorto(nombre: string | null | undefined): string {
+    const nombreNormalizado = (nombre || '').trim();
+    return nombreNormalizado.length > 10 ? `${nombreNormalizado.slice(0, 10)}...` : nombreNormalizado;
+  }
+
+  async onMunicipioChange(id: number) {
     const seleccionado = this.municipios.find((m) => m.municipio_id === id);
     if (!seleccionado) {
       return;
     }
 
     this.municipioActual = seleccionado;
-    this.municipioService.setMunicipio(seleccionado);
+    await this.municipioService.setMunicipio(seleccionado);
     this.router.navigate(['/home']);
   }
 

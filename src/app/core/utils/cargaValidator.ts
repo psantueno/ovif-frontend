@@ -51,6 +51,29 @@ const decimalSchema = (campo: string = "importe") =>
     error: `El campo "${campo}" debe ser un número decimal válido`
   }));
 
+const cantidadHorasExtraSchema = (campo: string) =>
+  z.preprocess((value) => {
+    if (typeof value === "number") {
+      return value;
+    }
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (/^\d+([.,]\d{1,2})?$/.test(trimmed)) {
+        return obtenerNumeroDecimal(trimmed);
+      }
+      return value;
+    }
+
+    return value;
+  },
+  z
+    .number({ error: `El campo "${campo}" debe ser un número decimal válido` })
+    .min(0, `El campo "${campo}" debe ser un número mayor o igual a 0`)
+    .max(9999.99, `El campo "${campo}" no puede superar 9999,99`)
+    .refine((n) => Number.isFinite(n), `El campo "${campo}" debe ser un número decimal válido`)
+    .refine((n) => Number.isInteger(n * 100), `El campo "${campo}" debe tener como máximo 2 decimales`));
+
 const fechaSchema = z.preprocess(
   preprocessFecha,
   z.string()
@@ -130,17 +153,9 @@ export const RemuneracionesSchema = z.object({
   basico_cargo_salarial: decimalSchema('Básico carga salarial'),
   total_remunerativo: decimalSchema('Total remunerativo'),
   sac: decimalSchema('Sac'),
-  cant_hs_extras_50: z
-    .number('La cantidad de horas extra 50% debe ser un número')
-    .int('La cantidad de horas extra 50% debe ser un número entero')
-    .min(0, 'La cantidad de horas extra 50% debe ser un número mayor a 0')
-    .refine(n => isFinite(Number(n)) && !isNaN(n), 'La cantidad de horas extra 50% debe ser un número entero mayor a 0'),
+  cant_hs_extras_50: cantidadHorasExtraSchema('Cantidad de horas extra 50%'),
   importe_horas_extras_50: decimalSchema('Importe horas extras 50'),
-  cant_hs_extras_100: z
-  .number('La cantidad de horas extra 100% debe ser un número')
-  .int('La cantidad de horas extra 100% debe ser un número entero')
-  .min(0, 'La cantidad de horas extra 100% debe ser un número mayor a 0')
-  .refine(n => isFinite(Number(n)) && !isNaN(n), 'La cantidad de horas extra 100% debe ser un número entero mayor a 0'),
+  cant_hs_extras_100: cantidadHorasExtraSchema('Cantidad de horas extra 100%'),
   importe_horas_extras_100: decimalSchema('Importe horas extras 100'),
   total_no_remunerativo: decimalSchema('Total no remunerativo'),
   total_ropa: decimalSchema('Total ropa'),
