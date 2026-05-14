@@ -65,6 +65,7 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: GastoPreviewRow[] = [];
+  inputRef: HTMLInputElement | null = null;
 
   totalFilasLeidas = 0;
   filasValidas = 0;
@@ -199,6 +200,9 @@ export class GastosComponent implements OnInit, OnDestroy {
       if (input) {
         input.value = '';
       }
+      if (this.inputRef) {
+        this.inputRef.value = '';
+      }
       return;
     }
 
@@ -210,6 +214,7 @@ export class GastosComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = archivo;
     this.cargandoArchivoMasivo = true;
+    this.inputRef = input ?? null;
 
     try {
       const resultado = await parseGastosExcelFile(archivo);
@@ -315,6 +320,10 @@ export class GastosComponent implements OnInit, OnDestroy {
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
       input.value = '';
+    }
+
+    if (this.inputRef) {
+      this.inputRef.value = '';
     }
 
     this.archivoMasivoSeleccionado = null;
