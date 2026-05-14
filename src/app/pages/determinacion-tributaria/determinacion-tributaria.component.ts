@@ -71,6 +71,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
 
   erroresCargaMasiva: string[] = [];
   cargandoArchivoMasivo = false;
+  inputRef: HTMLInputElement | null = null;
 
   guardando = false;
   descargandoInforme = false;
@@ -198,6 +199,10 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
       if (input) {
         input.value = '';
       }
+
+      if (this.inputRef) {
+        this.inputRef.value = '';
+      }
       return;
     }
 
@@ -209,6 +214,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = archivo;
     this.cargandoArchivoMasivo = true;
+    this.inputRef = input ?? null;
 
     try {
       const resultado = await parseDeterminacionTributariaExcelFile(archivo);
@@ -324,6 +330,9 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
       input.value = '';
+    }
+    if (this.inputRef) {
+      this.inputRef.value = '';
     }
 
     this.archivoMasivoSeleccionado = null;

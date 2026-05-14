@@ -60,7 +60,6 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   mensaje: { tipo: MensajeTipo; texto: string } | null = null;
   mensajeTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  vistaActual: string = 'masiva';
   readonly manualRemuneracionesUrl = '../../../assets/pdfs/carga-informacion/REMUNERACIONES.pdf';
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: Remuneraciones[] = [];
@@ -68,6 +67,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   erroresCargaMasiva: string[] = [];
   erroresPrevisualizacion:ParseError<Remuneraciones>[] = [];
   cargandoArchivoMasivo = false;
+  inputRef: HTMLInputElement | null = null;
 
   guardando = false;
   descargandoInforme = false;
@@ -186,6 +186,10 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
       if (input) {
         input.value = '';
       }
+
+      if (this.inputRef) {
+        this.inputRef.value = '';
+      }
       return;
     }
 
@@ -197,6 +201,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = archivo;
     this.cargandoArchivoMasivo = true;
+    this.inputRef = input ?? null;
 
     try{
       const { rows, file } = await onFileChangeWithMetadata<Remuneraciones>(event);
@@ -322,6 +327,10 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
       input.value = '';
+    }
+
+    if (this.inputRef) {
+      this.inputRef.value = '';
     }
 
     this.archivoMasivoSeleccionado = null;

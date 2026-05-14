@@ -65,6 +65,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
   archivoMasivoSeleccionado: File | null = null;
   previsualizacionMasiva: RecaudacionPreviewRow[] = [];
+  inputRef: HTMLInputElement | null = null;
 
   totalFilasLeidas = 0;
   filasValidas = 0;
@@ -217,6 +218,9 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
       if (input) {
         input.value = '';
       }
+      if (this.inputRef) {
+        this.inputRef.value = '';
+      }
       return;
     }
 
@@ -228,6 +232,7 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
 
     this.archivoMasivoSeleccionado = archivo;
     this.cargandoArchivoMasivo = true;
+    this.inputRef = input ?? null;
 
     try {
       const resultado = await parseRecaudacionesExcelFile(archivo);
@@ -354,6 +359,10 @@ export class RecaudacionesComponent implements OnInit, OnDestroy {
   limpiarArchivoMasiva(input?: HTMLInputElement): void {
     if (input) {
       input.value = '';
+    }
+
+    if (this.inputRef) {
+      this.inputRef.value = '';
     }
 
     this.archivoMasivoSeleccionado = null;
