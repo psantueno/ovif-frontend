@@ -85,7 +85,6 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
 
   const headerRow = Array.isArray(matrix[0]) ? matrix[0] : [];
   const headerRowFiltered = headerRow.filter(row => row !== null && row !== undefined && row !== "")
-console.log("headerrf: ", headerRowFiltered)
   const normalizedHeaders = headerRowFiltered
     .map((header) => normalizeHeader(header))
     .filter((header) => header.length > 0);
@@ -158,14 +157,14 @@ console.log("headerrf: ", headerRowFiltered)
     });
   }
 
-  // Deteccion de duplicados por cod_recurso + cod_fuente_financiera
+  // Deteccion de duplicados por cod_recurso, alineada con la clave real del backend.
   const duplicates = new Map<string, number[]>();
   rows.forEach((row, index) => {
-    if (row.cod_recurso === null || row.cod_fuente_financiera === null) {
+    if (row.cod_recurso === null) {
       return;
     }
 
-    const key = `${row.cod_recurso}__${row.cod_fuente_financiera}`;
+    const key = String(row.cod_recurso);
     const positions = duplicates.get(key) ?? [];
     positions.push(index);
     duplicates.set(key, positions);
@@ -178,9 +177,8 @@ console.log("headerrf: ", headerRowFiltered)
 
     indexes.forEach((index) => {
       const codigo = rows[index].cod_recurso;
-      const fuente = rows[index].cod_fuente_financiera;
       rows[index].errores.push(
-        `La combinación cod_recurso ${codigo} y cod_fuente_financiera ${fuente} está duplicada en el archivo.`
+        `El cod_recurso ${codigo} está duplicado en el archivo.`
       );
       rows[index].tieneError = true;
     });
