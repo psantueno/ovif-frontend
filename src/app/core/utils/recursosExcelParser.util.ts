@@ -157,14 +157,14 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
     });
   }
 
-  // Deteccion de duplicados por cod_recurso, alineada con la clave real del backend.
+  // Deteccion de duplicados por cod_recurso + cod_fuente_financiera.
   const duplicates = new Map<string, number[]>();
   rows.forEach((row, index) => {
-    if (row.cod_recurso === null) {
+    if (row.cod_recurso === null || row.cod_fuente_financiera === null) {
       return;
     }
 
-    const key = String(row.cod_recurso);
+    const key = `${row.cod_recurso}__${row.cod_fuente_financiera}`;
     const positions = duplicates.get(key) ?? [];
     positions.push(index);
     duplicates.set(key, positions);
@@ -177,8 +177,9 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
 
     indexes.forEach((index) => {
       const codigo = rows[index].cod_recurso;
+      const fuente = rows[index].cod_fuente_financiera;
       rows[index].errores.push(
-        `El cod_recurso ${codigo} está duplicado en el archivo.`
+        `La combinación cod_recurso ${codigo} y cod_fuente_financiera ${fuente} está duplicada en el archivo.`
       );
       rows[index].tieneError = true;
     });

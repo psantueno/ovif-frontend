@@ -170,14 +170,14 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
     });
   }
 
-  // Deteccion de duplicados por codigo_partida, alineada con la clave real del backend.
+  // Deteccion de duplicados por codigo_partida + cod_fuente_financiera.
   const duplicates = new Map<string, number[]>();
   rows.forEach((row, index) => {
-    if (row.codigo_partida === null) {
+    if (row.codigo_partida === null || row.cod_fuente_financiera === null) {
       return;
     }
 
-    const key = String(row.codigo_partida);
+    const key = `${row.codigo_partida}__${row.cod_fuente_financiera}`;
     const positions = duplicates.get(key) ?? [];
     positions.push(index);
     duplicates.set(key, positions);
@@ -190,8 +190,9 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
 
     indexes.forEach((index) => {
       const codigo = rows[index].codigo_partida;
+      const fuente = rows[index].cod_fuente_financiera;
       rows[index].errores.push(
-        `El codigo_partida ${codigo} está duplicado en el archivo.`
+        `La combinación codigo_partida ${codigo} y cod_fuente_financiera ${fuente} está duplicada en el archivo.`
       );
       rows[index].tieneError = true;
     });
