@@ -102,7 +102,13 @@ export class EjerciciosService {
   private readonly conveniosUrl = `${this.apiUrl}/convenios`;
   private readonly pautasConvenioUrl = `${this.apiUrl}/pautas-convenio`;
 
-  listarEjercicios(params?: { page?: number; limit?: number; year?: number | string }): Observable<EjerciciosPageResponse> {
+  listarEjercicios(params?: {
+    page?: number;
+    limit?: number;
+    year?: number | string;
+    convenio_id?: number | string | null;
+    tipo_pauta_id?: number | string | null;
+  }): Observable<EjerciciosPageResponse> {
     const httpParams: Record<string, string> = {};
     if (params?.page) {
       httpParams['page'] = String(params.page);
@@ -112,6 +118,12 @@ export class EjerciciosService {
     }
     if (params?.year) {
       httpParams['year'] = String(params.year);
+    }
+    if (params?.convenio_id) {
+      httpParams['convenio_id'] = String(params.convenio_id);
+    }
+    if (params?.tipo_pauta_id) {
+      httpParams['tipo_pauta_id'] = String(params.tipo_pauta_id);
     }
 
     return this.http.get<any>(this.baseUrl, { params: httpParams }).pipe(

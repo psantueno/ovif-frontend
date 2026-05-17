@@ -1,6 +1,8 @@
 import { Component, inject, OnDestroy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import Swal from 'sweetalert2';
 
 // componentes standalone
 import { HeaderComponent } from './shared/header/header.component';
@@ -27,6 +29,7 @@ export class AppComponent implements OnDestroy {
 
   private readonly authService = inject(AuthService);
   private readonly municipioService = inject(MunicipioService);
+  private readonly dialog = inject(MatDialog);
   private readonly userSub: Subscription;
   private readonly sessionExpiredSub: Subscription;
 
@@ -41,12 +44,21 @@ export class AppComponent implements OnDestroy {
     });
 
     this.sessionExpiredSub = this.authService.sessionExpired$.subscribe((expired) => {
+      if (expired) {
+        this.closeFloatingUi();
+      }
       this.sessionExpired = expired;
     });
   }
 
   onSessionExpiredAccepted(): void {
+    this.closeFloatingUi();
     this.authService.acknowledgeSessionExpired();
+  }
+
+  private closeFloatingUi(): void {
+    this.dialog.closeAll();
+    Swal.close();
   }
 
   ngOnDestroy() {

@@ -2,11 +2,18 @@ import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import Swal from 'sweetalert2';
 import { GastosComponent } from '../gastos.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class GastosPendingChangesGuard implements CanDeactivate<GastosComponent> {
+  constructor(private readonly authService: AuthService) {}
+
   canDeactivate(component: GastosComponent): boolean | Promise<boolean> {
-    if (!component.tieneCambiosPendientes()) {
+    if (
+      this.authService.isSessionDead ||
+      this.authService.isLoggingOut ||
+      !component.tieneCambiosPendientes()
+    ) {
       return true;
     }
 

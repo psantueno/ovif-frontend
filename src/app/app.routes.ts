@@ -7,6 +7,7 @@ import { RemuneracionesPendingChangesGuard } from './pages/remuneraciones/guards
 import { DeterminacionPendingChangesGuard } from './pages/determinacion-tributaria/guards/pending-changes.guard';
 import { MunicipioGuard } from './core/guards/municipio.guard';
 import { AdminGuard } from './core/guards/admin.guard';
+import { OperatorGuard } from './core/guards/operator.guard';
 import { MainLayout } from './shared/layouts/main-layout.component';
 import { MaintenanceGuard } from './core/guards/maintenance.guard';
 import { MaintenancePageGuard } from './core/guards/maintenance-page.guard';
@@ -59,44 +60,53 @@ export const routes: Routes = [
     children: [
       {
         path: 'seleccionar-municipio',
+        canActivate: [OperatorGuard],
         loadComponent: () =>
           import('./pages/seleccionar-municipio/seleccionar-municipio.component').then((m) => m.SeleccionarMunicipioComponent)
       },
       {
         path: 'home',
+        canActivate: [OperatorGuard],
         loadComponent: () => import('./pages/home/home.component').then((m) => m.HomeComponent)
       },
       {
         path: 'panel-carga-mensual',
+        canActivate: [OperatorGuard],
         loadComponent: () =>
           import('./pages/panel-carga-mensual/panel-carga-mensual.component').then((m) => m.PanelCargaMensualComponent)
       },
       {
         path: 'subir-archivos',
+        canActivate: [OperatorGuard],
         loadComponent: () => import('./pages/subir-archivos/subir-archivos.component').then((m) => m.SubirArchivosComponent)
       },
       {
         path: 'gastos',
+        canActivate: [OperatorGuard],
         canDeactivate: [GastosPendingChangesGuard],
         loadComponent: () => import('./pages/gastos/gastos.component').then((m) => m.GastosComponent)
       },
       {
         path: 'recursos',
+        canActivate: [OperatorGuard],
         canDeactivate: [RecursosPendingChangesGuard],
         loadComponent: () => import('./pages/recursos/recursos.component').then((m) => m.RecursosComponent)
       },
       {
         path: 'recaudaciones',
+        canActivate: [OperatorGuard],
         canDeactivate: [RecaudacionesPendingChangesGuard],
         loadComponent: () => import('./pages/recaudaciones/recaudaciones.component').then((m) => m.RecaudacionesComponent)
       },
       {
         path: 'remuneraciones',
+        canActivate: [OperatorGuard],
         canDeactivate: [RemuneracionesPendingChangesGuard],
         loadComponent: () => import('./pages/remuneraciones/remuneraciones.component').then((m) => m.RemuneracionesComponent)
       },
       {
         path: 'determinacion-tributaria',
+        canActivate: [OperatorGuard],
         loadComponent: () =>
           import('./pages/determinacion-tributaria/determinacion-tributaria.component').then(
             (m) => m.DeterminacionTributariaComponent
@@ -105,6 +115,7 @@ export const routes: Routes = [
       },
       {
         path: 'historico-ejercicios-cerrados',
+        canActivate: [OperatorGuard],
         loadComponent: () =>
           import('./pages/historico-ejercicios-cerrados/historico-ejercicios-cerrados.component').then(
             (m) => m.HistoricoEjerciciosCerradosComponent
@@ -112,6 +123,7 @@ export const routes: Routes = [
       },
       {
         path: 'panel-carga-rectificaciones',
+        canActivate: [OperatorGuard],
         loadComponent: () =>
           import('./pages/rectificaciones/panel-carga-rectificaciones.component').then((m) => m.PanelCargaRectificacionesComponent)
       },

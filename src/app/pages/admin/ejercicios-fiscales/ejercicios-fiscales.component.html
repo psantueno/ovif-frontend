@@ -8,7 +8,7 @@
         <h3>Administración de Ejercicios Fiscales</h3>
         <hr>
         <ol>
-          <li>Consultá el listado completo paginado o filtrado por ejercicio.</li>
+          <li>Consultá el listado completo paginado o filtrado por ejercicio, convenio o tipo de pauta.</li>
           <li>Creá, editá o eliminá registros desde las acciones disponibles.</li>
         </ol>
       </div>
@@ -38,6 +38,48 @@
             <mat-icon>close</mat-icon>
           </button>
         </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>
+            <mat-icon aria-hidden="true" class="filter-label-icon">business</mat-icon>
+            Convenio
+          </mat-label>
+          <mat-select [formControl]="convenioControl" [disabled]="cargandoConvenios">
+            <mat-option *ngFor="let convenio of convenios" [value]="convenio.convenio_id">
+              {{ convenio.nombre }}
+            </mat-option>
+          </mat-select>
+          <button
+            mat-icon-button
+            type="button"
+            matSuffix
+            *ngIf="convenioControl.value"
+            (click)="limpiarConvenioFiltro()"
+            aria-label="Limpiar filtro de convenio">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>
+            <mat-icon aria-hidden="true" class="filter-label-icon">category</mat-icon>
+            Tipo de pauta
+          </mat-label>
+          <mat-select [formControl]="tipoPautaControl" [disabled]="cargandoTiposPauta">
+            <mat-option *ngFor="let tipoPauta of tiposPauta" [value]="tipoPauta.tipo_pauta_id">
+              {{ tipoPauta.nombre }}
+            </mat-option>
+          </mat-select>
+          <button
+            mat-icon-button
+            type="button"
+            matSuffix
+            *ngIf="tipoPautaControl.value"
+            (click)="limpiarTipoPautaFiltro()"
+            aria-label="Limpiar filtro de tipo de pauta">
+            <mat-icon>close</mat-icon>
+          </button>
+        </mat-form-field>
       </div>
 
       <div class="list-state" *ngIf="cargando">
@@ -47,7 +89,7 @@
 
       <div class="list-state" *ngIf="!cargando && totalRegistros === 0">
         <mat-icon>inventory_2</mat-icon>
-        <span>No hay ejercicios cargados.</span>
+        <span>No existen ejercicios fiscales con los filtros seleccionados.</span>
       </div>
 
       <div class="admin-tabla-wrapper" *ngIf="!cargando && totalRegistros > 0">

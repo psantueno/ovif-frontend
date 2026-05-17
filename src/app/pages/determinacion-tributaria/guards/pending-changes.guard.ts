@@ -2,11 +2,18 @@ import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import Swal from 'sweetalert2';
 import { DeterminacionTributariaComponent } from '../determinacion-tributaria.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class DeterminacionPendingChangesGuard implements CanDeactivate<DeterminacionTributariaComponent> {
+  constructor(private readonly authService: AuthService) {}
+
   canDeactivate(component: DeterminacionTributariaComponent): boolean | Promise<boolean> {
-    if (!component.tieneCambiosPendientes()) {
+    if (
+      this.authService.isSessionDead ||
+      this.authService.isLoggingOut ||
+      !component.tieneCambiosPendientes()
+    ) {
       return true;
     }
 

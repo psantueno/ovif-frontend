@@ -20,6 +20,8 @@ import { confirmarEliminacion } from '../../../core/utils/swal.util';
 
 import { AdminNavbarComponent, AdminBreadcrumb } from '../../../shared/components/admin-navbar/admin-navbar.component';
 import { EjerciciosService, EjercicioMes, EjerciciosPageResponse } from '../../../services/ejercicios.service';
+import { ConvenioService, ConvenioSelectOption } from '../../../services/convenio.service';
+import { TipoPauta, TiposPautaAdminService } from '../../../services/tipos-pauta-admin.service';
 import { EjerciciosFiscalesDialogComponent } from './ejercicios-fiscales-dialog.component';
 
 interface MesOption {
@@ -80,15 +82,24 @@ export class EjerciciosFiscalesComponent implements OnInit {
   pageIndex = 0;
   readonly pageSizeOptions = [12];
   yearControl = new FormControl<string | null>(null);
+  convenioControl = new FormControl<number | null>(null);
+  tipoPautaControl = new FormControl<number | null>(null);
+  convenios: ConvenioSelectOption[] = [];
+  tiposPauta: TipoPauta[] = [];
+  cargandoConvenios = false;
+  cargandoTiposPauta = false;
   private readonly destroyRef = inject(DestroyRef);
   private yearFilter: string | null = null;
 
   constructor(
     private readonly ejerciciosService: EjerciciosService,
+    private readonly convenioService: ConvenioService,
+    private readonly tiposPautaService: TiposPautaAdminService,
     private readonly dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
+    this.cargarCatalogos();
     this.yearControl.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef), debounceTime(300), distinctUntilChanged())
       .subscribe((value) => {
@@ -100,7 +111,30 @@ export class EjerciciosFiscalesComponent implements OnInit {
         this.pageIndex = 0;
         this.cargarEjercicios();
       });
+
+    this.convenioControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged())
+      .subscribe(() => {
+        this.pageIndex = 0;
+        this.cargarEjercicios();
+      });
+
+    this.tipoPautaControl.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef), distinctUntilChanged())
+      .subscribe(() => {
+        this.pageIndex = 0;
+        this.cargarEjercicios();
+      });
+
     this.cargarEjercicios();
+  }
+
+  limpiarConvenioFiltro(): void {
+    this.convenioControl.reset();
+  }
+
+  limpiarTipoPautaFiltro(): void {
+    this.tipoPautaControl.reset();
   }
 
   mesLabel(mes: number): string {
@@ -187,17 +221,81 @@ export class EjerciciosFiscalesComponent implements OnInit {
     });
   }
 
+  private cargarCatalogos(): void {
+    this.cargandoConvenios = true;
+    this.convenioService.getCatalogoConvenios()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.cargandoConvenios = false;
+        })
+      )
+      .subscribe({
+        next: (convenios) => {
+          this.convenios = convenios;
+        },
+        error: () => {
+          this.convenios = [];
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al cargar convenios',
+            text: 'No se pudo obtener el catálogo de convenios.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#d33'
+          });
+        }
+      });
+
+    this.cargandoTiposPauta = true;
+    this.tiposPautaService.getCatalogoTiposPauta()
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        finalize(() => {
+          this.cargandoTiposPauta = false;
+        })
+      )
+      .subscribe({
+        next: (tiposPauta) => {
+          this.tiposPauta = tiposPauta;
+        },
+        error: () => {
+          this.tiposPauta = [];
+          Swal.fire({
+            icon: 'error',
+            title: 'Error al cargar tipos de pauta',
+            text: 'No se pudo obtener el catálogo de tipos de pauta.',
+            confirmButtonText: 'Aceptar',
+            confirmButtonColor: '#d33'
+          });
+        }
+      });
+  }
+
   private cargarEjercicios(): void {
     this.cargando = true;
     let recargandoPaginaAnterior = false;
     const page = this.pageIndex + 1;
-    const params: { page: number; limit: number; year?: string } = {
+    const params: {
+      page: number;
+      limit: number;
+      year?: string;
+      convenio_id?: number;
+      tipo_pauta_id?: number;
+    } = {
       page,
       limit: this.pageSize
     };
 
     if (this.yearFilter) {
       params.year = this.yearFilter;
+    }
+    const convenioId = Number(this.convenioControl.value);
+    if (Number.isInteger(convenioId) && convenioId > 0) {
+      params.convenio_id = convenioId;
+    }
+    const tipoPautaId = Number(this.tipoPautaControl.value);
+    if (Number.isInteger(tipoPautaId) && tipoPautaId > 0) {
+      params.tipo_pauta_id = tipoPautaId;
     }
 
     this.ejerciciosService

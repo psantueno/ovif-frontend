@@ -2,11 +2,18 @@ import { Injectable } from '@angular/core';
 import { CanDeactivate } from '@angular/router';
 import Swal from 'sweetalert2';
 import { RecursosComponent } from '../recursos.component';
+import { AuthService } from '../../../services/auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class RecursosPendingChangesGuard implements CanDeactivate<RecursosComponent> {
+  constructor(private readonly authService: AuthService) {}
+
   canDeactivate(component: RecursosComponent): boolean | Promise<boolean> {
-    if (!component.tieneCambiosPendientes()) {
+    if (
+      this.authService.isSessionDead ||
+      this.authService.isLoggingOut ||
+      !component.tieneCambiosPendientes()
+    ) {
       return true;
     }
 

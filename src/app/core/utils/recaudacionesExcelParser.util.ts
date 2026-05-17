@@ -7,6 +7,7 @@ const EXPECTED_HEADERS = [
   'importe_recaudacion',
   'ente_recaudador',
 ] as const;
+const MYSQL_INT_MAX = 2147483647;
 
 export interface RecaudacionPreviewRow {
   filaExcel: number;
@@ -129,7 +130,7 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
     let codigoTributo: number | null = null;
     let importeRecaudacion: number | null = null;
 
-    codigoTributo = normalizarNumeroEntero(codigoRaw, 'codigo_tributo', errores);
+    codigoTributo = normalizarNumeroEntero(codigoRaw, 'codigo_tributo', errores, true, MYSQL_INT_MAX);
 
     if (!descripcion) {
       errores.push('El campo descripcion es obligatorio.');

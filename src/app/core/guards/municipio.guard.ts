@@ -6,7 +6,11 @@ import { MunicipioService } from '../../services/municipio.service';
 import { getUserRoleNames } from '../utils/roles.util';
 
 const RUTAS_RESTRINGIDAS = new Set([
+  'home',
   'panel-carga-mensual',
+  'panel-carga-rectificaciones',
+  'historico-ejercicios-cerrados',
+  'subir-archivos',
   'gastos',
   'recursos',
   'remuneraciones',

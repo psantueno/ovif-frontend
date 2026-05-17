@@ -70,7 +70,13 @@ const normalizarValorNumerico = (value: string): { value: number | null; decimal
  * @param errores
  * @returns El número entero normalizado o null si no es válido
  */
-export const normalizarNumeroEntero = (raw: string, campo: string, errores: string[], allowZero: boolean = false): number | null => {
+export const normalizarNumeroEntero = (
+  raw: string,
+  campo: string,
+  errores: string[],
+  allowZero: boolean = false,
+  maxValue?: number
+): number | null => {
   if (!raw) {
     errores.push(`El campo ${campo} es obligatorio.`);
     return null;
@@ -80,6 +86,11 @@ export const normalizarNumeroEntero = (raw: string, campo: string, errores: stri
 
   if (result.value === null || !Number.isInteger(result.value) || (result.value <= 0 && !allowZero)) {
     errores.push(`El campo ${campo} debe ser un número entero mayor a 0.`);
+    return null;
+  }
+
+  if (maxValue !== undefined && result.value > maxValue) {
+    errores.push(`El campo ${campo} no puede superar ${maxValue}.`);
     return null;
   }
 
