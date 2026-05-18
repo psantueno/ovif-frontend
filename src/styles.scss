@@ -1086,6 +1086,7 @@ html, body {
   --mdc-filled-button-label-text-color: #ffffff;
   --mdc-protected-button-container-color: #2b3e4c;
   --mdc-protected-button-label-text-color: #ffffff;
+  --mdc-protected-button-label-text-weight: 600;
   font-weight: 600;
   border-radius: 8px;
   padding: 0.9rem 1.6rem;
@@ -1101,6 +1102,31 @@ html, body {
     --mdc-protected-button-container-color: var(--color-secondary);
     --mdc-filled-button-label-text-color: var(--color-on-secondary);
     --mdc-protected-button-label-text-color: var(--color-on-secondary);
+  }
+}
+
+.admin-btn-accion-secundario {
+  --mdc-protected-button-container-color: rgba(var(--color-primary-rgb), 0.12);
+  --mdc-protected-button-label-text-color: var(--color-primary);
+  --mdc-protected-button-label-text-weight: 600;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 0.9rem 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+
+  mat-icon { font-size: 20px; }
+
+  &:hover:enabled {
+    box-shadow: none;
+    background: rgba(var(--color-primary-rgb), 0.18);
+    color: var(--color-primary);
+  }
+
+  &:hover {
+    --mdc-protected-button-container-color: rgba(var(--color-primary-rgb), 0.18);
   }
 }
 

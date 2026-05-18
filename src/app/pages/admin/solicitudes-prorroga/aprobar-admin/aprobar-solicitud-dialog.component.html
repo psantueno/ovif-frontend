@@ -1,0 +1,46 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon ok">check_circle</mat-icon>
+  Aprobar solicitud #{{ data.solicitud_id }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+
+  <div class="info-cierre">
+    <span class="label">Fecha de cierre solicitada por el operario:</span>
+    <strong>{{ mostrar(data.fecha_cierre_solicitada) }}</strong>
+    @if (fechaSolicitadaVencida) {
+      <span class="badge-vencida">VENCIDA — ingresá una fecha alternativa</span>
+    }
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Fecha de cierre aprobada {{ fechaSolicitadaVencida ? '*' : '(opcional)' }}</mat-label>
+    <input matInput [matDatepicker]="picker" formControlName="fecha_cierre_aprobada"
+      [min]="hoy" placeholder="DD/MM/AAAA" />
+    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+    <mat-hint>Si se omite, se usa la fecha solicitada.</mat-hint>
+    @if (form.get('fecha_cierre_aprobada')?.hasError('required')) {
+      <mat-error>Obligatorio: la fecha solicitada ya venció.</mat-error>
+    }
+    @if (form.get('fecha_cierre_aprobada')?.hasError('matDatepickerMin')) {
+      <mat-error>La fecha debe ser mayor o igual a hoy.</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Comentario (opcional)</mat-label>
+    <textarea matInput formControlName="comentario_resolucion" rows="3"
+      placeholder="Comentario para el operario"></textarea>
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button mat-dialog-close class="admin-btn-accion-secundario" [disabled]="aprobando">Cancelar</button>
+  <button mat-raised-button class="admin-btn-accion" (click)="aprobar()" [disabled]="aprobando">
+    <mat-icon>{{ aprobando ? 'hourglass_top' : 'check_circle' }}</mat-icon>
+    Aprobar
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="aprobando"></app-loading-overlay>

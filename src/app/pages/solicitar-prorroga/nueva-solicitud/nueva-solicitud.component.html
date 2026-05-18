@@ -1,0 +1,197 @@
+<div class="nueva-solicitud-container">
+
+  <!-- Info -->
+  <mat-card class="admin-helper-card admin-card">
+    <div class="helper-content">
+      <mat-icon color="primary">info</mat-icon>
+      <div class="helper-text-container">
+        <h3>Solicitar prórroga de cierre</h3>
+        <hr>
+        <ol>
+          <li>Agregá una o más filas indicando el período, la fecha de cierre solicitada y el motivo.</li>
+          <li>Revisá el resumen y enviá las solicitudes.</li>
+        </ol>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Sin municipios asignados -->
+  @if (!cargandoMunicipios && municipiosAsignados.length === 0) {
+    <mat-card class="admin-card estado-vacio">
+      <mat-icon color="warn">warning</mat-icon>
+      <p>No tenés municipios asignados. Contactá al administrador.</p>
+    </mat-card>
+  }
+
+  <!-- Cargando municipios -->
+  @if (cargandoMunicipios) {
+    <mat-card class="admin-card estado-cargando">
+      <mat-spinner diameter="32"></mat-spinner>
+      <p>Cargando municipios...</p>
+    </mat-card>
+  }
+
+  <!-- Formulario principal -->
+  @if (!cargandoMunicipios && municipiosAsignados.length > 0) {
+
+    <!-- Filas de solicitudes -->
+    <mat-card class="admin-card filas-card">
+      <div class="filas-header">
+        <h3 class="seccion-titulo">
+          <mat-icon>list_alt</mat-icon>
+          Solicitudes ({{ filas.length }})
+        </h3>
+        <button mat-raised-button class="admin-btn-accion" (click)="agregarFila()">
+          <mat-icon>add</mat-icon>
+          Agregar fila
+        </button>
+      </div>
+
+      <mat-divider class="divider-filas"></mat-divider>
+
+      @if (filas.length === 0) {
+        <div class="filas-vacias">
+          <mat-icon class="icon-vacio">playlist_add</mat-icon>
+          <p>No hay solicitudes. Presioná "Agregar fila" para comenzar.</p>
+        </div>
+      }
+
+      @for (fila of filas.controls; track $index) {
+        <div class="fila-solicitud" [formGroup]="$any(fila)">
+          <div class="fila-header">
+            <span class="fila-numero">Fila {{ $index + 1 }}</span>
+            <button mat-icon-button color="warn" (click)="eliminarFila($index)"
+              matTooltip="Eliminar fila">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+
+          <div class="fila-campos">
+
+            <!-- Municipios de la fila -->
+            <mat-form-field appearance="outline" class="campo-municipios">
+              <mat-label>Municipios</mat-label>
+              <mat-select formControlName="municipios" multiple>
+                @for (mun of municipiosAsignados; track mun.municipio_id) {
+                  <mat-option [value]="mun.municipio_id">{{ mun.municipio_nombre }}</mat-option>
+                }
+              </mat-select>
+              @if ($any(fila).get('municipios')?.hasError('required') && $any(fila).get('municipios')?.touched) {
+                <mat-error>Seleccioná al menos un municipio.</mat-error>
+              }
+              @if (filasState[$index].cargandoPeriodos) {
+                <mat-hint>Cargando períodos...</mat-hint>
+              }
+            </mat-form-field>
+
+            <!-- Ejercicio -->
+            <mat-form-field appearance="outline" class="campo-corto">
+              <mat-label>Ejercicio</mat-label>
+              <mat-select formControlName="ejercicio">
+                @for (ej of filasState[$index].ejerciciosDisponibles; track ej) {
+                  <mat-option [value]="ej">{{ ej }}</mat-option>
+                }
+                @if (filasState[$index].ejerciciosDisponibles.length === 0 && !filasState[$index].cargandoPeriodos) {
+                  <mat-option disabled>Sin períodos disponibles</mat-option>
+                }
+              </mat-select>
+              @if ($any(fila).get('ejercicio')?.hasError('required') && $any(fila).get('ejercicio')?.touched) {
+                <mat-error>Obligatorio.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Mes -->
+            <mat-form-field appearance="outline" class="campo-corto">
+              <mat-label>Mes</mat-label>
+              <mat-select formControlName="mes">
+                @for (mes of filasState[$index].mesesDisponibles; track mes) {
+                  <mat-option [value]="mes">{{ mesesLabels[mes] }}</mat-option>
+                }
+              </mat-select>
+              @if ($any(fila).get('mes')?.hasError('required') && $any(fila).get('mes')?.touched) {
+                <mat-error>Obligatorio.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Convenio -->
+            <mat-form-field appearance="outline" class="campo-medio">
+              <mat-label>Convenio</mat-label>
+              <mat-select formControlName="convenio_id">
+                @for (conv of filasState[$index].conveniosDisponibles; track conv.convenio_id) {
+                  <mat-option [value]="conv.convenio_id">{{ conv.convenio_nombre }}</mat-option>
+                }
+              </mat-select>
+              @if ($any(fila).get('convenio_id')?.hasError('required') && $any(fila).get('convenio_id')?.touched) {
+                <mat-error>Obligatorio.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Pauta -->
+            <mat-form-field appearance="outline" class="campo-medio">
+              <mat-label>Pauta</mat-label>
+              <mat-select formControlName="pauta_id">
+                @for (pauta of filasState[$index].pautasDisponibles; track pauta.pauta_id) {
+                  <mat-option [value]="pauta.pauta_id">{{ pauta.pauta_descripcion }}</mat-option>
+                }
+              </mat-select>
+              @if ($any(fila).get('pauta_id')?.hasError('required') && $any(fila).get('pauta_id')?.touched) {
+                <mat-error>Obligatorio.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Fecha de cierre solicitada -->
+            <mat-form-field appearance="outline" class="campo-fecha">
+              <mat-label>Fecha de cierre solicitada</mat-label>
+              <input matInput [matDatepicker]="picker" formControlName="fecha_cierre_solicitada"
+                [min]="hoy" placeholder="DD/MM/AAAA" />
+              <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+              <mat-datepicker #picker></mat-datepicker>
+              @if ($any(fila).get('fecha_cierre_solicitada')?.hasError('required') && $any(fila).get('fecha_cierre_solicitada')?.touched) {
+                <mat-error>Obligatorio.</mat-error>
+              }
+              @if ($any(fila).get('fecha_cierre_solicitada')?.hasError('matDatepickerMin')) {
+                <mat-error>La fecha debe ser mayor o igual a hoy.</mat-error>
+              }
+            </mat-form-field>
+
+            <!-- Motivo -->
+            <mat-form-field appearance="outline" class="campo-motivo">
+              <mat-label>Motivo</mat-label>
+              <textarea matInput formControlName="motivo" rows="2"
+                placeholder="Justificación de la solicitud"></textarea>
+              <mat-hint align="end"
+                [class.char-contador--excede]="getMotivoLength($index) > maxMotivo">
+                {{ getMotivoLength($index) }} / {{ maxMotivo }}
+              </mat-hint>
+              @if ($any(fila).get('motivo')?.hasError('required') && $any(fila).get('motivo')?.touched) {
+                <mat-error>El motivo es obligatorio.</mat-error>
+              }
+              @if ($any(fila).get('motivo')?.hasError('maxlength')) {
+                <mat-error>Máximo {{ maxMotivo }} caracteres.</mat-error>
+              }
+            </mat-form-field>
+
+          </div>
+
+          @if ($index < filas.length - 1) {
+            <mat-divider class="divider-fila"></mat-divider>
+          }
+        </div>
+      }
+    </mat-card>
+
+    <!-- Botón de envío -->
+    @if (filas.length > 0) {
+      <div class="acciones-envio">
+        <button mat-raised-button class="admin-btn-accion"
+          (click)="enviar()" [disabled]="enviando">
+          <mat-icon>send</mat-icon>
+          Enviar solicitudes
+        </button>
+      </div>
+    }
+
+  }
+
+  <app-loading-overlay [display]="enviando"></app-loading-overlay>
+</div>

@@ -1,0 +1,6 @@
+.dialog-title { display: flex; align-items: center; gap: 8px; }
+.dialog-title-icon { color: #1976d2; }
+.dialog-content { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.full-width { width: 100%; }
+.info-texto { font-size: 13px; color: #666; margin: 0; }
+.char-excede { color: #e53935 !important; }

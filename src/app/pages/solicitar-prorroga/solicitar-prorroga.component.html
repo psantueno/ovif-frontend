@@ -1,0 +1,16 @@
+<div class="solicitar-prorroga-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/home"></app-admin-navbar>
+
+  <div class="tab-container">
+    <app-tab-group class="prorroga-tabs">
+      <app-tab label="Nueva solicitud" [active]="tabActivo === 0" (clicked)="onTabChange(0)"></app-tab>
+      <app-tab label="Historial" [active]="tabActivo === 1" (clicked)="onTabChange(1)"></app-tab>
+    </app-tab-group>
+  </div>
+  <div [hidden]="tabActivo !== 0" class="tab-content">
+    <app-nueva-solicitud (solicitudEnviada)="irAHistorial()"></app-nueva-solicitud>
+  </div>
+  <div [hidden]="tabActivo !== 1" class="tab-content">
+    <app-historial-solicitudes></app-historial-solicitudes>
+  </div>
+</div>

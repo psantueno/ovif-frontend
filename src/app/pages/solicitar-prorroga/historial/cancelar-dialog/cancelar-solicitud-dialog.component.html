@@ -1,0 +1,33 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon warn">cancel</mat-icon>
+  Cancelar solicitud #{{ data.solicitud_id }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="advertencia">
+    <mat-icon>warning</mat-icon>
+    <p>Esta acción cambia el estado de la solicitud a <strong>CANCELADA</strong>.
+        No se puede deshacer.</p>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Motivo de cancelación</mat-label>
+    <textarea matInput formControlName="motivo_cancelacion" rows="3"
+      placeholder="Indicá el motivo por el que cancelás la solicitud"></textarea>
+    @if (form.get('motivo_cancelacion')?.hasError('required') && form.get('motivo_cancelacion')?.touched) {
+      <mat-error>El motivo de cancelación es obligatorio.</mat-error>
+    }
+    @if (form.get('motivo_cancelacion')?.hasError('maxlength')) {
+      <mat-error>Máximo 500 caracteres.</mat-error>
+    }
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button class="admin-btn-accion-secundario" mat-dialog-close [disabled]="cancelando">Volver</button>
+  <button mat-raised-button class="admin-btn-accion" (click)="cancelar()" [disabled]="cancelando">
+    Cancelar solicitud
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="cancelando"></app-loading-overlay>

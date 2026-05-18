@@ -1,0 +1,91 @@
+.historial-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+}
+
+.seccion-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.filtros-card {
+  .filtros-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+
+    mat-form-field { min-width: 160px; flex: 1; }
+  }
+
+  .filtros-acciones {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-top: 4px;
+  }
+}
+
+.tabla-cargando, .tabla-vacia {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 32px;
+  color: #888;
+  justify-content: center;
+
+  mat-icon { font-size: 32px; height: 32px; width: 32px; opacity: 0.5; }
+}
+
+.icono-cargando {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.tabla-wrapper {
+  overflow-x: auto;
+}
+
+.historial-tabla {
+  width: 100%;
+}
+
+.estado-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.pendiente  { background: #fff3cd; color: #856404; }
+  &.aprobada   { background: #d1e7dd; color: #0a3622; }
+  &.rechazada  { background: #f8d7da; color: #58151c; }
+  &.cancelada  { background: #e2e3e5; color: #41464b; }
+}
+
+.texto-truncado {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.admin-acciones {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}

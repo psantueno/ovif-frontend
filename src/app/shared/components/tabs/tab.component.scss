@@ -1,0 +1,26 @@
+:host {
+  flex: 1;
+}
+
+.tab-btn {
+  padding: 15px 20px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  font-family: inherit;
+  transition: background 0.2s, color 0.2s;
+  outline: none;
+  width: 100%;
+
+  &.active {
+    background: #2b3e4c;
+    color: white;
+  }
+
+  &:not(.active) {
+    background: #e0e3e7; // gris claro neutro
+    color: #7a7a7a; // gris medio para texto
+  }
+}
