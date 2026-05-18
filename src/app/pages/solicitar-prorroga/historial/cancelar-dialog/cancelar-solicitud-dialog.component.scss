@@ -1,0 +1,10 @@
+.dialog-title { display: flex; align-items: center; gap: 8px; }
+.dialog-title-icon.warn { color: #d32f2f; }
+.dialog-content { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.full-width { width: 100%; }
+.advertencia {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: #fff3e0; border-radius: 8px; padding: 12px;
+  mat-icon { color: #e65100; margin-top: 2px; }
+  p { margin: 0; font-size: 13px; }
+}

@@ -1,0 +1,123 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">info</mat-icon>
+  Detalle de solicitud #{{ data.solicitud_id }}
+</h2>
+
+<mat-dialog-content class="dialog-content">
+  <div class="detalle-grid">
+    <div class="detalle-item">
+      <span class="label">Municipio</span>
+      <span>{{ data.Municipio?.municipio_nombre ?? data.municipio_id }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Período</span>
+      <span>{{ meses[data.mes] }} {{ data.ejercicio }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Convenio</span>
+      <span>{{ data.Convenio?.nombre ?? data.convenio_id }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Pauta</span>
+      <span>{{ data.PautaConvenio?.descripcion ?? data.pauta_id }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Estado</span>
+      <span class="estado-badge"
+        [class.pendiente]="data.estado === 'PENDIENTE'"
+        [class.aprobada]="data.estado === 'APROBADA'"
+        [class.rechazada]="data.estado === 'RECHAZADA'"
+        [class.cancelada]="data.estado === 'CANCELADA'">
+        {{ data.estado }}
+      </span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Solicitante</span>
+      <span>{{ data.Solicitante ? data.Solicitante.nombre + ' ' + data.Solicitante.apellido : '—' }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Fecha solicitud</span>
+      <span>{{ mostrar(data.fecha_solicitud.slice(0,10)) }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Cierre solicitado</span>
+      <span>{{ mostrar(data.fecha_cierre_solicitada) }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Cierre anterior</span>
+      <span>{{ mostrar(data.fecha_cierre_anterior) }}</span>
+    </div>
+    <div class="detalle-item">
+      <span class="label">Cierre aprobado</span>
+      <span>{{ mostrar(data.fecha_cierre_aprobada) }}</span>
+    </div>
+    <div class="detalle-item full">
+      <span class="label">Motivo</span>
+      <span>{{ data.motivo }}</span>
+    </div>
+    @if (data.estado !== 'PENDIENTE') {
+      <div class="detalle-item">
+        <span class="label">Resuelto por</span>
+        <span>{{ data.Resolutor ? data.Resolutor.nombre + ' ' + data.Resolutor.apellido : '—' }}</span>
+      </div>
+      <div class="detalle-item">
+        <span class="label">Fecha resolución</span>
+        <span>{{ mostrar(data.fecha_resolucion?.slice(0,10)) }}</span>
+      </div>
+      <div class="detalle-item full">
+        <span class="label">Comentario resolución</span>
+        <span>{{ data.comentario_resolucion ?? '—' }}</span>
+      </div>
+    }
+    @if (data.estado === 'CANCELADA') {
+      <div class="detalle-item full">
+        <span class="label">Motivo cancelación</span>
+        <span>{{ data.motivo_cancelacion ?? '—' }}</span>
+      </div>
+    }
+  </div>
+
+  @if (data.SolicitudProrrogaEstados?.length) {
+    <mat-divider class="divider-auditoria"></mat-divider>
+    <h4 class="auditoria-titulo">
+      <mat-icon>history</mat-icon>
+      Historial de cambios
+    </h4>
+    <div class="auditoria-scroll-container">
+      <table mat-table [dataSource]="data.SolicitudProrrogaEstados!" class="auditoria-tabla">
+        <ng-container matColumnDef="fecha">
+          <th mat-header-cell *matHeaderCellDef>Fecha</th>
+          <td mat-cell *matCellDef="let a">{{ a.fecha_evento | date:'dd/MM/yyyy HH:mm' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="usuario">
+          <th mat-header-cell *matHeaderCellDef>Usuario</th>
+          <td mat-cell *matCellDef="let a">
+            {{ a.Usuario ? a.Usuario.nombre + ' ' + a.Usuario.apellido : '—' }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="accion">
+          <th mat-header-cell *matHeaderCellDef>Acción</th>
+          <td mat-cell *matCellDef="let a">{{ a.accion }}</td>
+        </ng-container>
+        <ng-container matColumnDef="comentario">
+          <th mat-header-cell *matHeaderCellDef>Comentario</th>
+          <td mat-cell *matCellDef="let a">
+            @if (a.comentario) {
+              <span class="comentario-truncado" [matTooltip]="a.comentario">{{ a.comentario }}</span>
+            } @else {
+              <div class="sin-comentario">
+                <span class="comentario-truncado" [matTooltip]="'Sin comentarios'">{{ '—' }}</span>
+              </div>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="['fecha','usuario','accion','comentario']"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['fecha','usuario','accion','comentario'];"></tr>
+      </table>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-raised-button class="admin-btn-accion" mat-dialog-close>Cerrar</button>
+</mat-dialog-actions>

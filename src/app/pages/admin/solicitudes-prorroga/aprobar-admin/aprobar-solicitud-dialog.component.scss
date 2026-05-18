@@ -1,0 +1,15 @@
+.dialog-title { display: flex; align-items: center; gap: 8px; }
+.dialog-title-icon.ok { color: #2e7d32; }
+.dialog-content { display: flex; flex-direction: column; gap: 16px; padding-top: 8px; }
+.full-width { width: 100%; }
+.info-cierre {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  background: #f1f8e9; border-radius: 8px; padding: 12px;
+  font-size: 14px;
+  .label { color: #555; }
+}
+.badge-vencida {
+  display: inline-block; background: #ffccbc; color: #bf360c;
+  padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600;
+}
+.btn-aprobar { background-color: #2e7d32; color: white; }

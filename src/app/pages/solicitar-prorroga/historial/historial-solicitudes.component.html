@@ -1,0 +1,212 @@
+<div class="historial-container">
+
+  <!-- Filtros -->
+  <mat-card class="admin-card filtros-card">
+    <h3 class="seccion-titulo">
+      <mat-icon>filter_list</mat-icon>
+      Filtros
+    </h3>
+    <form [formGroup]="filtroForm" class="filtros-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="">Todos</mat-option>
+          @for (e of estados; track e) {
+            <mat-option [value]="e">{{ e }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Municipio</mat-label>
+        <mat-select formControlName="municipio_id">
+          <mat-option value="">Todos</mat-option>
+          @for (m of municipiosAsignados; track m.municipio_id) {
+            <mat-option [value]="m.municipio_id">{{ m.municipio_nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Ejercicio</mat-label>
+        <mat-select formControlName="ejercicio">
+          <mat-option value="">Todos</mat-option>
+          @for (ej of ejercicios; track ej) {
+            <mat-option [value]="ej">{{ ej }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Mes</mat-label>
+        <mat-select formControlName="mes">
+          <mat-option value="">Todos</mat-option>
+          @for (mes of [1,2,3,4,5,6,7,8,9,10,11,12]; track mes) {
+            <mat-option [value]="mes">{{ mesesLabels[mes] }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Convenio</mat-label>
+        <mat-select formControlName="convenio_id">
+          <mat-option value="">Todos</mat-option>
+          @for (c of convenios; track c.convenio_id) {
+            <mat-option [value]="c.convenio_id">{{ c.nombre }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Pauta</mat-label>
+        <mat-select formControlName="pauta_id">
+          <mat-option value="">Todos</mat-option>
+          @for (p of pautas; track p.pauta_id) {
+            <mat-option [value]="p.pauta_id">{{ p.descripcion }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Solicitud desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" [max]="fechaSolicitudDesdeMax" formControlName="fecha_solicitud_desde" />
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Solicitud hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" [min]="fechaSolicitudHastaMin" formControlName="fecha_solicitud_hasta" />
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+
+      <div class="filtros-acciones">
+        <button mat-raised-button class="admin-btn-accion-secundario" (click)="limpiarFiltros()">
+          <mat-icon>clear</mat-icon>
+          Limpiar
+        </button>
+        <button mat-raised-button class="admin-btn-accion" (click)="buscar()">
+          <mat-icon>search</mat-icon>
+          Buscar
+        </button>
+      </div>
+    </form>
+  </mat-card>
+
+  <!-- Tabla -->
+  <mat-card class="admin-card tabla-card">
+    @if (cargando) {
+      <div class="tabla-cargando">
+        <mat-icon class="icono-cargando">hourglass_top</mat-icon>
+        <span>Cargando...</span>
+      </div>
+    }
+
+    @if (!cargando && dataSource.data.length === 0) {
+      <div class="tabla-vacia">
+        <mat-icon>inbox</mat-icon>
+        <p>No se encontraron solicitudes con los filtros aplicados.</p>
+      </div>
+    }
+
+    @if (!cargando && dataSource.data.length > 0) {
+      <div class="tabla-wrapper">
+        <table mat-table [dataSource]="dataSource" class="admin-tabla historial-tabla">
+
+          <ng-container matColumnDef="fecha_solicitud">
+            <th mat-header-cell *matHeaderCellDef>Fecha solicitud</th>
+            <td mat-cell *matCellDef="let s">{{ mostrarFecha(s.fecha_solicitud?.slice(0,10)) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="municipio">
+            <th mat-header-cell *matHeaderCellDef>Municipio</th>
+            <td mat-cell *matCellDef="let s">{{ s.Municipio?.municipio_nombre ?? s.municipio_id }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="ejercicio">
+            <th mat-header-cell *matHeaderCellDef>Ejercicio</th>
+            <td mat-cell *matCellDef="let s">{{ s.ejercicio }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="mes">
+            <th mat-header-cell *matHeaderCellDef>Mes</th>
+            <td mat-cell *matCellDef="let s">{{ mesesLabels[s.mes] }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="convenio">
+            <th mat-header-cell *matHeaderCellDef>Convenio</th>
+            <td mat-cell *matCellDef="let s">{{ s.Convenio?.nombre ?? s.convenio_id }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="pauta">
+            <th mat-header-cell *matHeaderCellDef>Pauta</th>
+            <td mat-cell *matCellDef="let s">{{ s.PautaConvenio?.descripcion ?? s.pauta_id }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha_cierre_solicitada">
+            <th mat-header-cell *matHeaderCellDef>Cierre solicitado</th>
+            <td mat-cell *matCellDef="let s">{{ mostrarFecha(s.fecha_cierre_solicitada) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef>Estado</th>
+            <td mat-cell *matCellDef="let s">
+              <span class="estado-badge"
+                [class.pendiente]="s.estado === 'PENDIENTE'"
+                [class.aprobada]="s.estado === 'APROBADA'"
+                [class.rechazada]="s.estado === 'RECHAZADA'"
+                [class.cancelada]="s.estado === 'CANCELADA'">
+                {{ s.estado }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fecha_resolucion">
+            <th mat-header-cell *matHeaderCellDef>Fecha resolución</th>
+            <td mat-cell *matCellDef="let s">{{ mostrarFecha(s.fecha_resolucion?.slice(0,10)) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="comentario_resolucion">
+            <th mat-header-cell *matHeaderCellDef>Comentario resolución</th>
+            <td mat-cell *matCellDef="let s">
+              <span class="texto-truncado" [matTooltip]="s.comentario_resolucion ?? ''">
+                {{ s.comentario_resolucion ?? '—' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef>Acciones</th>
+            <td mat-cell *matCellDef="let s">
+              <div class="admin-acciones">
+                <button mat-icon-button matTooltip="Ver detalle" (click)="verDetalle(s)">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                @if (s.estado === 'PENDIENTE') {
+                  <button mat-icon-button color="accent" matTooltip="Editar" (click)="editarSolicitud(s)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" matTooltip="Cancelar" (click)="cancelarSolicitud(s)">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+
+      <mat-paginator
+        [length]="totalRegistros"
+        [pageSize]="limite"
+        [pageSizeOptions]="[10, 25, 50]"
+        (page)="cambiarPagina($event)">
+      </mat-paginator>
+    }
+  </mat-card>
+
+</div>

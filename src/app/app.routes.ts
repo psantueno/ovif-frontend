@@ -127,6 +127,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/rectificaciones/panel-carga-rectificaciones.component').then((m) => m.PanelCargaRectificacionesComponent)
       },
+      {
+        path: 'solicitar-prorroga',
+        loadComponent: () =>
+          import('./pages/solicitar-prorroga/solicitar-prorroga.component').then((m) => m.SolicitarProrrogaComponent)
+      },
       // Admin
       {
         path: 'admin',
@@ -211,6 +216,12 @@ export const routes: Routes = [
         canActivate: [AdminGuard],
         loadComponent: () =>
           import('./pages/admin/municipios-mails/municipios-mails.component').then((m) => m.MunicipioMailsComponent)
+      },
+      {
+        path: 'admin/solicitudes-prorroga',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/solicitudes-prorroga/solicitudes-prorroga-admin.component').then((m) => m.SolicitudesProrrogaAdminComponent)
       }
     ]
   },

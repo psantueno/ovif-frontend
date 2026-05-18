@@ -1,0 +1,33 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon warn">cancel</mat-icon>
+  Rechazar solicitud #{{ data.solicitud_id }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <div class="advertencia">
+    <mat-icon>info</mat-icon>
+    <p>Indicá el motivo del rechazo. Este campo es <strong>obligatorio</strong>.</p>
+  </div>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Motivo de rechazo *</mat-label>
+    <textarea matInput formControlName="comentario_resolucion" rows="4"
+      placeholder="Explicá por qué se rechaza la solicitud"></textarea>
+    @if (form.get('comentario_resolucion')?.hasError('required') && form.get('comentario_resolucion')?.touched) {
+      <mat-error>El motivo de rechazo es obligatorio.</mat-error>
+    }
+    @if (form.get('comentario_resolucion')?.hasError('maxlength')) {
+      <mat-error>Máximo 1000 caracteres.</mat-error>
+    }
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button class="admin-btn-accion-secundario" mat-raised-button mat-dialog-close [disabled]="rechazando">Cancelar</button>
+  <button class="admin-btn-accion" mat-raised-button color="warn" (click)="rechazar()" [disabled]="rechazando">
+    <mat-icon>{{ rechazando ? 'hourglass_top' : 'cancel' }}</mat-icon>
+    Rechazar
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="rechazando"></app-loading-overlay>

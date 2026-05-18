@@ -1,0 +1,46 @@
+<h2 mat-dialog-title class="dialog-title">
+  <mat-icon class="dialog-title-icon">edit</mat-icon>
+  Editar solicitud #{{ data.solicitud_id }}
+</h2>
+
+<mat-dialog-content [formGroup]="form" class="dialog-content">
+  <p class="info-texto">
+    Podés modificar la fecha de cierre solicitada y/o el motivo.
+    Al menos un campo debe cambiar.
+  </p>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Fecha de cierre solicitada</mat-label>
+    <input matInput [matDatepicker]="picker" formControlName="fecha_cierre_solicitada"
+      [min]="hoy" placeholder="DD/MM/AAAA" />
+    <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+    <mat-datepicker #picker></mat-datepicker>
+    <mat-hint>Actual: {{ mostrar(data.fecha_cierre_solicitada) }}</mat-hint>
+    @if (form.get('fecha_cierre_solicitada')?.hasError('matDatepickerMin')) {
+      <mat-error>La fecha debe ser mayor o igual a hoy.</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Motivo</mat-label>
+    <textarea matInput formControlName="motivo" rows="4"
+      placeholder="Justificación de la solicitud"></textarea>
+    <mat-hint align="end"
+      [class.char-excede]="motivoLength > maxMotivo">
+      {{ motivoLength }} / {{ maxMotivo }}
+    </mat-hint>
+    @if (form.get('motivo')?.hasError('maxlength')) {
+      <mat-error>Máximo {{ maxMotivo }} caracteres.</mat-error>
+    }
+  </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end" class="dialog-actions">
+  <button mat-raised-button class="admin-btn-accion-secundario" mat-dialog-close [disabled]="guardando">Cancelar</button>
+  <button mat-raised-button class="admin-btn-accion" (click)="guardar()" [disabled]="guardando">
+    <mat-icon>{{ guardando ? 'hourglass_top' : 'save' }}</mat-icon>
+    Guardar
+  </button>
+</mat-dialog-actions>
+
+<app-loading-overlay [display]="guardando"></app-loading-overlay>
