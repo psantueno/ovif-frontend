@@ -1,0 +1,51 @@
+.borrado-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  background-color: #fff5f5;
+
+  &__helper {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  &__helper-icon {
+    font-size: 1rem;
+    color: #ef4444;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  &__helper-text {
+    line-height: 1.4;
+
+    strong {
+      color: #374151;
+    }
+  }
+
+  &__btn {
+    align-self: flex-start;
+
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+
+  &__spinner {
+    display: inline-block;
+    margin-right: 6px;
+    vertical-align: middle;
+
+    ::ng-deep circle {
+      stroke: #fff;
+    }
+  }
+}

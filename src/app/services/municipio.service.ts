@@ -10,6 +10,7 @@ import {
   obtenerEtiquetaTipoPauta
 } from '../models/pauta.model';
 import { normalizeBlobHttpError } from '../core/http/blob-error.util';
+import { BorradoResponse } from '../models/borrado.model';
 
 export interface PartidaGastoResponse {
   partidas_gastos_codigo: number;
@@ -963,5 +964,20 @@ export class MunicipioService {
     if (activeElement && typeof activeElement.blur === 'function') {
       activeElement.blur();
     }
+  }
+
+  borrarDatosModulo(params: {
+    municipioId: number;
+    ejercicio: number;
+    mes: number;
+    modulo: ModuloPauta | string;
+    tipoCarga?: 'regular' | 'rectificacion';
+  }): Observable<BorradoResponse> {
+    const { municipioId, ejercicio, mes, modulo, tipoCarga = 'regular' } = params;
+    const segmento = tipoCarga === 'rectificacion' ? `${modulo}-rectificadas` : modulo;
+    const url = `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/${segmento}`;
+    return this.http
+      .delete<BorradoResponse>(url)
+      .pipe(catchError((error) => throwError(() => error)));
   }
 }

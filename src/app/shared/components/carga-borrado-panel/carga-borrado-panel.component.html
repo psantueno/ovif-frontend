@@ -1,0 +1,41 @@
+<div class="borrado-panel" *ngIf="contexto">
+  <div class="borrado-panel__helper">
+    <mat-icon class="borrado-panel__helper-icon">info_outline</mat-icon>
+    <span class="borrado-panel__helper-text">
+      Se borrarán todos los datos de
+      <strong>{{ contexto.modulo }}</strong>
+      ({{ tipoLabel }}) —
+      <strong>{{ contexto.municipioNombre }}</strong>,
+      {{ nombreMesLabel }} {{ contexto.ejercicio }}
+      <ng-container *ngIf="contexto.convenioNombre">
+        · {{ contexto.convenioNombre }}
+      </ng-container>
+      <ng-container *ngIf="contexto.pautaDescripcion">
+        · {{ contexto.pautaDescripcion }}
+      </ng-container>
+    </span>
+  </div>
+
+  <button
+    mat-raised-button
+    color="warn"
+    class="borrado-panel__btn"
+    [disabled]="botonDeshabilitado"
+    (click)="onClickBorrar()"
+    matTooltip="Borrar todos los datos de este periodo"
+  >
+    <ng-container *ngIf="!borrando">
+      <mat-icon>delete</mat-icon>
+      Borrar datos
+    </ng-container>
+    <ng-container *ngIf="borrando">
+      <mat-progress-spinner
+        diameter="18"
+        strokeWidth="2"
+        mode="indeterminate"
+        class="borrado-panel__spinner"
+      ></mat-progress-spinner>
+      Borrando...
+    </ng-container>
+  </button>
+</div>
