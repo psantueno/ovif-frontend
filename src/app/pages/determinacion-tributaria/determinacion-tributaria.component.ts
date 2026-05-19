@@ -14,7 +14,6 @@ import {
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
-import { CargaBorradoPanelComponent } from '../../shared/components/carga-borrado-panel/carga-borrado-panel.component';
 import {
   DeterminacionTributariaPreviewRow,
   parseDeterminacionTributariaExcelFile,
@@ -29,7 +28,7 @@ type MensajeTipo = 'info' | 'error';
 @Component({
   selector: 'app-determinacion-tributaria',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent, CargaBorradoPanelComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent],
   templateUrl: './determinacion-tributaria.component.html',
   styleUrls: ['../recaudaciones/recaudaciones.component.scss', './determinacion-tributaria.component.scss'],
 })
@@ -114,9 +113,7 @@ export class DeterminacionTributariaComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             const code = err?.error?.code;
-            if (code === 'USER_RATE_LIMITED') {
-              mostrarToastError('Límite alcanzado', 'Demasiados borrados en poco tiempo. Intentá en una hora.');
-            } else if (code === 'MODULE_CLOSED') {
+            if (code === 'MODULE_CLOSED') {
               mostrarToastError('Módulo cerrado', 'El periodo ya fue cerrado oficialmente. No se puede borrar.');
             } else {
               mostrarToastError('Error', 'No se pudo completar el borrado. Intentá nuevamente.');

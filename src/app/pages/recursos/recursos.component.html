@@ -170,19 +170,22 @@
           <span>Generando informe...</span>
         </ng-template>
       </button>
+      <button
+        type="button"
+        class="accion-borrar-datos"
+        (click)="onConfirmarBorrado()"
+        [disabled]="!borradoContexto || guardando || cargandoArchivoMasivo || descargandoInforme || borrandoDatos"
+      >
+        <mat-icon aria-hidden="true">{{ borrandoDatos ? 'hourglass_top' : 'delete' }}</mat-icon>
+        <span>{{ borrandoDatos ? 'Borrando...' : 'Borrar datos' }}</span>
+      </button>
     </div>
 
     <p class="carga-masiva__helper" *ngIf="tieneErroresPrevisualizacion" role="note">
       Corregí las filas con error en el archivo y volvé a cargarlo antes de guardar.
     </p>
+
   </section>
 
   <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
-
-  <app-carga-borrado-panel
-    [contexto]="borradoContexto"
-    [disabled]="guardando || cargandoArchivoMasivo || descargandoInforme"
-    [borrando]="borrandoDatos"
-    (confirmar)="onConfirmarBorrado()"
-  ></app-carga-borrado-panel>
 </div>

@@ -76,30 +76,33 @@ export function confirmarBorrado(contexto: BorradoContexto): Promise<SweetAlertR
   };
 
   const moduloLabel = esc(ETIQUETAS_MODULO[contexto.modulo] ?? contexto.modulo);
-  const tipoLabel = contexto.tipoCarga === 'rectificacion' ? 'Rectificación' : 'Regular';
+  const tipoLabel = esc(contexto.tipoCarga === 'rectificacion' ? 'Rectificación' : 'Regular');
   const mesLabel = esc(nombreMes(contexto.mes));
   const municipio = esc(contexto.municipioNombre);
+  const row = (label: string, value: string | number): string => `
+    <tr>
+      <th scope="row">${esc(label)}</th>
+      <td>${value}</td>
+    </tr>
+  `;
 
   const html = `
-    <p style="margin-bottom: 12px; color: #b91c1c; font-weight: 600;">
+    <p class="swal-borrado-alerta">
       Esta acción es <strong>irreversible</strong> y eliminará todos los datos del periodo.
     </p>
-    <table style="width:100%; text-align:left; font-size:0.9rem; border-collapse:collapse;">
-      <tr><td style="padding:4px 8px; color:#6b7280;">Módulo</td>
-          <td style="padding:4px 8px; font-weight:600;">${moduloLabel}</td></tr>
-      <tr><td style="padding:4px 8px; color:#6b7280;">Tipo</td>
-          <td style="padding:4px 8px;">${tipoLabel}</td></tr>
-      <tr><td style="padding:4px 8px; color:#6b7280;">Municipio</td>
-          <td style="padding:4px 8px;">${municipio}</td></tr>
-      <tr><td style="padding:4px 8px; color:#6b7280;">Ejercicio</td>
-          <td style="padding:4px 8px;">${contexto.ejercicio}</td></tr>
-      <tr><td style="padding:4px 8px; color:#6b7280;">Mes</td>
-          <td style="padding:4px 8px;">${mesLabel}</td></tr>
-      ${contexto.convenioNombre ? `<tr><td style="padding:4px 8px; color:#6b7280;">Convenio</td>
-          <td style="padding:4px 8px;">${esc(contexto.convenioNombre)}</td></tr>` : ''}
-      ${contexto.pautaDescripcion ? `<tr><td style="padding:4px 8px; color:#6b7280;">Pauta</td>
-          <td style="padding:4px 8px;">${esc(contexto.pautaDescripcion)}</td></tr>` : ''}
-    </table>
+    <div class="swal-borrado-periodo" aria-label="Datos del periodo">
+      <table>
+        <tbody>
+          ${row('Módulo', moduloLabel)}
+          ${row('Tipo de carga', tipoLabel)}
+          ${row('Municipio', municipio)}
+          ${row('Ejercicio', contexto.ejercicio)}
+          ${row('Mes', mesLabel)}
+          ${contexto.convenioNombre ? row('Convenio', esc(contexto.convenioNombre)) : ''}
+          ${contexto.pautaDescripcion ? row('Pauta', esc(contexto.pautaDescripcion)) : ''}
+        </tbody>
+      </table>
+    </div>
   `;
 
   return Swal.fire({
@@ -112,5 +115,10 @@ export function confirmarBorrado(contexto: BorradoContexto): Promise<SweetAlertR
     confirmButtonColor: '#d33',
     cancelButtonColor: '#6c757d',
     reverseButtons: true,
+    customClass: {
+      popup: 'swal-borrado-popup',
+      title: 'swal-borrado-title',
+      htmlContainer: 'swal-borrado-html',
+    },
   });
 }
