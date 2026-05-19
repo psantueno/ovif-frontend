@@ -17,7 +17,6 @@ import { onFileChangeWithMetadata, Remuneraciones } from '../../core/utils/excel
 import { getExcelProcessingErrorMessage } from '../../core/utils/secureExcelReader.util';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
-import { CargaBorradoPanelComponent } from '../../shared/components/carga-borrado-panel/carga-borrado-panel.component';
 import { ParseError, parseRemuneracionesConMetadata } from '../../core/utils/cargaTypesParser';
 import { construirContextoBorrado } from '../../core/utils/borrado.util';
 import { confirmarBorrado, mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../core/utils/swal.util';
@@ -28,7 +27,7 @@ type MensajeTipo = 'info' | 'error';
 @Component({
   selector: 'app-remuneraciones',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent, CargaBorradoPanelComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent],
   templateUrl: './remuneraciones.component.html',
   styleUrls: ['./remuneraciones.component.scss'],
 })
@@ -110,9 +109,7 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             const code = err?.error?.code;
-            if (code === 'USER_RATE_LIMITED') {
-              mostrarToastError('Límite alcanzado', 'Demasiados borrados en poco tiempo. Intentá en una hora.');
-            } else if (code === 'MODULE_CLOSED') {
+            if (code === 'MODULE_CLOSED') {
               mostrarToastError('Módulo cerrado', 'El periodo ya fue cerrado oficialmente. No se puede borrar.');
             } else {
               mostrarToastError('Error', 'No se pudo completar el borrado. Intentá nuevamente.');

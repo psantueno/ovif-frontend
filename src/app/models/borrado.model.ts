@@ -11,7 +11,7 @@ export interface BorradoContexto {
 }
 
 export interface BorradoResponse {
-  code: 'DATA_DELETED' | 'NO_DATA_TO_DELETE' | 'USER_RATE_LIMITED' | 'MODULE_CLOSED';
+  code: 'DATA_DELETED' | 'NO_DATA_TO_DELETE' | 'MODULE_CLOSED';
   deleted_count: number;
   audit_id: number | null;
   message: string;
