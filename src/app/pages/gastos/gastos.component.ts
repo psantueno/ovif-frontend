@@ -14,18 +14,22 @@ import {
 import { EjerciciosService } from '../../services/ejercicios.service';
 import { BackButtonComponent } from '../../shared/components/back-button/back-button.component';
 import { LoadingOverlayComponent } from '../../shared/components/loading-overlay/loading-overlay.component';
+import { CargaBorradoPanelComponent } from '../../shared/components/carga-borrado-panel/carga-borrado-panel.component';
 import {
   parseGastosExcelFile,
   GastoPreviewRow,
 } from '../../core/utils/gastosExcelParser.util';
 import { getExcelProcessingErrorMessage } from '../../core/utils/secureExcelReader.util';
+import { construirContextoBorrado } from '../../core/utils/borrado.util';
+import { confirmarBorrado, mostrarToastExito, mostrarToastError, mostrarToastWarning } from '../../core/utils/swal.util';
+import { BorradoContexto } from '../../models/borrado.model';
 
 type MensajeTipo = 'info' | 'error';
 
 @Component({
   selector: 'app-gastos',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent],
+  imports: [CommonModule, FormsModule, MatIconModule, BackButtonComponent, LoadingOverlayComponent, CargaBorradoPanelComponent],
   templateUrl: './gastos.component.html',
   styleUrls: ['./gastos.component.scss'],
 })
@@ -76,6 +80,52 @@ export class GastosComponent implements OnInit, OnDestroy {
 
   guardando = false;
   descargandoInforme = false;
+  borrandoDatos = false;
+
+  get borradoContexto(): BorradoContexto | null {
+    if (!this.periodoSeleccionado || !this.municipioActual) return null;
+    return construirContextoBorrado(
+      this.periodoSeleccionado,
+      this.municipioNombre,
+      'gastos',
+      'regular'
+    );
+  }
+
+  onConfirmarBorrado(): void {
+    if (!this.borradoContexto || this.borrandoDatos) return;
+    confirmarBorrado(this.borradoContexto).then((result) => {
+      if (!result.isConfirmed) return;
+      const { municipio_id: municipioId } = this.municipioActual;
+      const { ejercicio, mes } = this.periodoSeleccionado!;
+      this.borrandoDatos = true;
+      this.municipioService
+        .borrarDatosModulo({ municipioId, ejercicio, mes, modulo: 'gastos' })
+        .pipe(take(1), finalize(() => (this.borrandoDatos = false)))
+        .subscribe({
+          next: (r) => {
+            if (r.code === 'DATA_DELETED') {
+              mostrarToastExito('Datos borrados', `Se eliminaron ${r.deleted_count} registros.`);
+              this.limpiarArchivoMasiva();
+            } else if (r.code === 'NO_DATA_TO_DELETE') {
+              mostrarToastWarning('Sin datos', 'No hay datos cargados para borrar en este periodo.');
+            } else {
+              mostrarToastWarning('Aviso', r.message);
+            }
+          },
+          error: (err) => {
+            const code = err?.error?.code;
+            if (code === 'USER_RATE_LIMITED') {
+              mostrarToastError('Límite alcanzado', 'Demasiados borrados en poco tiempo. Intentá en una hora.');
+            } else if (code === 'MODULE_CLOSED') {
+              mostrarToastError('Módulo cerrado', 'El periodo ya fue cerrado oficialmente. No se puede borrar.');
+            } else {
+              mostrarToastError('Error', 'No se pudo completar el borrado. Intentá nuevamente.');
+            }
+          },
+        });
+    });
+  }
 
   ngOnInit(): void {
     this.municipioActual = this.municipioService.getMunicipioActual();

@@ -41,7 +41,7 @@
       </div>
     </mat-card>
 
-    <mat-card class="panel-menu-card" routerLink="/solicitar-prorroga">
+    <mat-card *ngIf="enableProrrogasModule" class="panel-menu-card" routerLink="/solicitar-prorroga">
       <mat-card-title class="card-title">Solicitar prórroga</mat-card-title>
       <div class="card-content">
         <mat-icon class="card-icon">pending_actions</mat-icon>

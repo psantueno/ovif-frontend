@@ -201,4 +201,11 @@
   </section>
 
   <app-loading-overlay [display]="guardando" label="Guardando cambios..."></app-loading-overlay>
+
+  <app-carga-borrado-panel
+    [contexto]="borradoContexto"
+    [disabled]="guardando || cargandoArchivoMasivo || descargandoInforme"
+    [borrando]="borrandoDatos"
+    (confirmar)="onConfirmarBorrado()"
+  ></app-carga-borrado-panel>
 </div>
