@@ -40,21 +40,31 @@ const normalizarKeysRemuneracion = (row: Record<string, any>): Record<string, an
   return normalized;
 };
 
+/**
+ * Normaliza un CUIL para comparación: elimina guiones, puntos y espacios,
+ * dejando solo dígitos. Esto asegura que "23-38155293-4" y 23381552934
+ * (numérico desde Excel) se traten como iguales.
+ */
+const normalizarCuil = (cuil: unknown): string =>
+  String(cuil ?? '').replace(/[\s.\-]/g, '').trim();
+
 const validarClaveUnicaPorCuilRegimen = (
-  remuneracion: Remuneraciones,
+  row: Remuneraciones,
   clavesPorCuilRegimen: Set<string>,
   errors: ParseError<Remuneraciones>[],
-  row: Remuneraciones,
   filaExcel?: number
 ): boolean => {
-  const cuil = String(remuneracion.cuil).trim();
-  const regimen = String(remuneracion.regimen_laboral).trim();
+  const cuil = normalizarCuil(row.cuil);
+  const regimen = String(row.regimen_laboral ?? '').trim();
+
+  if (!cuil || !regimen) return true; // sin datos suficientes, deja que Zod lo rechace
+
   const key = `${cuil}::${regimen.toLocaleLowerCase()}`;
 
   if (clavesPorCuilRegimen.has(key)) {
     errors.push({
       row,
-      error: `La combinación CUIL ${cuil} y régimen ${regimen} está duplicada en el archivo.`,
+      error: `La combinación CUIL ${String(row.cuil).trim()} y régimen ${regimen} está duplicada en el archivo.`,
       filaExcel
     });
     return false;
@@ -70,14 +80,14 @@ export const parseRemuneraciones = (rows: Remuneraciones[]): ParseResponse<Remun
   const clavesPorCuilRegimen = new Set<string>()
 
   rows.forEach((row) => {
+    if (!validarClaveUnicaPorCuilRegimen(row, clavesPorCuilRegimen, errors)) {
+      return
+    }
+
     const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = {...result.data}
-      if (!validarClaveUnicaPorCuilRegimen(remuneracionValida, clavesPorCuilRegimen, errors, row)) {
-        return
-      }
-
       parsedRemuneraciones.push(remuneracionValida)
     } else {
         const error: ParseError<Remuneraciones> = {
@@ -104,14 +114,14 @@ export const parseRemuneracionesConMetadata = (
   const clavesPorCuilRegimen = new Set<string>()
 
   rows.forEach(({ row, filaExcel }) => {
+    if (!validarClaveUnicaPorCuilRegimen(row, clavesPorCuilRegimen, errors, filaExcel)) {
+      return
+    }
+
     const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = { ...result.data }
-      if (!validarClaveUnicaPorCuilRegimen(remuneracionValida, clavesPorCuilRegimen, errors, row, filaExcel)) {
-        return
-      }
-
       parsedRemuneraciones.push(remuneracionValida)
     } else {
       const error: ParseError<Remuneraciones> = {
