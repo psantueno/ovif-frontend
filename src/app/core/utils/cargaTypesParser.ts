@@ -40,15 +40,43 @@ const normalizarKeysRemuneracion = (row: Record<string, any>): Record<string, an
   return normalized;
 };
 
+const validarClaveUnicaPorCuilRegimen = (
+  remuneracion: Remuneraciones,
+  clavesPorCuilRegimen: Set<string>,
+  errors: ParseError<Remuneraciones>[],
+  row: Remuneraciones,
+  filaExcel?: number
+): boolean => {
+  const cuil = String(remuneracion.cuil).trim();
+  const regimen = String(remuneracion.regimen_laboral).trim();
+  const key = `${cuil}::${regimen.toLocaleLowerCase()}`;
+
+  if (clavesPorCuilRegimen.has(key)) {
+    errors.push({
+      row,
+      error: `La combinación CUIL ${cuil} y régimen ${regimen} está duplicada en el archivo.`,
+      filaExcel
+    });
+    return false;
+  }
+
+  clavesPorCuilRegimen.add(key);
+  return true;
+};
+
 export const parseRemuneraciones = (rows: Remuneraciones[]): ParseResponse<Remuneraciones[], Remuneraciones> => {
   const parsedRemuneraciones: Remuneraciones[] = []
   const errors: ParseError<Remuneraciones>[] = []
+  const clavesPorCuilRegimen = new Set<string>()
 
   rows.forEach((row) => {
     const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = {...result.data}
+      if (!validarClaveUnicaPorCuilRegimen(remuneracionValida, clavesPorCuilRegimen, errors, row)) {
+        return
+      }
 
       parsedRemuneraciones.push(remuneracionValida)
     } else {
@@ -73,12 +101,17 @@ export const parseRemuneracionesConMetadata = (
 ): ParseResponse<Remuneraciones[], Remuneraciones> => {
   const parsedRemuneraciones: Remuneraciones[] = []
   const errors: ParseError<Remuneraciones>[] = []
+  const clavesPorCuilRegimen = new Set<string>()
 
   rows.forEach(({ row, filaExcel }) => {
     const result = RemuneracionesSchema.safeParse(normalizarKeysRemuneracion(row));
 
     if(result.success){
       const remuneracionValida: Remuneraciones = { ...result.data }
+      if (!validarClaveUnicaPorCuilRegimen(remuneracionValida, clavesPorCuilRegimen, errors, row, filaExcel)) {
+        return
+      }
+
       parsedRemuneraciones.push(remuneracionValida)
     } else {
       const error: ParseError<Remuneraciones> = {

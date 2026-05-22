@@ -787,11 +787,11 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
 
   private armarPayload(remuneracion: Remuneraciones): RemuneracionUpsertPayload{
     const payload: RemuneracionUpsertPayload = {
-      cuil: remuneracion.cuil,
+      cuil: String(remuneracion.cuil).trim(),
       legajo: remuneracion.legajo,
       apellido_nombre: remuneracion.apellido_nombre,
-      regimen_laboral: remuneracion.regimen_laboral,
-      categoria: remuneracion.categoria,
+      regimen_laboral: String(remuneracion.regimen_laboral).trim(),
+      categoria: String(remuneracion.categoria).trim(),
       sector: remuneracion.sector,
       fecha_ingreso: remuneracion.fecha_ingreso,
       fecha_inicio_servicio: remuneracion.fecha_inicio_servicio,
