@@ -60,7 +60,7 @@ export interface Usuario {
   styleUrls: ['./usuarios.component.scss'],
 })
 export class UsuariosComponent implements OnInit {
-  displayedColumns: string[] = ['usuario', 'email', 'nombre', 'activo', 'acciones'];
+  displayedColumns: string[] = ['id', 'usuario', 'email', 'nombre', 'activo', 'acciones'];
   dataSource = new MatTableDataSource<Usuario>([]);
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   totalRegistros: number = 0;

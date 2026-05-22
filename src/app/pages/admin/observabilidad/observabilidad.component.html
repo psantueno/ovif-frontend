@@ -41,8 +41,14 @@
 
   <mat-card *ngIf="error" class="estado-card error-card"><mat-icon>error</mat-icon><span>{{ error }}</span></mat-card>
 
-  <mat-tab-group class="observabilidad-tabs" animationDuration="180ms">
-    <mat-tab label="General">
+  <app-tab-group>
+    <app-tab label="General" [active]="tabActivo === 'general'" (clicked)="tabActivo = 'general'"></app-tab>
+    <app-tab label="Rate Limits" [active]="tabActivo === 'rateLimits'" (clicked)="tabActivo = 'rateLimits'"></app-tab>
+    <app-tab label="Explorer" [active]="tabActivo === 'explorer'" (clicked)="tabActivo = 'explorer'"></app-tab>
+    <app-tab label="Anomalías" [active]="tabActivo === 'anomalias'" (clicked)="tabActivo = 'anomalias'"></app-tab>
+  </app-tab-group>
+
+    <div [hidden]="tabActivo !== 'general'">
       <section class="tab-content">
         <div *ngIf="loading" class="loading-row"><mat-spinner diameter="36"></mat-spinner></div>
         <section class="metric-grid" *ngIf="metricas">
@@ -84,9 +90,9 @@
           </mat-card-content>
         </mat-card>
       </section>
-    </mat-tab>
+    </div>
 
-    <mat-tab label="Rate Limits">
+    <div [hidden]="tabActivo !== 'rateLimits'">
       <section class="tab-content">
         <mat-card class="admin-tabla-card admin-card">
           <mat-card-header><mat-icon class="header-icon">block</mat-icon><mat-card-title>Bloqueos por limiter</mat-card-title></mat-card-header>
@@ -127,9 +133,9 @@
           </mat-card-content>
         </mat-card>
       </section>
-    </mat-tab>
+    </div>
 
-    <mat-tab label="Explorer">
+    <div [hidden]="tabActivo !== 'explorer'">
       <section class="tab-content">
         <mat-card *ngIf="explorerError" class="estado-card error-card"><mat-icon>error</mat-icon><span>{{ explorerError }}</span></mat-card>
         <mat-card class="admin-tabla-card admin-card">
@@ -151,9 +157,9 @@
           </mat-card-content>
         </mat-card>
       </section>
-    </mat-tab>
+    </div>
 
-    <mat-tab label="Anomalías">
+    <div [hidden]="tabActivo !== 'anomalias'">
       <section class="tab-content">
         <mat-card class="admin-tabla-card admin-card">
           <mat-card-header><mat-icon class="header-icon">monitor_heart</mat-icon><mat-card-title>Anomalías detectadas</mat-card-title></mat-card-header>
@@ -169,6 +175,5 @@
           </mat-card-content>
         </mat-card>
       </section>
-    </mat-tab>
-  </mat-tab-group>
+    </div>
 </div>
