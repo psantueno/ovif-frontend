@@ -158,7 +158,7 @@
       <button
         type="button"
         (click)="generarInforme()"
-        [disabled]="mesCerrado || guardando || descargandoInforme"
+        [disabled]="mesCerrado || guardando || descargandoInforme || previsualizacionMasiva.length || cargandoArchivoMasivo || borrandoDatos || erroresCargaMasiva.length"
       >
         <mat-icon aria-hidden="true">{{ descargandoInforme ? 'hourglass_top' : 'picture_as_pdf' }}</mat-icon>
         <ng-container *ngIf="!descargandoInforme; else generandoInformeTexto">
@@ -172,7 +172,7 @@
         type="button"
         class="accion-borrar-datos"
         (click)="onConfirmarBorrado()"
-        [disabled]="!borradoContexto || guardando || cargandoArchivoMasivo || descargandoInforme || borrandoDatos"
+        [disabled]="!borradoContexto || guardando || cargandoArchivoMasivo || descargandoInforme || borrandoDatos || previsualizacionMasiva.length || erroresCargaMasiva.length"
       >
         <mat-icon aria-hidden="true">{{ borrandoDatos ? 'hourglass_top' : 'delete' }}</mat-icon>
         <span>{{ borrandoDatos ? 'Borrando...' : 'Borrar datos' }}</span>

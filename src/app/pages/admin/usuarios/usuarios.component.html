@@ -72,6 +72,12 @@
         <div class="admin-tabla-wrapper">
         <table mat-table [dataSource]="dataSource" class="usuarios-table admin-tabla">
 
+          <!-- ID -->
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef> ID </th>
+            <td mat-cell *matCellDef="let u"> {{ u.usuario_id }} </td>
+          </ng-container>
+
           <!-- Usuario -->
           <ng-container matColumnDef="usuario">
             <th mat-header-cell *matHeaderCellDef> Usuario </th>

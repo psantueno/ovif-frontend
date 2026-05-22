@@ -25,6 +25,8 @@ import {
   ObservabilidadRateLimits,
   ObservabilidadService,
 } from '../../../services/observabilidad.service';
+import { TabGroupComponent } from '../../../shared/components/tabs/tab-group.component';
+import { TabComponent } from '../../../shared/components/tabs/tab.component';
 
 const ES_AR_DATE_FORMATS = {
   parse: {
@@ -63,6 +65,8 @@ const ES_AR_DATE_FORMATS = {
     MatTabsModule,
     MatTooltipModule,
     AdminNavbarComponent,
+    TabGroupComponent,
+    TabComponent,
   ],
   providers: [
     provideNativeDateAdapter(ES_AR_DATE_FORMATS),
@@ -106,6 +110,7 @@ export class ObservabilidadComponent implements OnInit {
   explorerLoading = false;
   error = '';
   explorerError = '';
+  tabActivo: 'general' | 'rateLimits' | 'explorer' | 'anomalias' = 'general';
 
   readonly slowEndpointColumns = ['method', 'route_pattern', 'total_requests', 'avg_duration_ms', 'p95_duration_ms'];
   readonly limiterColumns = ['limiter', 'total'];
