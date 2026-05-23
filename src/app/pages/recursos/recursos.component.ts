@@ -420,6 +420,11 @@ export class RecursosComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (response) => {
+          if (this.municipioService.esInformeSinDatos(response)) {
+            this.mostrarMensaje('info', response.message);
+            return;
+          }
+
           const blob = response.body;
           if (!blob || blob.size === 0) {
             this.mostrarError('No recibimos el archivo del informe. Intentá nuevamente más tarde.');

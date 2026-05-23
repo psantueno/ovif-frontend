@@ -207,6 +207,13 @@ export interface UpsertResponse {
   }
 }
 
+export interface InformeSinDatosResponse {
+  generado: false;
+  message: string;
+}
+
+export type InformeDescargaResponse = HttpResponse<Blob> | InformeSinDatosResponse;
+
 @Injectable({ providedIn: 'root' })
 export class MunicipioService {
   private readonly apiUrl = inject(API_URL);
@@ -216,6 +223,48 @@ export class MunicipioService {
   private readonly ejercicioMesKey = 'ejercicioMesSeleccionado';
   private readonly municipioSubject = new BehaviorSubject<any>(this.readFromStorage());
   readonly municipio$ = this.municipioSubject.asObservable();
+
+  esInformeSinDatos(response: InformeDescargaResponse): response is InformeSinDatosResponse {
+    return !!response && !(response instanceof HttpResponse) && response.generado === false;
+  }
+
+  private descargarInforme(url: string): Observable<InformeDescargaResponse> {
+    return this.http.get(url, {
+      responseType: 'blob',
+      observe: 'response',
+    }).pipe(
+      switchMap((response) => this.normalizarRespuestaInforme(response)),
+      catchError((error) => normalizeBlobHttpError(error))
+    );
+  }
+
+  private normalizarRespuestaInforme(response: HttpResponse<Blob>): Observable<InformeDescargaResponse> {
+    const blob = response.body;
+    const contentType = (
+      response.headers?.get('Content-Type') ??
+      blob?.type ??
+      ''
+    ).toLowerCase();
+
+    if (!blob || !contentType.includes('json')) {
+      return of(response);
+    }
+
+    return from(blob.text()).pipe(
+      map((rawText) => {
+        try {
+          const payload = JSON.parse(rawText);
+          if (payload?.generado === false && typeof payload.message === 'string') {
+            return payload as InformeSinDatosResponse;
+          }
+        } catch {
+          return response;
+        }
+
+        return response;
+      })
+    );
+  }
 
   private readFromStorage(): any {
     const guardado = localStorage.getItem(this.storageKey);
@@ -503,16 +552,13 @@ export class MunicipioService {
   }
 
 
-  descargarInformeGastos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeGastos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/gastos/informe`);
   }
 
   guardarPartidasGastos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaGastoUpsertPayload[] }): Observable<UpsertResponse> {
@@ -545,16 +591,13 @@ export class MunicipioService {
       );
   }
 
-  descargarInformeRecursos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeRecursos(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de recursos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recursos/informe`);
   }
 
   guardarPartidasRecursos(params: { municipioId: number; ejercicio: number; mes: number; partidas: PartidaRecursoUpsertPayload[] }): Observable<UpsertResponse> {
@@ -754,47 +797,37 @@ export class MunicipioService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  descargarInformeRecaudaciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeRecaudaciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones/informe`);
   }
 
-  descargarInformeRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones/informe`);
   }
 
   descargarInformeDeterminacionTributaria(params: {
     municipioId: number;
     ejercicio: number;
     mes: number;
-  }): Observable<HttpResponse<Blob>> {
+  }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de determinacion tributaria.'));
     }
 
-    return this.http.get(
-      `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/determinacion-tributaria/informe`,
-      {
-        responseType: 'blob',
-        observe: 'response',
-      }
-    ).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(
+      `${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/determinacion-tributaria/informe`
+    );
   }
 
   guardarRemuneraciones(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
@@ -837,28 +870,22 @@ export class MunicipioService {
       .pipe(catchError((error) => throwError(() => error)));
   }
 
-  descargarInformeRecaudacionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeRecaudacionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/recaudaciones-rectificadas/informe`);
   }
 
-  descargarInformeRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<HttpResponse<Blob>> {
+  descargarInformeRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number }): Observable<InformeDescargaResponse> {
     const { municipioId, ejercicio, mes } = params;
     if (!municipioId || !ejercicio || !mes) {
       return throwError(() => new Error('Datos insuficientes para descargar el informe de gastos.'));
     }
 
-    return this.http.get(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones-rectificadas/informe`, {
-      responseType: 'blob',
-      observe: 'response',
-    }).pipe(catchError((error) => normalizeBlobHttpError(error)));
+    return this.descargarInforme(`${this.apiUrl}/municipios/${municipioId}/ejercicios/${ejercicio}/mes/${mes}/remuneraciones-rectificadas/informe`);
   }
 
   guardarRemuneracionesRectificadas(params: { municipioId: number; ejercicio: number; mes: number; remuneraciones: RemuneracionUpsertPayload[] }): Observable<UpsertResponse> {
