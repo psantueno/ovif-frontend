@@ -144,10 +144,18 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
       errores.push('El campo descripcion es obligatorio.');
     }
 
+    if(descripcion && descripcion.length > 255) {
+      errores.push('El campo descripcion no puede exceder los 255 caracteres.');
+    }
+
     const codFuenteFinanciera = normalizarNumeroEntero(codFuenteRaw, 'cod_fuente_financiera', errores);
 
     if (!descripcionFuente) {
       errores.push('El campo descripcion_fuente es obligatorio.');
+    }
+
+    if(descripcionFuente && descripcionFuente.length > 255) {
+      errores.push('El campo descripcion_fuente no puede exceder los 255 caracteres.');
     }
 
     const formulado = normalizarNumeroDecimal(formuladoRaw, 'formulado', errores);

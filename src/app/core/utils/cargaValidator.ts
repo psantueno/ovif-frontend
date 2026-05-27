@@ -81,7 +81,7 @@ const fechaSchema = z.preprocess(
     .transform(parseExcelDate)
 );
 
-const stringTrimSchema = (campo: string) =>
+const stringTrimSchema = (campo: string, maxLength: number = 100) =>
   z.preprocess((value) => {
     if (typeof value === 'string' || typeof value === 'number') {
       return String(value).trim();
@@ -91,7 +91,10 @@ const stringTrimSchema = (campo: string) =>
   },
   z.string({
     error: `El campo "${campo}" debe ser una cadena de caracteres`
-  }).min(1, `El campo "${campo}" es obligatorio`));
+  })
+  .min(1, `El campo "${campo}" es obligatorio`)
+  .max(maxLength, `El campo "${campo}" no puede exceder ${maxLength} caracteres`));
+
 
   const fechaFinServicioSchema = z.preprocess(
     (value) => {
@@ -144,15 +147,11 @@ export const RemuneracionesSchema = z.object({
     .int('El legajo debe ser un número entero')
     .min(0, 'El legajo debe ser un número mayor a 0')
     .refine(n => isFinite(Number(n)) && !isNaN(n), 'El legajo debe ser un número entero mayor a 0'),
-  cuil: stringTrimSchema('CUIL'),
-  apellido_nombre: z
-    .string('El apellido y nombre debe ser una cadena de carateres')
-    .min(1, 'El apellido y nombre es obligatorio'),
-  regimen_laboral: stringTrimSchema('Regimen laboral'),
-  categoria: stringTrimSchema('Categoria'),
-  sector: z
-    .string('La categoria debe ser una cadena de carateres')
-    .min(1, 'La categoria es obligatorio'),
+  cuil: stringTrimSchema('CUIL', 20),
+  apellido_nombre: stringTrimSchema('Apellido Nombre', 255),
+  regimen_laboral: stringTrimSchema('Regimen laboral', 255),
+  categoria: stringTrimSchema('Categoria', 100),
+  sector: stringTrimSchema('Sector', 100),
   fecha_ingreso: fechaSchema,
   fecha_inicio_servicio: fechaSchema,
   fecha_fin_servicio: fechaFinServicioSchema,

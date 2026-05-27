@@ -259,7 +259,9 @@ export class RemuneracionesComponent implements OnInit, OnDestroy {
         return;
       }
 
+      console.log("Rows: ", rows);
       const { rows: importesParseados, errors: errores } = parseRemuneracionesConMetadata(rows);
+      console.log("Errores: ", errores);
 
       if (importesParseados.length === 0 && errores.length === 0) {
         this.erroresCargaMasiva.push('El archivo está vacío o no cumple con la plantilla requerida.');
