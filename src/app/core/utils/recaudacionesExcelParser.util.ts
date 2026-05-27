@@ -136,10 +136,18 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
       errores.push('El campo descripcion es obligatorio.');
     }
 
+    if(descripcion && descripcion.length > 255) {
+      errores.push('El campo descripcion no puede exceder los 255 caracteres.');
+    }
+
     importeRecaudacion = normalizarNumeroDecimal(importeRaw, 'importe_recaudacion', errores)
 
     if (!enteRecaudador) {
       errores.push('El campo ente_recaudador es obligatorio.');
+    }
+
+    if(enteRecaudador && enteRecaudador.length > 255) {
+      errores.push('El campo ente_recaudador no puede exceder los 255 caracteres.');
     }
 
     rows.push({
