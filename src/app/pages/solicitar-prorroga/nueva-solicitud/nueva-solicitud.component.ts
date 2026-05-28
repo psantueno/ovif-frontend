@@ -40,6 +40,110 @@ interface FilaState {
   cargandoPeriodos: boolean;
 }
 
+const escapeHtml = (value: unknown): string =>
+  String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const buildErroresSolicitudesHtml = (errores: any[]): string => {
+  const cantidad = errores.length;
+  const detalle = errores
+    .map((e: any) => {
+      const indice = escapeHtml(e?.indice);
+      const mensaje = escapeHtml(e?.error);
+
+      return `
+        <li style="
+          display:block;
+          margin:0;
+          padding:14px 16px;
+          border:1px solid #f3c7c7;
+          border-left:5px solid #e45f5f;
+          border-radius:8px;
+          background:#fffafa;
+          box-shadow:0 1px 2px rgba(17,24,39,.04);
+        ">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="
+              display:inline-flex;
+              align-items:center;
+              justify-content:center;
+              min-width:58px;
+              padding:3px 9px;
+              border-radius:999px;
+              background:#fee2e2;
+              color:#991b1b;
+              font-size:12px;
+              font-weight:800;
+              line-height:1.25;
+              white-space:nowrap;
+            ">Ítem ${indice}</span>
+            <span style="height:1px; flex:1; background:#f3d4d4;"></span>
+          </div>
+          <div style="
+            color:#2f3a45;
+            font-size:14px;
+            font-weight:600;
+            line-height:1.42;
+            overflow-wrap:anywhere;
+            word-break:normal;
+          ">${mensaje}</div>
+        </li>
+      `;
+    })
+    .join('');
+
+  return `
+    <div style="text-align:left; color:#2f3a45;">
+      <div style="
+        display:flex;
+        align-items:flex-start;
+        gap:12px;
+        margin:2px 0 16px;
+        padding:12px 14px;
+        border-radius:8px;
+        background:#f8fafc;
+        border:1px solid #e5e7eb;
+      ">
+        <div style="
+          flex:0 0 auto;
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          width:30px;
+          height:30px;
+          border-radius:50%;
+          background:#fee2e2;
+          color:#b91c1c;
+          font-size:18px;
+          font-weight:800;
+        ">!</div>
+        <div style="min-width:0;">
+          <div style="font-size:15px; font-weight:800; color:#111827; margin-bottom:3px;">
+            ${cantidad} solicitud${cantidad !== 1 ? 'es requieren' : ' requiere'} revisión
+          </div>
+          <div style="font-size:13px; color:#5f6b76; line-height:1.35;">
+            Corregí los casos indicados y volvé a enviar el formulario.
+          </div>
+        </div>
+      </div>
+      <ul style="
+        display:grid;
+        gap:10px;
+        max-height:min(42vh, 360px);
+        margin:0;
+        padding:2px 4px 2px 0;
+        overflow-y:auto;
+        overflow-x:hidden;
+        list-style:none;
+      ">${detalle}</ul>
+    </div>
+  `;
+};
+
 @Component({
   selector: 'app-nueva-solicitud',
   standalone: true,
@@ -366,13 +470,12 @@ export class NuevaSolicitudComponent implements OnInit {
           this.enviando = false;
           const errores = err?.error?.errores;
           if (Array.isArray(errores) && errores.length > 0) {
-            const detalle = errores
-              .map((e: any) => `• Ítem ${e.indice}: ${e.error}`)
-              .join('\n');
             Swal.fire({
               icon: 'error',
               title: 'Errores en las solicitudes',
-              html: `<pre style="text-align:left;font-size:13px;padding: 5px">${detalle}</pre>`,
+              html: buildErroresSolicitudesHtml(errores),
+              width: 'min(720px, calc(100vw - 32px))',
+              confirmButtonText: 'Entendido',
               confirmButtonColor: '#2b3e4c',
             });
           } else {
