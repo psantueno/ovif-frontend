@@ -47,16 +47,17 @@ export class AprobarSolicitudDialogComponent {
   private readonly solicitudesService = inject(SolicitudesProrrogaService);
   private readonly dialogRef = inject(MatDialogRef<AprobarSolicitudDialogComponent>);
   private readonly fb = inject(FormBuilder);
+  private readonly hoyISO = this.formatearISODateLocal(new Date());
 
-  readonly hoy = new Date();
+  readonly hoy = this.crearFechaLocalDesdeISO(this.hoyISO);
   readonly mostrar = mostrarFecha;
   readonly tipos = TIPOS_SOLICITUD_PRORROGA;
   aprobando = false;
 
   get fechaSolicitadaVencida(): boolean {
-    const fecha = this.data.fecha_cierre_solicitada;
-    if (!fecha) return false;
-    return new Date(fecha) < this.hoy;
+    const fechaISO = this.normalizarFechaISO(this.data.fecha_cierre_solicitada);
+    if (!fechaISO) return false;
+    return fechaISO < this.hoyISO;
   }
 
   readonly form = this.fb.group({
@@ -70,6 +71,35 @@ export class AprobarSolicitudDialogComponent {
       this.form.get('fecha_cierre_aprobada')?.setValidators(Validators.required);
       this.form.get('fecha_cierre_aprobada')?.updateValueAndValidity();
     }
+  }
+
+  private formatearISODateLocal(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private crearFechaLocalDesdeISO(fechaISO: string): Date {
+    const [y, m, d] = fechaISO.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  private normalizarFechaISO(fecha: string | null | undefined): string | null {
+    if (!fecha) return null;
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(fecha)) {
+      return fecha.slice(0, 10);
+    }
+
+    const match = fecha.match(/^(\d{2})[-/](\d{2})[-/](\d{4})$/);
+    if (match) {
+      const [, d, m, y] = match;
+      return `${y}-${m}-${d}`;
+    }
+
+    const parsed = new Date(fecha);
+    return Number.isNaN(parsed.getTime()) ? null : this.formatearISODateLocal(parsed);
   }
 
   aprobar(): void {
