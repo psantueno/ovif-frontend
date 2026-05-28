@@ -222,6 +222,14 @@ export const routes: Routes = [
         canActivate: [AdminGuard],
         loadComponent: () =>
           import('./pages/admin/solicitudes-prorroga/solicitudes-prorroga-admin.component').then((m) => m.SolicitudesProrrogaAdminComponent)
+      },
+      {
+        path: 'admin/test-cierre-modulos',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./pages/admin/test-cierre-modulos/test-cierre-modulos.component').then(
+            (m) => m.TestCierreModulosComponent
+          )
       }
     ]
   },

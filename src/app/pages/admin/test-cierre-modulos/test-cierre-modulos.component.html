@@ -1,0 +1,385 @@
+<div class="test-cierre-container">
+  <app-admin-navbar [breadcrumbs]="breadcrumbs" backLink="/admin"></app-admin-navbar>
+
+  <!-- Helper card con instrucciones -->
+  <mat-card class="admin-helper-card admin-card">
+    <div class="helper-content">
+      <mat-icon color="primary">science</mat-icon>
+      <div class="helper-text-container">
+        <h3>Test de Cierre de Módulos</h3>
+        <hr>
+        <ol>
+          <li>Seleccioná el municipio con el buscador.</li>
+          <li>Completá el ejercicio (año), mes y los módulos a simular.</li>
+          <li>Activá "Enviar mail de prueba" si querés incluir la simulación de correos.</li>
+          <li>Presioná <strong>Simular</strong> para ejecutar la prueba (no escribe en la base de datos).</li>
+          <li>Revisá los resultados en las secciones de abajo.</li>
+        </ol>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Selector de municipio -->
+  <mat-card class="admin-selector-card selector-card">
+    <div class="selector-content">
+      <mat-form-field appearance="outline" class="selector-field">
+        <mat-label>Seleccionar municipio</mat-label>
+        <input
+          matInput
+          [matAutocomplete]="municipioAuto"
+          [formControl]="municipioControl"
+          placeholder="Escribí para filtrar"
+        />
+        <button
+          mat-icon-button
+          matSuffix
+          type="button"
+          *ngIf="municipioControl.value"
+          (click)="limpiarSeleccionMunicipio()"
+          aria-label="Limpiar selección"
+        >
+          <mat-icon>clear</mat-icon>
+        </button>
+        <mat-autocomplete
+          #municipioAuto="matAutocomplete"
+          (optionSelected)="onMunicipioSelected($event)"
+          [displayWith]="displayMunicipio.bind(this)"
+        >
+          <mat-option
+            *ngFor="let municipio of filteredMunicipios$ | async"
+            [value]="municipio"
+          >
+            {{ municipio.municipio_nombre }}
+          </mat-option>
+          <mat-option
+            *ngIf="!(filteredMunicipios$ | async)?.length && !cargandoMunicipios"
+            disabled
+          >
+            No se encontraron municipios.
+          </mat-option>
+        </mat-autocomplete>
+      </mat-form-field>
+
+      <div class="selector-helper" *ngIf="!cargandoMunicipios">
+        <mat-icon>help_outline</mat-icon>
+        <span>Seleccioná un municipio para habilitar la simulación.</span>
+      </div>
+
+      <div class="selector-loading" *ngIf="cargandoMunicipios">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Cargando municipios...</span>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Formulario de simulación — visible al seleccionar municipio -->
+  <mat-card class="admin-card form-card" *ngIf="selectedMunicipio">
+    <mat-card-header>
+      <mat-card-title class="card-title-with-icon">
+        <mat-icon class="header-icon">tune</mat-icon>
+        Parámetros de simulación
+      </mat-card-title>
+      <mat-card-subtitle>
+        Municipio: <b>{{ selectedMunicipio.municipio_nombre }}</b>
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="form" class="simulacion-form">
+
+        <!-- Ejercicio y Mes -->
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Ejercicio (año)</mat-label>
+            <input matInput type="number" formControlName="ejercicio" placeholder="2026" />
+            <mat-icon matSuffix>calendar_today</mat-icon>
+            <mat-error *ngIf="form.get('ejercicio')?.hasError('required')">
+              El ejercicio es requerido.
+            </mat-error>
+            <mat-error *ngIf="form.get('ejercicio')?.hasError('min') || form.get('ejercicio')?.hasError('max')">
+              Ingresá un año entre 2000 y 2100.
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Mes</mat-label>
+            <mat-select formControlName="mes">
+              <mat-option *ngFor="let m of meses" [value]="m.value">{{ m.label }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="form.get('mes')?.hasError('required')">
+              Seleccioná el mes.
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <!-- Módulos -->
+        <div class="modulos-section">
+          <label class="modulos-label">
+            <mat-icon>view_module</mat-icon>
+            Grupos de módulos a simular
+          </label>
+          <div class="modulos-grid">
+            <div class="grupo-modulo" *ngFor="let grupo of gruposModulos">
+              <mat-checkbox
+                [checked]="isGrupoSelected(grupo)"
+                (change)="toggleGrupo(grupo)"
+                color="primary"
+              >
+                {{ grupo.label }}
+              </mat-checkbox>
+            </div>
+          </div>
+          <div
+            class="modulos-error"
+            *ngIf="form.get('modulos')?.touched && form.get('modulos')?.hasError('requiereModulo')"
+          >
+            Seleccioná al menos un grupo de módulos.
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- Toggle enviar mail -->
+        <div class="toggle-row">
+          <mat-slide-toggle formControlName="enviarMail" color="primary">
+            Enviar mail de prueba
+          </mat-slide-toggle>
+          <span class="toggle-hint">
+            <mat-icon>info_outline</mat-icon>
+            Envía el mail al destinatario de prueba configurado en el servidor.
+          </span>
+        </div>
+
+        <!-- Acciones -->
+        <div class="form-actions">
+          <button
+            mat-raised-button
+            class="admin-btn-accion"
+            type="button"
+            (click)="simular()"
+            [disabled]="simulando"
+          >
+            <mat-spinner *ngIf="simulando" diameter="18" class="btn-spinner"></mat-spinner>
+            <mat-icon *ngIf="!simulando">play_arrow</mat-icon>
+            <ng-container *ngIf="!simulando">Simular</ng-container>
+            <ng-container *ngIf="simulando">Simulando...</ng-container>
+          </button>
+
+          <button
+            mat-stroked-button
+            type="button"
+            (click)="limpiarFormulario()"
+            [disabled]="simulando"
+          >
+            <mat-icon>refresh</mat-icon>
+            Limpiar
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Resultados -->
+  <ng-container *ngIf="resultado">
+
+    <!-- Tabla de simulación -->
+    <mat-card class="admin-tabla-card admin-card">
+      <mat-card-header>
+        <mat-card-title class="card-title-with-icon">
+          <mat-icon class="header-icon">assignment_turned_in</mat-icon>
+          Resultado de simulación
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ resultado.municipio.municipio_nombre }} &mdash;
+          <ng-container *ngIf="resultado.simulacion.length > 0; else sinResultados">
+            {{ resultado.simulacion.length }} módulo(s) procesado(s)
+          </ng-container>
+          <ng-template #sinResultados>
+            Sin módulos procesados (verificá la configuración del período)
+          </ng-template>
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div *ngIf="resultado.simulacion.length === 0" class="estado-vacio">
+          <mat-icon>search_off</mat-icon>
+          <span>No hay módulos simulados. Es posible que no exista un EjercicioMes configurado para este período, o que los módulos solicitados no estén cubiertos por ninguna pauta.</span>
+        </div>
+
+        <div class="admin-tabla-wrapper" *ngIf="resultado.simulacion.length > 0">
+          <table mat-table [dataSource]="resultado.simulacion" class="admin-tabla">
+
+            <ng-container matColumnDef="modulo">
+              <th mat-header-cell *matHeaderCellDef>Módulo</th>
+              <td mat-cell *matCellDef="let item">
+                <strong>{{ item.cierre_modulo.modulo }}</strong>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tipo_cierre">
+              <th mat-header-cell *matHeaderCellDef>Tipo cierre</th>
+              <td mat-cell *matCellDef="let item">{{ item.cierre_modulo.tipo_cierre }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="estado">
+              <th mat-header-cell *matHeaderCellDef>Estado (cron)</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="estado-badge" [ngClass]="item.cron_log.estado === 'OK' ? 'estado-ok' : 'estado-error'">
+                  <mat-icon>{{ item.cron_log.estado === 'OK' ? 'check_circle' : 'error' }}</mat-icon>
+                  {{ item.cron_log.estado }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="cierre_existente">
+              <th mat-header-cell *matHeaderCellDef>Cierre existente</th>
+              <td mat-cell *matCellDef="let item">
+                <span class="estado-badge" [ngClass]="item.cierre_modulo.cierre_existente ? 'estado-advertencia' : 'estado-ok'">
+                  <mat-icon>{{ item.cierre_modulo.cierre_existente ? 'warning' : 'check_circle' }}</mat-icon>
+                  {{ item.cierre_modulo.cierre_existente ? 'Sí' : 'No' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="observacion">
+              <th mat-header-cell *matHeaderCellDef>Observación / Mensaje</th>
+              <td mat-cell *matCellDef="let item" class="observacion-cell"
+                  [matTooltip]="item.cron_log.mensaje">
+                {{ item.cierre_modulo.observacion || item.cron_log.mensaje || '—' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="simulacionColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: simulacionColumns;"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Envío de correos -->
+    <mat-card class="admin-card correos-card" *ngIf="resultado.envio_correos.length > 0">
+      <mat-card-header>
+        <mat-card-title class="card-title-with-icon">
+          <mat-icon class="header-icon">email</mat-icon>
+          Envío de correos simulado
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ resultado.envio_correos.length }} entrada(s) que se encolarían en la base de datos
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="correos-lista">
+          <div class="correo-item" *ngFor="let correo of resultado.envio_correos">
+            <mat-icon class="correo-icon">person</mat-icon>
+            <div class="correo-datos">
+              <span class="correo-nombre">{{ correo.nombre_destinatario }}</span>
+              <span class="correo-email">{{ correo.destinatario }}</span>
+              <span class="correo-asunto">{{ correo.asunto }}</span>
+              <span class="correo-grupo">
+                <mat-icon>view_module</mat-icon>
+                {{ correo.grupo_modulos.join(', ') }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Mail test — grupos por par de pauta -->
+    <mat-card class="admin-card mail-card">
+      <mat-card-header>
+        <mat-card-title class="card-title-with-icon">
+          <mat-icon class="header-icon">mark_email_read</mat-icon>
+          Mails generados
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ resultado.mail_test.grupos.length }} par(es) de pauta
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <!-- Resumen global -->
+        <div class="mail-meta">
+          <div class="mail-meta-item" *ngIf="resultado.mail_test.destinatario_test">
+            <span class="meta-label">Destinatario de prueba</span>
+            <span class="meta-value">{{ resultado.mail_test.destinatario_test }}</span>
+          </div>
+
+          <ng-container *ngIf="resultado.mail_test.resumen_envio as resumen">
+            <div class="mail-meta-item">
+              <span class="meta-label">Enviados</span>
+              <span class="estado-badge estado-ok">
+                <mat-icon>check_circle</mat-icon>{{ resumen.sent }} / {{ resumen.total }}
+              </span>
+            </div>
+            <div class="mail-meta-item" *ngIf="resumen.failed > 0">
+              <span class="meta-label">Fallidos</span>
+              <span class="estado-badge estado-error">
+                <mat-icon>error</mat-icon>{{ resumen.failed }}
+              </span>
+            </div>
+            <div class="mail-meta-item" *ngIf="resumen.skipped > 0">
+              <span class="meta-label">Omitidos</span>
+              <span class="estado-badge estado-neutral">
+                <mat-icon>skip_next</mat-icon>{{ resumen.skipped }}
+              </span>
+            </div>
+          </ng-container>
+
+          <div class="mail-meta-item" *ngIf="resultado.mail_test.error">
+            <span class="meta-label">Error</span>
+            <span class="meta-value meta-value--error">{{ resultado.mail_test.error }}</span>
+          </div>
+        </div>
+
+        <!-- Un bloque por grupo/par de pauta -->
+        <div
+          class="mail-grupo"
+          *ngFor="let grupo of resultado.mail_test.grupos; let i = index"
+        >
+          <mat-divider *ngIf="i > 0"></mat-divider>
+
+          <div class="mail-grupo-header">
+            <div class="mail-grupo-info">
+              <span class="mail-grupo-modulos">{{ grupo.modulos.join(', ') }}</span>
+              <!-- Estado de envío (solo si enviar_mail fue true) -->
+              <ng-container *ngIf="grupo.enviado !== null">
+                <span class="estado-badge" [ngClass]="grupo.enviado ? 'estado-ok' : 'estado-error'">
+                  <mat-icon>{{ grupo.enviado ? 'check_circle' : 'error' }}</mat-icon>
+                  {{ grupo.enviado ? 'Enviado' : 'Error de envío' }}
+                </span>
+              </ng-container>
+              <span class="mail-grupo-error" *ngIf="grupo.error">{{ grupo.error }}</span>
+            </div>
+
+            <button
+              mat-stroked-button
+              type="button"
+              class="btn-preview"
+              (click)="toggleGrupoMailPreview(i)"
+            >
+              <mat-icon>{{ isGrupoMailExpandido(i) ? 'expand_less' : 'expand_more' }}</mat-icon>
+              {{ isGrupoMailExpandido(i) ? 'Ocultar' : 'Ver' }} preview
+            </button>
+          </div>
+
+          <div class="mail-preview-container" *ngIf="isGrupoMailExpandido(i) && grupo.html">
+            <iframe
+              class="mail-iframe"
+              [srcdoc]="mailHtmlSeguroForGrupo(grupo)"
+              sandbox="allow-same-origin"
+              [title]="'Preview mail ' + grupo.modulos.join(', ')"
+            ></iframe>
+          </div>
+        </div>
+
+        <div class="estado-vacio" *ngIf="resultado.mail_test.grupos.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <span>No se generaron mails (no hay módulos simulados para este período).</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </ng-container>
+</div>
