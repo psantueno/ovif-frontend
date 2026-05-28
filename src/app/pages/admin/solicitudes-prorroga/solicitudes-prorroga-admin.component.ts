@@ -24,7 +24,8 @@ import { LoadingOverlayComponent } from '../../../shared/components/loading-over
 import {
   SolicitudesProrrogaService, SolicitudProrroga, EstadoSolicitud,
   RechazarLoteItem, AprobarLoteItem,
-  formatearFechaParaBackend, mostrarFecha, MESES_LABELS
+  formatearFechaParaBackend, mostrarFecha, MESES_LABELS,
+  TIPOS_SOLICITUD_PRORROGA, TipoSolicitudProrroga, mostrarTipoProrroga
 } from '../../../services/solicitudes-prorroga.service';
 import { MunicipioService, MunicipioSelectOption } from '../../../services/municipio.service';
 import { ConveniosAdminService, Convenio } from '../../../services/convenios-admin.service';
@@ -84,13 +85,15 @@ export class SolicitudesProrrogaAdminComponent implements OnInit {
 
   readonly mesesLabels = MESES_LABELS;
   readonly mostrarFecha = mostrarFecha;
+  readonly mostrarTipoProrroga = mostrarTipoProrroga;
   readonly estados: EstadoSolicitud[] = ['PENDIENTE', 'APROBADA', 'RECHAZADA', 'CANCELADA'];
+  readonly tipos = TIPOS_SOLICITUD_PRORROGA;
   readonly ejercicios: number[] = Array.from({ length: 15 }, (_, i) => 2026 - i);
 
   readonly displayedColumns = [
     'seleccion', 'fecha_solicitud', 'solicitante', 'municipio', 'ejercicio', 'mes',
     'convenio', 'pauta', 'fecha_cierre_solicitada', 'estado',
-    'resuelto_por', 'fecha_resolucion', 'acciones'
+    'tipo', 'resuelto_por', 'fecha_resolucion', 'acciones'
   ];
 
   dataSource = new MatTableDataSource<SolicitudProrroga>([]);
@@ -111,6 +114,7 @@ export class SolicitudesProrrogaAdminComponent implements OnInit {
     mes: [''],
     convenio_id: [''],
     pauta_id: [''],
+    tipo: [''],
     fecha_solicitud_desde: [null],
     fecha_solicitud_hasta: [null],
     fecha_resolucion_desde: [null],
@@ -180,7 +184,7 @@ export class SolicitudesProrrogaAdminComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.filtroForm.reset({ estado: 'PENDIENTE' });
+    this.filtroForm.reset({ estado: 'PENDIENTE', tipo: '' });
     this.buscar();
   }
 
@@ -201,6 +205,7 @@ export class SolicitudesProrrogaAdminComponent implements OnInit {
       mes: f.mes || undefined,
       convenio_id: f.convenio_id || undefined,
       pauta_id: f.pauta_id || undefined,
+      tipo: f.tipo || undefined,
       solicitado_por: f.solicitado_por || undefined,
       fecha_solicitud_desde: formatearFechaParaBackend(f.fecha_solicitud_desde),
       fecha_solicitud_hasta: formatearFechaParaBackend(f.fecha_solicitud_hasta),
@@ -287,18 +292,28 @@ export class SolicitudesProrrogaAdminComponent implements OnInit {
       title: `¿Aprobar ${ids.length} solicitud${ids.length !== 1 ? 'es' : ''}?`,
       text: 'Se usará la fecha de cierre solicitada de cada una como fecha aprobada.',
       icon: 'question',
+      input: 'select',
+      inputOptions: Object.fromEntries(this.tipos.map(tipo => [tipo.value, tipo.label])),
+      inputPlaceholder: '- Determine el motivo -',
       showCancelButton: true,
       confirmButtonText: 'Sí, aprobar',
       cancelButtonText: 'Cancelar',
       confirmButtonColor: '#2e7d32',
       cancelButtonColor: '#6c757d',
       reverseButtons: true,
+      inputValidator: (value) => {
+        if (!value) {
+          return 'Debe determinar el motivo de la prórroga.';
+        }
+        return undefined;
+      },
     }).then(result => {
-      if (!result.isConfirmed) return;
+      if (!result.isConfirmed || !result.value) return;
 
+      const tipo = result.value as TipoSolicitudProrroga;
       const items: AprobarLoteItem[] = ids.map(solicitud_id => ({ solicitud_id }));
       this.enviando = true;
-      this.solicitudesService.aprobarLote(items)
+      this.solicitudesService.aprobarLote(tipo, items)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (res) => {

@@ -2,5 +2,4 @@
 export const environment = {
   production: true,
   apiUrl: '/api',   // Relativo: nginx hace proxy_pass a Node.js
-  enableProrrogasModule: false
 };

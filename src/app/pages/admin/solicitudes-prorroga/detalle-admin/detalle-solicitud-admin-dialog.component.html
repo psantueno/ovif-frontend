@@ -51,6 +51,10 @@
       <span class="label">Cierre aprobado</span>
       <span>{{ mostrar(data.fecha_cierre_aprobada) }}</span>
     </div>
+    <div class="detalle-item">
+      <span class="label">Tipo</span>
+      <span>{{ mostrarTipo(data.tipo) }}</span>
+    </div>
     @if (data.prorroga_id) {
       <div class="detalle-item">
         <span class="label">Prórroga efectiva ID</span>
