@@ -14,6 +14,19 @@
   </div>
 
   <mat-form-field appearance="outline" class="full-width">
+    <mat-label>Tipo de prórroga</mat-label>
+    <mat-select formControlName="tipo">
+      <mat-option value="" disabled>- Determine el motivo -</mat-option>
+      @for (tipo of tipos; track tipo.value) {
+        <mat-option [value]="tipo.value">{{ tipo.label }}</mat-option>
+      }
+    </mat-select>
+    @if (form.get('tipo')?.hasError('required') && form.get('tipo')?.touched) {
+      <mat-error>Debe determinar el motivo de la prórroga.</mat-error>
+    }
+  </mat-form-field>
+
+  <mat-form-field appearance="outline" class="full-width">
     <mat-label>Fecha de cierre aprobada {{ fechaSolicitadaVencida ? '*' : '(opcional)' }}</mat-label>
     <input matInput [matDatepicker]="picker" formControlName="fecha_cierre_aprobada"
       [min]="hoy" placeholder="DD/MM/AAAA" />
@@ -37,7 +50,7 @@
 
 <mat-dialog-actions align="end">
   <button mat-raised-button mat-dialog-close class="admin-btn-accion-secundario" [disabled]="aprobando">Cancelar</button>
-  <button mat-raised-button class="admin-btn-accion" (click)="aprobar()" [disabled]="aprobando">
+  <button mat-raised-button class="admin-btn-accion" (click)="aprobar()" [disabled]="aprobando || form.invalid">
     <mat-icon>{{ aprobando ? 'hourglass_top' : 'check_circle' }}</mat-icon>
     Aprobar
   </button>

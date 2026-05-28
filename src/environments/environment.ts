@@ -3,5 +3,4 @@
 export const environment = {
   production: false,
   apiUrl: '/api',
-  enableProrrogasModule: true
 };

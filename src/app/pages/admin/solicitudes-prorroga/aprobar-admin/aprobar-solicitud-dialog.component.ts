@@ -1,6 +1,6 @@
 import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,12 +8,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, MAT_DATE_LOCALE } from '@angular/material/core';
+import { MatSelectModule } from '@angular/material/select';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { finalize } from 'rxjs/operators';
 
 import {
   SolicitudesProrrogaService, SolicitudProrroga,
-  formatearFechaParaBackend, mostrarFecha
+  formatearFechaParaBackend, mostrarFecha,
+  TIPOS_SOLICITUD_PRORROGA, TipoSolicitudProrroga
 } from '../../../../services/solicitudes-prorroga.service';
 import { mostrarToastExito, mostrarToastError } from '../../../../core/utils/swal.util';
 import { LoadingOverlayComponent } from '../../../../shared/components/loading-overlay/loading-overlay.component';
@@ -31,6 +33,7 @@ import { LoadingOverlayComponent } from '../../../../shared/components/loading-o
     MatIconModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSelectModule,
     LoadingOverlayComponent,
   ],
   providers: [
@@ -47,6 +50,7 @@ export class AprobarSolicitudDialogComponent {
 
   readonly hoy = new Date();
   readonly mostrar = mostrarFecha;
+  readonly tipos = TIPOS_SOLICITUD_PRORROGA;
   aprobando = false;
 
   get fechaSolicitadaVencida(): boolean {
@@ -56,13 +60,14 @@ export class AprobarSolicitudDialogComponent {
   }
 
   readonly form = this.fb.group({
+    tipo: ['' as TipoSolicitudProrroga | '', Validators.required],
     fecha_cierre_aprobada: [null as Date | null],
     comentario_resolucion: [''],
   });
 
   constructor(@Inject(MAT_DIALOG_DATA) public readonly data: SolicitudProrroga) {
     if (this.fechaSolicitadaVencida) {
-      this.form.get('fecha_cierre_aprobada')?.setValidators(require => require.value ? null : { required: true });
+      this.form.get('fecha_cierre_aprobada')?.setValidators(Validators.required);
       this.form.get('fecha_cierre_aprobada')?.updateValueAndValidity();
     }
   }
@@ -73,7 +78,13 @@ export class AprobarSolicitudDialogComponent {
       return;
     }
 
-    const payload: { fecha_cierre_aprobada?: string; comentario_resolucion?: string } = {};
+    const tipo = this.form.get('tipo')?.value as TipoSolicitudProrroga | '';
+    if (!tipo) {
+      this.form.get('tipo')?.markAsTouched();
+      return;
+    }
+
+    const payload: { tipo: TipoSolicitudProrroga; fecha_cierre_aprobada?: string; comentario_resolucion?: string } = { tipo };
     const fecha: Date | null = this.form.get('fecha_cierre_aprobada')?.value ?? null;
     const comentario: string = this.form.get('comentario_resolucion')?.value ?? '';
 

@@ -163,12 +163,6 @@ export const routes: Routes = [
           import('./pages/admin/ejercicios-fiscales/ejercicios-fiscales.component').then((m) => m.EjerciciosFiscalesComponent)
       },
       {
-        path: 'admin/prorroga-cierre',
-        canActivate: [AdminGuard],
-        loadComponent: () =>
-          import('./pages/admin/prorroga-cierre/prorroga-cierre.component').then((m) => m.ProrrogaCierreComponent)
-      },
-      {
         path: 'admin/roles',
         canActivate: [AdminGuard],
         loadComponent: () => import('./pages/admin/roles/roles.component').then((m) => m.RolesComponent)

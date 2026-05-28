@@ -5,8 +5,6 @@ import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { environment } from '../../../../environments/environment';
-
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -15,5 +13,4 @@ import { environment } from '../../../../environments/environment';
   styleUrls: ['./admin-menu.component.scss'],
 })
 export class AdminMenuComponent {
-  readonly enableProrrogasModule = environment.enableProrrogasModule;
 }

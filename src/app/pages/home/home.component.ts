@@ -3,8 +3,6 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { environment } from '../../../environments/environment';
-
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -13,5 +11,4 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['./home.component.scss'],
 })
 export class HomeComponent {
-  readonly enableProrrogasModule = environment.enableProrrogasModule;
 }

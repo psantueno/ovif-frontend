@@ -15,6 +15,7 @@ export interface SolicitudProrroga {
   pauta_id: number;
   prorroga_id: number | null;
   estado: EstadoSolicitud;
+  tipo: TipoSolicitudProrroga | null;
   fecha_cierre_solicitada: string;       // YYYY-MM-DD (respuesta del backend)
   fecha_cierre_anterior: string | null;
   fecha_cierre_aprobada: string | null;
@@ -40,6 +41,12 @@ export interface SolicitudProrroga {
 }
 
 export type EstadoSolicitud = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'CANCELADA';
+export type TipoSolicitudProrroga = 'AMPLIACION_PLAZO' | 'CORRECCION_DATOS';
+
+export const TIPOS_SOLICITUD_PRORROGA: { value: TipoSolicitudProrroga; label: string }[] = [
+  { value: 'AMPLIACION_PLAZO', label: 'Ampliación de plazo' },
+  { value: 'CORRECCION_DATOS', label: 'Corrección de datos' },
+];
 
 export interface SolicitudProrrogaEstado {
   auditoria_id: number;
@@ -73,6 +80,7 @@ export interface SolicitudProrrogaFiltros {
   mes?: number | '';
   convenio_id?: number | '';
   pauta_id?: number | '';
+  tipo?: TipoSolicitudProrroga | '';
   solicitado_por?: number | '';
   grupo_solicitud_id?: string;
   fecha_solicitud_desde?: string;        // DD-MM-YYYY
@@ -134,6 +142,7 @@ export class SolicitudesProrrogaService {
       ['mes', filtros.mes],
       ['convenio_id', filtros.convenio_id],
       ['pauta_id', filtros.pauta_id],
+      ['tipo', filtros.tipo],
       ['solicitado_por', filtros.solicitado_por],
       ['grupo_solicitud_id', filtros.grupo_solicitud_id],
       ['fecha_solicitud_desde', filtros.fecha_solicitud_desde],
@@ -174,7 +183,7 @@ export class SolicitudesProrrogaService {
    */
   aprobar(
     id: number,
-    payload: { fecha_cierre_aprobada?: string; comentario_resolucion?: string }
+    payload: { tipo: TipoSolicitudProrroga; fecha_cierre_aprobada?: string; comentario_resolucion?: string }
   ): Observable<{ message: string; solicitud: SolicitudProrroga }> {
     return this.http.put<any>(`${this.base}/${id}/aprobar`, payload);
   }
@@ -185,8 +194,8 @@ export class SolicitudesProrrogaService {
   }
 
   /** Aprueba múltiples solicitudes pendientes. Cada ítem se procesa de forma independiente. */
-  aprobarLote(items: AprobarLoteItem[]): Observable<{ resultados: ResultadoLote[] }> {
-    return this.http.put<any>(`${this.base}/aprobar-lote`, { items });
+  aprobarLote(tipo: TipoSolicitudProrroga, items: AprobarLoteItem[]): Observable<{ resultados: ResultadoLote[] }> {
+    return this.http.put<any>(`${this.base}/aprobar-lote`, { tipo, items });
   }
 
   /** Rechaza múltiples solicitudes pendientes. comentario_resolucion es obligatorio por ítem. */
@@ -225,6 +234,10 @@ export function mostrarFecha(fecha: string | null | undefined): string {
     return `${d}/${m}/${y}`;
   }
   return fecha;
+}
+
+export function mostrarTipoProrroga(tipo: TipoSolicitudProrroga | null | undefined): string {
+  return TIPOS_SOLICITUD_PRORROGA.find(item => item.value === tipo)?.label ?? '—';
 }
 
 /** Etiquetas de meses en español. */
