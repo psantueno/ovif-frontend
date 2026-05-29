@@ -22,6 +22,10 @@
       <span>{{ data.PautaConvenio?.descripcion ?? data.pauta_id }}</span>
     </div>
     <div class="detalle-item">
+      <span class="label">Tipo</span>
+      <span>{{ mostrarTipo(data.tipo) }}</span>
+    </div>
+    <div class="detalle-item">
       <span class="label">Estado</span>
       <span class="estado-badge"
         [class.pendiente]="data.estado === 'PENDIENTE'"
