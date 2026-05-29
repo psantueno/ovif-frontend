@@ -8,6 +8,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
@@ -15,6 +16,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterModule } from '@angular/router';
+import { MetricasDialogComponent } from './metricas-dialog/metricas-dialog.component';
 import { ChartConfiguration } from 'chart.js';
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 import { AdminBreadcrumb, AdminNavbarComponent } from '../../../shared/components/admin-navbar/admin-navbar.component';
@@ -61,6 +63,7 @@ const ES_AR_DATE_FORMATS = {
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    MatDialogModule,
     MatTableModule,
     MatTabsModule,
     MatTooltipModule,
@@ -79,6 +82,7 @@ const ES_AR_DATE_FORMATS = {
 export class ObservabilidadComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly observabilidadService = inject(ObservabilidadService);
+  private readonly dialog = inject(MatDialog);
 
   readonly breadcrumbs: AdminBreadcrumb[] = [
     { label: 'Admin', link: '/admin' },
@@ -252,6 +256,14 @@ export class ObservabilidadComponent implements OnInit {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) return '0';
     return parsed.toLocaleString('es-AR');
+  }
+
+  verMetricas(metrics: any): void {
+    this.dialog.open(MetricasDialogComponent, {
+      data: metrics,
+      width: '600px',
+      maxHeight: '90vh',
+    });
   }
 
   anomalyLabel(type: string): string {

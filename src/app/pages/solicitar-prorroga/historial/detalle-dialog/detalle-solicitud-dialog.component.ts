@@ -6,7 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { SolicitudProrroga, mostrarFecha, MESES_LABELS } from '../../../../services/solicitudes-prorroga.service';
+import { SolicitudProrroga, mostrarFecha, MESES_LABELS, mostrarTipoProrroga } from '../../../../services/solicitudes-prorroga.service';
 
 @Component({
   selector: 'app-detalle-solicitud-dialog',
@@ -26,6 +26,7 @@ import { SolicitudProrroga, mostrarFecha, MESES_LABELS } from '../../../../servi
 export class DetalleSolicitudDialogComponent {
   readonly meses = MESES_LABELS;
   readonly mostrar = mostrarFecha;
+  readonly mostrarTipo = mostrarTipoProrroga;
 
   constructor(@Inject(MAT_DIALOG_DATA) public readonly data: SolicitudProrroga) {}
 }
