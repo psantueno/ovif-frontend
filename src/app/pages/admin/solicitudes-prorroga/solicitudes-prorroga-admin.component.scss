@@ -20,19 +20,24 @@
 
 .filtros-card {
   .filtros-form {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    align-items: flex-start;
+    align-items: start;
 
-    mat-form-field { min-width: 150px; flex: 1; }
-  }
+    // Fuerza los date pickers (items 8-11) a empezar en la fila 3,
+    // dejando la 4.ª celda de la fila 2 vacía (Convenio, Pauta, Tipo).
+    mat-form-field:nth-child(8) {
+      grid-column-start: 1;
+    }
 
-  .filtros-acciones {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding-top: 4px;
+    .filtros-acciones {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-top: 4px;
+    }
   }
 }
 
