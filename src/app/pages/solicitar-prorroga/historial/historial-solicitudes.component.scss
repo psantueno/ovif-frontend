@@ -17,19 +17,18 @@
 
 .filtros-card {
   .filtros-form {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
-    align-items: flex-start;
+    align-items: start;
 
-    mat-form-field { min-width: 160px; flex: 1; }
-  }
-
-  .filtros-acciones {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    padding-top: 4px;
+    .filtros-acciones {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding-top: 4px;
+    }
   }
 }
 
