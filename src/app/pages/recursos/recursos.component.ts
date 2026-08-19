@@ -72,6 +72,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
   totalFilasLeidas = 0;
   filasValidas = 0;
   filasConErrores = 0;
+  filasConAdvertencias = 0;
 
   erroresCargaMasiva: string[] = [];
   cargandoArchivoMasivo = false;
@@ -269,6 +270,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
       this.totalFilasLeidas = resultado.totalRowsRead;
       this.filasValidas = resultado.validRows;
       this.filasConErrores = resultado.invalidRows;
+      this.filasConAdvertencias = resultado.rows.filter((fila) => fila.tieneAdvertencia).length;
       this.erroresCargaMasiva = [...resultado.globalErrors];
 
       if (resultado.totalRowsRead === 0 && this.erroresCargaMasiva.length === 0) {
@@ -683,6 +685,7 @@ export class RecursosComponent implements OnInit, OnDestroy {
     this.totalFilasLeidas = 0;
     this.filasValidas = 0;
     this.filasConErrores = 0;
+    this.filasConAdvertencias = 0;
   }
 
   private esModuloPermitido(): boolean {

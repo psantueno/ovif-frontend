@@ -32,6 +32,8 @@ export interface DeterminacionTributariaPreviewRow {
   bajas_periodo: number | null;
   errores: string[];
   tieneError: boolean;
+  advertencias: string[];
+  tieneAdvertencia: boolean;
 }
 
 export interface DeterminacionTributariaExcelParseResult {
@@ -67,7 +69,7 @@ export const parseDeterminacionTributariaExcelFile = async (
 
   let matrix: unknown[][];
   try {
-    matrix = await readExcelSecure(file);
+    matrix = await readExcelSecure(file, { raw: true });
   } catch (error) {
     if (error instanceof ExcelValidationError) {
       globalErrors.push(error.message);
@@ -131,17 +133,18 @@ export const parseDeterminacionTributariaExcelFile = async (
 
     const filaExcel = rowIndex + 1;
     const errores: string[] = [];
+    const advertencias: string[] = [];
 
     const codImpuesto = normalizarNumeroEntero(toCellString(row[0]), 'cod_impuesto', errores, true);
     const descripcion = toCellString(row[1]);
     const anio = normalizarNumeroEntero(toCellString(row[2]), 'anio', errores);
     const cuota = normalizarNumeroEntero(toCellString(row[3]), 'cuota', errores);
     const liquidadas = normalizarNumeroEntero(toCellString(row[4]), 'liquidadas', errores, true);
-    const importeLiquidadas = normalizarNumeroDecimal(toCellString(row[5]), 'importe_liquidadas', errores);
+    const importeLiquidadas = normalizarNumeroDecimal(row[5], 'importe_liquidadas', errores, advertencias);
     const impagas = normalizarNumeroEntero(toCellString(row[6]), 'impagas', errores, true);
-    const importeImpagas = normalizarNumeroDecimal(toCellString(row[7]), 'importe_impagas', errores);
+    const importeImpagas = normalizarNumeroDecimal(row[7], 'importe_impagas', errores, advertencias);
     const pagadas = normalizarNumeroEntero(toCellString(row[8]), 'pagadas', errores, true);
-    const importePagadas = normalizarNumeroDecimal(toCellString(row[9]), 'importe_pagadas', errores);
+    const importePagadas = normalizarNumeroDecimal(row[9], 'importe_pagadas', errores, advertencias);
     const altasPeriodo = normalizarNumeroEntero(toCellString(row[10]), 'altas_periodo', errores, true);
     const bajasPeriodo = normalizarNumeroEntero(toCellString(row[11]), 'bajas_periodo', errores, true);
 
@@ -167,6 +170,8 @@ export const parseDeterminacionTributariaExcelFile = async (
       bajas_periodo: bajasPeriodo,
       errores,
       tieneError: errores.length > 0,
+      advertencias,
+      tieneAdvertencia: advertencias.length > 0,
     });
   }
 

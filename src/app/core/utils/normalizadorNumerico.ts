@@ -98,29 +98,62 @@ export const normalizarNumeroEntero = (
 };
 
 /**
- * Normaliza un número decimal desde una cadena, validando que sea un número con hasta 2 dígitos decimales.
- * Agrega mensajes de error al array proporcionado si la validación falla.
- * @param raw
- * @param campo
- * @param errores
- * @returns El número decimal normalizado o null si no es válido
+ * Normaliza un importe (valor de dinero) leído en crudo desde Excel (raw:true).
+ *
+ * - Si la celda es un número nativo, se redondea a 2 decimales. Si traía más de
+ *   2 decimales reales (diferencia >= medio centavo), se registra una ADVERTENCIA
+ *   no bloqueante para que el usuario la revise en la previsualización.
+ * - Si la celda NO es un número nativo (típicamente formato Texto/General, con
+ *   separadores de miles), se registra un ERROR bloqueante: los importes deben
+ *   venir en formato Número en Excel. No se intenta interpretar separadores.
+ *
+ * @param raw Valor crudo de la celda (number | string | null | undefined).
+ * @param campo Nombre del campo, para los mensajes.
+ * @param errores Array de errores bloqueantes.
+ * @param advertencias Array de advertencias no bloqueantes.
+ * @returns El importe redondeado a 2 decimales, o null si no es válido.
  */
-export const normalizarNumeroDecimal = (raw: string, campo: string, errores: string[]): number | null => {
-  if (!raw) {
+export const normalizarNumeroDecimal = (
+  raw: unknown,
+  campo: string,
+  errores: string[],
+  advertencias: string[] = [],
+): number | null => {
+  if (raw === null || raw === undefined || (typeof raw === 'string' && raw.trim() === '')) {
     errores.push(`El campo ${campo} es obligatorio.`);
     return null;
   }
 
-  const parsedImporte = normalizarValorNumerico(raw);
-  if (parsedImporte.value === null) {
-    errores.push(`El campo ${campo} debe ser un número válido.`);
-    return null;
+  if (typeof raw === 'number') {
+    if (!Number.isFinite(raw)) {
+      errores.push(`El campo ${campo} debe ser un número válido.`);
+      return null;
+    }
+
+    const centavos = raw * 100;
+    const centavosRedondeados = Math.round(centavos);
+    const redondeado = centavosRedondeados / 100;
+
+    // Si el importe expresado en centavos no es prácticamente entero, la celda
+    // traía más de 2 decimales reales: lo redondeamos y avisamos (advertencia no
+    // bloqueante). La tolerancia (medio milésimo de centavo) absorbe las
+    // imprecisiones propias del punto flotante y evita falsas alarmas.
+    if (Math.abs(centavos - centavosRedondeados) > 0.001) {
+      const valorFormateado = redondeado.toLocaleString('es-AR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      advertencias.push(
+        `El importe de ${campo} tenía más de 2 decimales y se redondeó a ${valorFormateado}.`,
+      );
+    }
+
+    return redondeado;
   }
 
-  if (parsedImporte.decimalPlaces > 2) {
-    errores.push(`El campo ${campo} debe tener como máximo 2 decimales.`);
-    return null;
-  }
-
-  return parsedImporte.value;
+  errores.push(
+    `El campo ${campo} debe tener formato Número en Excel (no Texto). ` +
+      `Reformateá la celda como número y volvé a cargar.`,
+  );
+  return null;
 };

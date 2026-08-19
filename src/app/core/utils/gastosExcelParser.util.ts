@@ -24,6 +24,8 @@ export interface GastoPreviewRow {
   vigente: number | null;
   errores: string[];
   tieneError: boolean;
+  advertencias: string[];
+  tieneAdvertencia: boolean;
 }
 
 export interface GastosExcelParseResult {
@@ -62,7 +64,7 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
 
   let matrix: unknown[][];
   try {
-    matrix = await readExcelSecure(file);
+    matrix = await readExcelSecure(file, { raw: true });
   } catch (error) {
     if (error instanceof ExcelValidationError) {
       globalErrors.push(error.message);
@@ -128,15 +130,12 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
 
     const filaExcel = rowIndex + 1;
     const errores: string[] = [];
+    const advertencias: string[] = [];
 
     const codigoPartidaRaw = toCellString(row[0]);
     const descripcion = toCellString(row[1]);
     const codFuenteRaw = toCellString(row[2]);
     const descripcionFuente = toCellString(row[3]);
-    const formuladoRaw = toCellString(row[4]);
-    const modificadoRaw = toCellString(row[5]);
-    const vigenteRaw = toCellString(row[6]);
-    const devengadoRaw = toCellString(row[7]);
 
     const codigoPartida = normalizarNumeroEntero(codigoPartidaRaw, 'codigo_partida', errores);
 
@@ -158,10 +157,10 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
       errores.push('El campo descripcion_fuente no puede exceder los 255 caracteres.');
     }
 
-    const formulado = normalizarNumeroDecimal(formuladoRaw, 'formulado', errores);
-    const modificado = normalizarNumeroDecimal(modificadoRaw, 'modificado', errores);
-    const devengado = normalizarNumeroDecimal(devengadoRaw, 'devengado', errores);
-    const vigente = normalizarNumeroDecimal(vigenteRaw, 'vigente', errores);
+    const formulado = normalizarNumeroDecimal(row[4], 'formulado', errores, advertencias);
+    const modificado = normalizarNumeroDecimal(row[5], 'modificado', errores, advertencias);
+    const devengado = normalizarNumeroDecimal(row[7], 'devengado', errores, advertencias);
+    const vigente = normalizarNumeroDecimal(row[6], 'vigente', errores, advertencias);
 
     rows.push({
       filaExcel,
@@ -175,6 +174,8 @@ export const parseGastosExcelFile = async (file: File): Promise<GastosExcelParse
       vigente,
       errores,
       tieneError: errores.length > 0,
+      advertencias,
+      tieneAdvertencia: advertencias.length > 0,
     });
   }
 
