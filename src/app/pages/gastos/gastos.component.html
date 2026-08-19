@@ -112,6 +112,10 @@
           <p class="preview-summary-card__label">Filas con error</p>
           <p class="preview-summary-card__value">{{ filasConErrores }}</p>
         </article>
+        <article class="preview-summary-card preview-summary-card--warning" *ngIf="filasConAdvertencias > 0">
+          <p class="preview-summary-card__label">Filas con advertencia</p>
+          <p class="preview-summary-card__value">{{ filasConAdvertencias }}</p>
+        </article>
       </div>
 
       <div class="tabla-wrapper">
@@ -131,7 +135,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let fila of previsualizacionMasiva" [class.tiene-error]="fila.tieneError">
+            <tr *ngFor="let fila of previsualizacionMasiva" [class.tiene-error]="fila.tieneError" [class.tiene-advertencia]="fila.tieneAdvertencia && !fila.tieneError">
               <td>{{ fila.filaExcel }}</td>
               <td>{{ fila.codigo_partida ?? '-' }}</td>
               <td>{{ fila.descripcion || '-' }}</td>
@@ -142,14 +146,13 @@
               <td>{{ fila.devengado !== null ? formatearImporte(fila.devengado) : '-' }}</td>
               <td>{{ fila.vigente !== null ? formatearImporte(fila.vigente) : '-' }}</td>
               <td>
-                <ng-container *ngIf="fila.tieneError; else estadoOk">
-                  <ul class="preview-list">
-                    <li class="preview-error" *ngFor="let error of fila.errores">{{ error }}</li>
-                  </ul>
-                </ng-container>
-                <ng-template #estadoOk>
-                  <span class="preview-ok">Listo para enviar</span>
-                </ng-template>
+                <ul class="preview-list" *ngIf="fila.tieneError">
+                  <li class="preview-error" *ngFor="let error of fila.errores">{{ error }}</li>
+                </ul>
+                <ul class="preview-list" *ngIf="fila.tieneAdvertencia">
+                  <li class="preview-advertencia" *ngFor="let advertencia of fila.advertencias">{{ advertencia }}</li>
+                </ul>
+                <span class="preview-ok" *ngIf="!fila.tieneError && !fila.tieneAdvertencia">Listo para enviar</span>
               </td>
             </tr>
           </tbody>

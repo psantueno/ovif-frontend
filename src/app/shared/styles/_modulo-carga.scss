@@ -260,6 +260,18 @@
   background: rgba(220, 53, 69, 0.08);
 }
 
+.preview-summary-card--warning {
+  border-color: rgba(240, 173, 78, 0.45);
+  background: rgba(240, 173, 78, 0.12);
+}
+
+// Resaltado de fila con advertencia (no bloqueante) en las tablas de preview.
+.recaudaciones-tabla tr.tiene-advertencia td,
+.gastos-tabla tr.tiene-advertencia td,
+.recursos-tabla tr.tiene-advertencia td {
+  background: rgba(240, 173, 78, 0.1);
+}
+
 .preview-summary-card__label {
   margin: 0;
   font-size: 0.78rem;
@@ -290,6 +302,16 @@
   margin: 0 0 0.5rem;
   padding: 0.4rem 0.8rem;
   background: rgba(220, 53, 69, 0.12);
+  border-radius: 6px;
+}
+
+.preview-advertencia {
+  color: #8a5a00;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+  padding: 0.4rem 0.8rem;
+  background: rgba(240, 173, 78, 0.18);
   border-radius: 6px;
 }
 

@@ -17,6 +17,8 @@ export interface RecaudacionPreviewRow {
   ente_recaudador: string;
   errores: string[];
   tieneError: boolean;
+  advertencias: string[];
+  tieneAdvertencia: boolean;
 }
 
 export interface RecaudacionesExcelParseResult {
@@ -55,7 +57,7 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
 
   let matrix: unknown[][];
   try {
-    matrix = await readExcelSecure(file);
+    matrix = await readExcelSecure(file, { raw: true });
   } catch (error) {
     if (error instanceof ExcelValidationError) {
       globalErrors.push(error.message);
@@ -121,10 +123,10 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
 
     const filaExcel = rowIndex + 1;
     const errores: string[] = [];
+    const advertencias: string[] = [];
 
     const codigoRaw = toCellString(row[0]);
     const descripcion = toCellString(row[1]);
-    const importeRaw = toCellString(row[2]);
     const enteRecaudador = toCellString(row[3]);
 
     let codigoTributo: number | null = null;
@@ -140,7 +142,7 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
       errores.push('El campo descripcion no puede exceder los 255 caracteres.');
     }
 
-    importeRecaudacion = normalizarNumeroDecimal(importeRaw, 'importe_recaudacion', errores)
+    importeRecaudacion = normalizarNumeroDecimal(row[2], 'importe_recaudacion', errores, advertencias)
 
     if (!enteRecaudador) {
       errores.push('El campo ente_recaudador es obligatorio.');
@@ -158,6 +160,8 @@ export const parseRecaudacionesExcelFile = async (file: File): Promise<Recaudaci
       ente_recaudador: enteRecaudador,
       errores,
       tieneError: errores.length > 0,
+      advertencias,
+      tieneAdvertencia: advertencias.length > 0,
     });
   }
 

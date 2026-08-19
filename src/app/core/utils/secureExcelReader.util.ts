@@ -38,6 +38,7 @@ export class ExcelValidationError extends Error {
 export type ExcelErrorCode =
   | 'INVALID_EXTENSION'
   | 'INVALID_MIME'
+  | 'INVALID_SIGNATURE'
   | 'FILE_TOO_LARGE'
   | 'FILE_EMPTY'
   | 'TOO_MANY_ROWS'
@@ -45,6 +46,14 @@ export type ExcelErrorCode =
   | 'TIMEOUT'
   | 'PARSE_ERROR'
   | 'NO_SHEETS';
+
+// Firmas de bytes (magic numbers) de los formatos Excel soportados.
+// .xlsx = contenedor ZIP -> "PK\x03\x04". .xls = documento OLE2.
+const XLSX_SIGNATURE = [0x50, 0x4b, 0x03, 0x04];
+const XLS_SIGNATURE = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
+
+const matchesSignature = (bytes: Uint8Array, signature: number[]): boolean =>
+  bytes.length >= signature.length && signature.every((byte, index) => bytes[index] === byte);
 
 export function validateExcelFile(file: File, options?: ExcelSecurityOptions): void {
   const limits = { ...EXCEL_LIMITS, ...options };
@@ -112,6 +121,20 @@ async function parseExcelFile(
 ): Promise<unknown[][]> {
   const buffer = await file.arrayBuffer();
 
+  // Defensa en profundidad: validar la firma de bytes real del archivo, no solo
+  // la extensión/MIME (que se pueden falsificar). Bloquea archivos disfrazados
+  // antes de pasarlos al parser.
+  const signatureBytes = new Uint8Array(buffer.slice(0, 8));
+  if (
+    !matchesSignature(signatureBytes, XLSX_SIGNATURE) &&
+    !matchesSignature(signatureBytes, XLS_SIGNATURE)
+  ) {
+    throw new ExcelValidationError(
+      'El archivo no es un Excel válido. Verificá que sea un .xlsx o .xls real y no otro tipo de archivo renombrado.',
+      'INVALID_SIGNATURE',
+    );
+  }
+
   let workbook: XLSX.WorkBook;
   try {
     workbook = XLSX.read(buffer, {
@@ -122,6 +145,10 @@ async function parseExcelFile(
       cellStyles: false,
       cellNF: false,
       cellText: false,
+      // Límite duro de filas parseadas: evita que la librería procese archivos
+      // enormes (superficie de ReDoS / consumo de memoria). El exceso real se
+      // sigue detectando abajo con el chequeo de rowCount.
+      sheetRows: limits.maxRows + 1,
       WTF: false,
     });
   } catch {
@@ -166,6 +193,9 @@ async function parseExcelFile(
     );
   }
 
+  // `header: 1` devuelve una matriz de arrays (no objetos con claves tomadas del
+  // archivo), lo que evita el vector de prototype pollution vía nombres de columna
+  // como "__proto__". Los parsers, además, validan los encabezados contra listas fijas.
   const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
     defval: raw ? null : '',

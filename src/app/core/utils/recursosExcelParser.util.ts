@@ -20,6 +20,8 @@ export interface RecursoPreviewRow {
   percibido: number | null;
   errores: string[];
   tieneError: boolean;
+  advertencias: string[];
+  tieneAdvertencia: boolean;
 }
 
 export interface RecursosExcelParseResult {
@@ -56,7 +58,7 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
 
   let matrix: unknown[][];
   try {
-    matrix = await readExcelSecure(file);
+    matrix = await readExcelSecure(file, { raw: true });
   } catch (error) {
     if (error instanceof ExcelValidationError) {
       globalErrors.push(error.message);
@@ -121,13 +123,12 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
 
     const filaExcel = rowIndex + 1;
     const errores: string[] = [];
+    const advertencias: string[] = [];
 
     const codRecursoRaw = toCellString(row[0]);
     const descripcion = toCellString(row[1]);
     const codFuenteRaw = toCellString(row[2]);
     const descripcionFuente = toCellString(row[3]);
-    const vigenteRaw = toCellString(row[4]);
-    const percibidoRaw = toCellString(row[5]);
 
     const codRecurso = normalizarNumeroEntero(codRecursoRaw, 'cod_recurso', errores);
 
@@ -149,8 +150,8 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
       errores.push('El campo descripcion_fuente no puede exceder los 255 caracteres.');
     }
 
-    const vigente = normalizarNumeroDecimal(vigenteRaw, 'vigente', errores);
-    const percibido = normalizarNumeroDecimal(percibidoRaw, 'percibido', errores);
+    const vigente = normalizarNumeroDecimal(row[4], 'vigente', errores, advertencias);
+    const percibido = normalizarNumeroDecimal(row[5], 'percibido', errores, advertencias);
 
     rows.push({
       filaExcel,
@@ -162,6 +163,8 @@ export const parseRecursosExcelFile = async (file: File): Promise<RecursosExcelP
       percibido,
       errores,
       tieneError: errores.length > 0,
+      advertencias,
+      tieneAdvertencia: advertencias.length > 0,
     });
   }
 
