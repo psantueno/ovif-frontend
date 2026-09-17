@@ -51,6 +51,9 @@ const decimalSchema = (campo: string = "importe") =>
     error: `El campo "${campo}" debe ser un número decimal válido`
   }));
 
+const decimalSchemaAbsoluto = (campo: string = "importe") =>
+  decimalSchema(campo).transform((valor) => Math.abs(valor));
+
 const cantidadHorasExtraSchema = (campo: string) =>
   z.preprocess((value) => {
     if (typeof value === "number") {
@@ -166,7 +169,7 @@ export const RemuneracionesSchema = z.object({
   total_ropa: decimalSchema('Total ropa'),
   total_bonos: decimalSchema('Total bonos'),
   asignaciones_familiares: decimalSchema('Asignaciones familiares'),
-  total_descuentos: decimalSchema('Total descuentos'),
+  total_descuentos: decimalSchemaAbsoluto('Total descuentos'),
   total_issn: decimalSchema('Total ISSN'),
   art: decimalSchema('ART'),
   seguro_vida_obligatorio: decimalSchema('Seguro Vida Obligatorio'),
